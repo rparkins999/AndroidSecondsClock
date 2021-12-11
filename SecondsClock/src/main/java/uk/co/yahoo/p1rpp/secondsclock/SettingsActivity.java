@@ -42,7 +42,7 @@ public class SettingsActivity extends Activity {
 
     private AppWidgetManager appWidgetManager;
     private ComponentName secondsClockWidget;
-    private int maxHeight = 121;
+    private int minHeight = 121;
     private int minWidth = 93;
     private SeekBar alphaSlider;
     private SeekBar redSlider;
@@ -99,8 +99,8 @@ public class SettingsActivity extends Activity {
         if (widgetIds.length > 0) {
             Bundle newOptions =
                 appWidgetManager.getAppWidgetOptions(widgetIds[0]);
-            maxHeight = newOptions.getInt(
-                AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxHeight);
+            minHeight = newOptions.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, minHeight);
             minWidth = newOptions.getInt(
                 AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
         }
@@ -128,11 +128,11 @@ public class SettingsActivity extends Activity {
 
     void updateDemo() {
         Formatter f = new Formatter();
-        f.set(this, minWidth, maxHeight,
+        f.set(this, minWidth, minHeight,
             showTime, showWeekDay, showShortDate,
             showMonthDay, showMonth, showYear);
         int width = (int)(minWidth * metrics.density);
-        int height = (int)(maxHeight * metrics.density);
+        int height = (int)(minHeight * metrics.density);
         demo.setMinimumWidth(width);
         demo.setMaxWidth(width);
         demo.setMinimumHeight(height);

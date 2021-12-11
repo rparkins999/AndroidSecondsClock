@@ -11,11 +11,12 @@
     android:layout_height="match_parent">
 
     <TextClock
-        tools:ignore="UnusedAttribute"
+        tools:ignore="PxUsage"
         android:id="@+id/appwidget_textclock"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
+        android:autoSizeMinTextSize="16px"
         android:autoSizeTextType="uniform"
     />
 </RelativeLayout>

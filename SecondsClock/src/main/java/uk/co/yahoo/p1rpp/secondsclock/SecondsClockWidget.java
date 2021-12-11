@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 /*
  * Implementation of App Widget functionality.
@@ -37,11 +38,21 @@ public class SecondsClockWidget extends AppWidgetProvider {
         SharedPreferences prefs = context.getSharedPreferences(
             "SecondsClock", Context.MODE_PRIVATE);
         Bundle newOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
-        int minHeight = newOptions.getInt(
-            AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 50);
         int minWidth = newOptions.getInt(
-            AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 40);
-
+            AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 93);
+        int minHeight = newOptions.getInt(
+            AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 121);
+        /* debugging
+        int maxWidth = newOptions.getInt(
+            AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 93);
+        int maxHeight = newOptions.getInt(
+            AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 121);
+        String s = "Width min " + minWidth
+                      + " max " + maxWidth
+              + ", Height min " + minHeight
+                      + " min " + maxHeight;
+        Toast.makeText(context, s, Toast.LENGTH_LONG).show();
+        // */
 
         Formatter f = new Formatter();
         // if showShortDate is not zero,
@@ -80,13 +91,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
 
         // Make a click on the widget go to the clock app
         Intent ai = new Intent("android.intent.action.SHOW_TIMERS");
-        int flags = 0;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M)
-        {
-            flags |= PendingIntent.FLAG_IMMUTABLE;
-        }
         PendingIntent pi = PendingIntent.getActivity(
-            context, 0, ai, flags);
+            context, 0, ai, PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.appwidget_textclock, pi);
 
         // Instruct the widget manager to update the widget
@@ -119,7 +125,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Toast.makeText(context,
             "onReceive " + intent.getAction(),
             Toast.LENGTH_LONG).show();
-        */
+        // */
         super.onReceive(context, intent);
     }
 }
