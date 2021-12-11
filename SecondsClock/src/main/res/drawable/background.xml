@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Copyright © 2021. Richard P. Parkins, M. A.
+   Released under GPL V3 or later
+   Pattern which is repeated to fill the widget background in the configurator
+   to show the effect of transparency.
+  -->
+
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/smallpattern" 
+    android:tileMode="repeat" /> 
+

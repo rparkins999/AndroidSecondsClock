@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Copyright © 2021. Richard P. Parkins, M. A.
+   Released under GPL V3 or later
+   This is just to handle the US spelling of 'colour'.
+  -->
+
+<resources>
+    <string name="set_bg_colour">Set widget background color</string>
+    <string name="setbgcolourhelp">Touch this button to bring up a color
+        chooser for the background color of the widget.</string>
+    <string name="set_fg_colour">Set widget text color</string>
+    <string name="setfgcolourhelp">Touch this button to bring up a color
+        chooser for the text color of the widget.</string>
+    <string name="fghelp">Touch anywhere in this pane to select
+        the text color of the widget. </string>
+    <string name="bghelp">Touch anywhere in this pane to select
+        the background color of the widget.</string>
+    <string name="setredsliderhelp">Move the thumb on this slider
+        to adjust the amount of red in the color.</string>
+    <string name="setgreensliderhelp">Move the thumb on this slider
+        to adjust the amount of green in the color.</string>
+    <string name="setbluesliderhelp">Move the thumb on this slider
+        to adjust the amount of blue in the color.</string>
+</resources>

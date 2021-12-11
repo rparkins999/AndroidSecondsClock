@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Copyright © 2021. Richard P. Parkins, M. A.
+   Released under GPL V3 or later
+  -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextClock
+        tools:ignore="UnusedAttribute"
+        android:id="@+id/appwidget_textclock"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:autoSizeTextType="uniform"
+    />
+</RelativeLayout>

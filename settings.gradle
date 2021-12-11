@@ -1,0 +1,12 @@
+// Copyright © 2021. Richard P. Parkins, M. A.
+// Released under GPL V3 or later
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "SecondsClock"
+include ':SecondsClock'

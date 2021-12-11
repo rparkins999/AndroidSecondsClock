@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Copyright © 2021. Richard P. Parkins, M. A.
+   Released under GPL V3 or later
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">SecondsClock</string>
+    <string name="app_label">Seconds Clock</string>
+    <string name="appwidget_text">Clock</string>
+    <string name="app_widget_description">1x1 seconds clock</string>
+    <string name="demohelp">This shows what a 1x1 widget would look like.
+        If there is currently no home screen widget, the size may not be correct
+        because SecondsClock can\'t find out what size the widget would be.
+        If you resize the widget on the home screen to a larger size,
+        the widget will rearrange its layout to use a larger font size,
+        but this will not be shown here. The background pattern shows
+        the effect of the widget background.</string>
+    <string name="longpresslabel">Long press here for help information.</string>
+    <string name="editwidgethelp">This screen allows you to define the
+        characteristics of the clock widget. When you have done, press
+        the back button. A long press on any of the objects below will bring up
+        some help information about it.</string>
+    <string name="show_time">Show time in widget</string>
+    <string name="showtimehelp">If this box is checked, the widget will
+        display the time in locale-appropriate format.</string>
+    <string name="show_seconds">Show time with seconds in widget</string>
+    <string name="showsecondshelp">If this box is checked, the widget will
+        display the time in locale-appropriate format including seconds.
+        This will increase battery drain
+        since the widget has to update itself every second.</string>
+    <string name="show_short_weekday">Show abbreviated day name
+        in widget</string>
+    <string name="showshortweekdayhelp">If this box is checked, the widget will
+        display the locale-appropriate abbreviation for the day of the
+        week.</string>
+    <string name="show_long_weekday">Show full day name in widget</string>
+    <string name="showlongweekdayhelp">If this box is checked, the widget will
+        display the locale-appropriate full name for the day of the
+        week.</string>
+    <string name="show_short_date">Show numeric date in widget</string>
+    <string name="showshortdatehelp">If this box is checked, the widget will
+        display the locale-appropriate numeric date. If the numeric date
+        is shown, the full date cannot be shown as well.</string>
+    <string name="show_month_day">Show day of month in widget</string>
+    <string name="showmonthdayhelp">If this box is checked, the widget will
+        display the day of the month.</string>
+    <string name="show_short_month">Show abbreviated month name
+        in widget</string>
+    <string name="showshortmonthhelp">If this box is checked, the widget will
+        display the locale-appropriate abbreviation for the month.</string>
+    <string name="show_long_month">Show full month name in widget</string>
+    <string name="showlongmonthhelp">If this box is checked, the widget will
+        display the locale-appropriate full name for the month.</string>
+    <string name="show_year">Show year in widget</string>
+    <string name="showyearhelp">If this box is checked, the widget will
+        display the year.</string>
+    <string name="set_bg_colour">Set widget background colour</string>
+    <string name="setbgcolourhelp">Touch this button to bring up a colour
+        chooser for the background colour of the widget.</string>
+    <string name="set_fg_colour">Set widget text colour</string>
+    <string name="setfgcolourhelp">Touch this button to bring up a colour
+        chooser for the text colour of the widget.</string>
+    <string name="fghelp">Touch anywhere in this pane to select
+        the text colour of the widget. </string>
+    <string name="bghelp">Touch anywhere in this pane to select
+        the background colour of the widget.</string>
+    <string name="setredsliderhelp">Move the thumb on this slider
+        to adjust the amount of red in the colour.</string>
+    <string name="setgreensliderhelp">Move the thumb on this slider
+        to adjust the amount of green in the colour.</string>
+    <string name="setbluesliderhelp">Move the thumb on this slider
+        to adjust the amount of blue in the colour.</string>
+    <string name="setalphasliderhelp">Move the thumb on this slider
+        to adjust the opacity of the widget background:
+        zero is transparent and 255 is fully opaque.</string>
+</resources>
