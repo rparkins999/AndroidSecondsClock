@@ -840,6 +840,7 @@ public class SettingsActivity extends Activity {
                         m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
                         fillBitmapInBackground(m_bgcolour);
                         demo.setBackgroundColor(m_bgcolour);
+                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         updateWidget();
                     }
                 }
