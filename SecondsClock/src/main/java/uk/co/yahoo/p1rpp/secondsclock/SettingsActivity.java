@@ -225,6 +225,8 @@ public class SettingsActivity extends Activity {
 
     void doMainLayout() {
         removeAllViews(topLayout);
+        demobox.addView(demo);
+        demoboxbox.addView(demobox);
         LinearLayout l1 = new LinearLayout(this);
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
@@ -379,24 +381,31 @@ public class SettingsActivity extends Activity {
         greenSlider.setProgress((colour >> 8) & 0xFF);
         blueSlider.setProgress(colour & 0xFF);
         LinearLayout l1 = new LinearLayout(this);
+        demobox.addView(demo);
+        demoboxbox.addView(demobox);
+        helptext.setPadding(20, 0, 20, 0);
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
-            demoboxbox.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
-            demoboxbox.setOrientation(LinearLayout.VERTICAL);
-            demoboxbox.setGravity(Gravity.CENTER_VERTICAL);
-            l1.addView(demoboxbox);
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.HORIZONTAL);
             l2.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT));
             l2.setGravity(Gravity.CENTER_VERTICAL);
+            l2.setPadding(20, 0, 0, 0);
             l2.addView(m_colourmap);
             l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
+            l3.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT));
+            demoboxbox.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+            demoboxbox.setOrientation(LinearLayout.VERTICAL);
+                demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
+            l3.addView(demoboxbox);
             l3.addView(helptext);
             l3.addView(redSlider);
             l3.addView(greenSlider);
@@ -479,11 +488,9 @@ public class SettingsActivity extends Activity {
         demobox.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
-        demobox.addView(demo);
         demobox.setBackgroundResource(R.drawable.background);
         demoboxbox = new LinearLayout(this);
         demoboxbox.setPadding(10, 0, 10, 0);
-        demoboxbox.addView(demobox);
         helptext = new TextView(this);
         showTimeCheckBox = new CheckBox(this);
         showSecondsCheckBox = new CheckBox(this);
