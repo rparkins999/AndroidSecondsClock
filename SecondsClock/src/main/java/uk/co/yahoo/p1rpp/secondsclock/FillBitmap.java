@@ -15,10 +15,6 @@ import android.os.AsyncTask;
 public class FillBitmap extends AsyncTask<BitmapWrapper, Void, BitmapWrapper> {
 
     protected BitmapWrapper doInBackground(BitmapWrapper... bm) {
-        if (isCancelled()) {
-            bm[0].m_active = null;
-            return bm[0];
-        }
         Bitmap bitmap = bm[0].m_Bitmap;
         int colour = bm[0].m_colour;
         if ((colour & 0xFFFFF) == 0) { colour += 0xFFFFFF; }
@@ -112,5 +108,13 @@ public class FillBitmap extends AsyncTask<BitmapWrapper, Void, BitmapWrapper> {
         }
         bm[0].m_active = null;
         return bm[0];
+    }
+
+    @Override
+    protected void onPostExecute(BitmapWrapper bitmapWrapper) {
+        if (bitmapWrapper.m_firstTime) {
+            bitmapWrapper.m_owner.redisplayBitmap();
+        }
+        super.onPostExecute(bitmapWrapper);
     }
 }

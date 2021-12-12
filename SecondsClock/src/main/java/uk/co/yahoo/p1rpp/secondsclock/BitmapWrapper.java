@@ -14,10 +14,15 @@ class BitmapWrapper {
     public int m_colour;
     public FillBitmap m_active;
     public int m_multiplier;
-    BitmapWrapper(int colour, Bitmap bitmap, int multiplier) {
+    public boolean m_firstTime;
+    public SettingsActivity m_owner;
+    BitmapWrapper(int colour, Bitmap bitmap, int multiplier,
+                  SettingsActivity owner, boolean firstTime) {
         m_Bitmap = bitmap;
         m_colour = colour;
         m_active = null;
         m_multiplier = multiplier;
+        m_owner = owner;
+        m_firstTime = firstTime;
     }
 }

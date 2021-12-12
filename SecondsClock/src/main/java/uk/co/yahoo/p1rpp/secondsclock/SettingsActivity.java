@@ -83,6 +83,7 @@ public class SettingsActivity extends Activity {
     private Button bgButton;
     private Button fgButton;
     private Bitmap m_bitmap;
+    private ImageView m_colourmap;
     private SettingsActivity ac;
     private boolean colourmaplongclicked = false;
     private Button okButton;
@@ -167,7 +168,7 @@ public class SettingsActivity extends Activity {
         updateWidget();
     }
 
-    private void fillBitmapInBackground(int colour) {
+    private void fillBitmapInBackground(int colour, boolean firstTime) {
         FillBitmap task;
         if (m_activeWrapper != null) {
             task = m_activeWrapper.m_active;
@@ -175,7 +176,8 @@ public class SettingsActivity extends Activity {
                 task.cancel(true);
             }
         }
-        m_activeWrapper = new BitmapWrapper(colour, m_bitmap, multiplier);
+        m_activeWrapper = new BitmapWrapper(
+            colour, m_bitmap, multiplier, this, firstTime);
         task = new FillBitmap();
         m_activeWrapper.m_active = task;
         task.execute(m_activeWrapper);
@@ -204,6 +206,10 @@ public class SettingsActivity extends Activity {
         } else {
             multiplier = 4;
         }
+    }
+
+    void redisplayBitmap() {
+        m_colourmap.invalidate();
     }
 
     // recursive version
@@ -328,17 +334,17 @@ public class SettingsActivity extends Activity {
         int size = 256 * multiplier;
         m_bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
-            fillBitmapInBackground(m_bgcolour);
+            fillBitmapInBackground(m_bgcolour, true);
         } else {
-            fillBitmapInBackground(m_fgcolour);
+            fillBitmapInBackground(m_fgcolour, true);
             setColour(m_fgcolour);
         }
-        ImageView colourmap = new ImageView(this);
-        colourmap.setAdjustViewBounds(true);
-        colourmap.setMaxWidth(size);
-        colourmap.setMaxHeight(size);
-        colourmap.setImageBitmap(m_bitmap);
-        colourmap.setOnTouchListener(new View.OnTouchListener() {
+        m_colourmap = new ImageView(this);
+        m_colourmap.setAdjustViewBounds(true);
+        m_colourmap.setMaxWidth(size);
+        m_colourmap.setMaxHeight(size);
+        m_colourmap.setImageBitmap(m_bitmap);
+        m_colourmap.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (  (event.getAction() == MotionEvent.ACTION_UP)
@@ -353,8 +359,8 @@ public class SettingsActivity extends Activity {
                 }
             }
         });
-        colourmap.setLongClickable(true);
-        colourmap.setOnLongClickListener(new View.OnLongClickListener() {
+        m_colourmap.setLongClickable(true);
+        m_colourmap.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 colourmaplongclicked = true;
@@ -387,7 +393,7 @@ public class SettingsActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT));
             l2.setGravity(Gravity.CENTER_VERTICAL);
-            l2.addView(colourmap);
+            l2.addView(m_colourmap);
             l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
@@ -419,7 +425,7 @@ public class SettingsActivity extends Activity {
             l3.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
-            l3.addView(colourmap);
+            l3.addView(m_colourmap);
             l2.addView(l3);
             l1.addView(l2);
             l1.addView(redSlider);
@@ -846,7 +852,7 @@ public class SettingsActivity extends Activity {
                         int val = seekBar.getProgress();
                         //alphaValue.setText(Integer.toString(val));
                         m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
-                        fillBitmapInBackground(m_bgcolour);
+                        fillBitmapInBackground(m_bgcolour, false);
                         demo.setBackgroundColor(m_bgcolour);
                         prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         updateWidget();
@@ -881,7 +887,7 @@ public class SettingsActivity extends Activity {
                         //redValue.setText(Integer.toString(val));
                         if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
                             m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
-                            fillBitmapInBackground(m_bgcolour);
+                            fillBitmapInBackground(m_bgcolour, false);
                             demo.setBackgroundColor(m_bgcolour);
                             prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         }
@@ -917,12 +923,12 @@ public class SettingsActivity extends Activity {
                         //greenValue.setText(Integer.toString(val));
                         if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
                             m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
-                            fillBitmapInBackground(m_bgcolour);
+                            fillBitmapInBackground(m_bgcolour, false);
                             demo.setBackgroundColor(m_bgcolour);
                             prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         } else {
                             m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
-                            fillBitmapInBackground(m_fgcolour);
+                            fillBitmapInBackground(m_fgcolour, false);
                             demo.setTextColor(m_fgcolour);
                             prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         }
@@ -958,14 +964,14 @@ public class SettingsActivity extends Activity {
                         int colour;
                         if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
                             m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
-                            fillBitmapInBackground(m_bgcolour);
+                            fillBitmapInBackground(m_bgcolour, false);
                             demo.setBackgroundColor(m_bgcolour);
                             prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         } else {
                             m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
-                            fillBitmapInBackground(m_fgcolour);
+                            fillBitmapInBackground(m_fgcolour, false);
                             demo.setTextColor(m_fgcolour);
-                            fillBitmapInBackground(m_fgcolour);
+                            fillBitmapInBackground(m_fgcolour, false);
                             prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         }
                     }
