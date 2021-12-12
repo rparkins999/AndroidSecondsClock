@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "uk.co.yahoo.p1rpp.secondsclock"
         minSdk 26
-        targetSdk 30
+        targetSdk 26
         versionCode 1
         versionName "0.1"
     }

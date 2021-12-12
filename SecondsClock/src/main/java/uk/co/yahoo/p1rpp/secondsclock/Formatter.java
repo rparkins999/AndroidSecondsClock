@@ -11,6 +11,8 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.text.format.DateFormat;
 
 class Formatter {
@@ -37,7 +39,7 @@ class Formatter {
     }
     public void set(Context context,
                     int minWidth,
-                    int minHeight,
+                    int maxHeight,
                     int showTime, // 0 => none, 1 => hhmm, 2 => hhmmss
                     int showWeekDay, // 0 => none, 1 => short, 2 => long
                     int showShortDate, // 0 => no. 1 => yes
@@ -48,107 +50,85 @@ class Formatter {
         time12 = "";
         time24 = "";
         lines = 1;
+        boolean anything = false;
         StringBuilder sbrest = new StringBuilder();
         if (showTime > 0) {
+            time12 = "h:mm";
+            time24 = "HH:mm";
             if (showTime == 2) { // show seconds
-                time12 = "h:mm";
-                time24 = "HH:mm";
                 int anydate = showWeekDay + showShortDate + showMonthDay
                     + showMonth + showYear;
-                if (minWidth >= 2 * minHeight) {
+                if ((minWidth >= maxHeight) || (anydate != 0)) {
                     sbrest.append(":ss");
-                } else if (anydate == 0) {
+                } else {
                     sbrest.append("'\n'ss");
                     ++lines;
-                } else /*if (anydate >= 2)*/ {
-                    sbrest.append(":ss");
-               /* } else {
-                    // Android doesn't get this case right, so we add a newline
-                    sbrest.append("ss'\n'");*/
-                }
-            } else {
-                time12 = "h:mm";
-                time24 = "HH:mm";
-            }
-            if (showWeekDay > 0) {
-                if (minWidth < 2 * minHeight) {
-                    sbrest.append("'\n'");
-                    ++lines;
-                } else {
-                    sbrest.append(" ");
-                }
-                if (showWeekDay == 1) {
-                    sbrest.append("c");
-                } else {
-                    sbrest.append("cccc");
                 }
             }
-            if (showShortDate > 0) {
-                if (   (minWidth < 2 * minHeight)
-                    || (showWeekDay > 0))
-                {
-                    sbrest.append("'\n'");
-                    ++lines;
-                } else {
-                    sbrest.append(" ");
-                }
-                sbrest.append(shortDateFormat(context));
-            }
-        } else if (showWeekDay == 1) {
-            sbrest.append("c");
-        } else if (showWeekDay == 2) {
-            sbrest.append("cccc");
+            anything = true;
         }
-        if ((showShortDate > 0) && (showTime == 0)) {
-            if (showWeekDay > 0) {
-                if (   ((showWeekDay == 1) && (minWidth < 2 * minHeight))
-                    || (minWidth < 3 * minHeight))
-                {
+        if (showWeekDay > 0) {
+            if (anything) {
+                if ((showMonth + showYear == 3)  && (minWidth >= maxHeight)) {
                     sbrest.append(" ");
                 } else {
-                    sbrest.append("'\n'");
+                    sbrest.append("\n");
                     ++lines;
                 }
+            }
+            if (showWeekDay == 1) {
+                sbrest.append("c");
+            } else {
+                sbrest.append("cccc");
+            }
+            anything = true;
+        }
+        if (showShortDate > 0) {
+            if (anything)
+            {
+                sbrest.append("\n");
+                ++lines;
             }
             sbrest.append(shortDateFormat(context));
-        }
-        if (   (showMonthDay + showMonth + showYear > 0)
-            && (showTime + showWeekDay > 0))
-        {
-            sbrest.append("'\n'");
-            ++lines;
-        }
-        if (showMonthDay > 0) {
-            sbrest.append("d");
-        }
-        if (showMonth > 0) {
+            anything = true;
+        } else {
             if (showMonthDay > 0) {
-                if (minWidth < 2 * minHeight) {
-                    sbrest.append("'\n'");
-                    ++lines;
-                } else {
-                    sbrest.append(" ");
+                if (anything) {
+                    if ((showWeekDay == 1) && (showMonth + showYear == 0)) {
+                        sbrest.append(" ");
+                    } else {
+                        sbrest.append("\n");
+                        ++lines;
+                    }
                 }
+                sbrest.append("d");
+                anything = true;
             }
-            if (showMonth == 1) {
-                sbrest.append("LLL");
-            } else {
-                sbrest.append("LLLL");
+            if (showMonth > 0) {
+                if ((showMonthDay != 0) && (minWidth >= maxHeight)) {
+                    sbrest.append(" ");
+                } else if (anything) {
+                    sbrest.append("\n");
+                    ++lines;
+                }
+                if (showMonth == 1) {
+                    sbrest.append("LLL");
+                } else {
+                    sbrest.append("LLLL");
+                }
+                anything = true;
             }
-        }
-        if (showYear > 0) {
-            if (showMonthDay + showMonth > 0) {
-                if (   (minWidth >= 3 * minHeight)
-                    || (   (minWidth >= 2 * minHeight)
-                    && (showMonth < 2)))
+            if (showYear > 0) {
+                if (   (showMonthDay + showMonth > 0)
+                    && (showMonth < 2) && (minWidth >= maxHeight))
                 {
                     sbrest.append(" ");
-                } else {
-                    sbrest.append("'\n'");
+                } else if (anything) {
+                    sbrest.append("\n");
                     ++lines;
                 }
+                sbrest.append("yyyy");
             }
-            sbrest.append("yyyy");
         }
         rest = sbrest.toString();
     }

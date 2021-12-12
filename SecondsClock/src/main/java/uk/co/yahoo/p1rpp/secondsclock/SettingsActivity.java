@@ -21,6 +21,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -42,7 +43,7 @@ public class SettingsActivity extends Activity {
 
     private AppWidgetManager appWidgetManager;
     private ComponentName secondsClockWidget;
-    private int minHeight = 121;
+    private int maxHeight = 121;
     private int minWidth = 93;
     private SeekBar alphaSlider;
     private SeekBar redSlider;
@@ -99,8 +100,8 @@ public class SettingsActivity extends Activity {
         if (widgetIds.length > 0) {
             Bundle newOptions =
                 appWidgetManager.getAppWidgetOptions(widgetIds[0]);
-            minHeight = newOptions.getInt(
-                AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, minHeight);
+            maxHeight = newOptions.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxHeight);
             minWidth = newOptions.getInt(
                 AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
         }
@@ -128,11 +129,11 @@ public class SettingsActivity extends Activity {
 
     void updateDemo() {
         Formatter f = new Formatter();
-        f.set(this, minWidth, minHeight,
+        f.set(this, minWidth, maxHeight,
             showTime, showWeekDay, showShortDate,
             showMonthDay, showMonth, showYear);
         int width = (int)(minWidth * metrics.density);
-        int height = (int)(minHeight * metrics.density);
+        int height = (int)(maxHeight * metrics.density);
         demo.setMinimumWidth(width);
         demo.setMaxWidth(width);
         demo.setMinimumHeight(height);
@@ -495,6 +496,13 @@ public class SettingsActivity extends Activity {
         blueSlider = new SeekBar(this);
         okButton = new Button(this);
 
+        if (showShortDate != 0) {
+            showMonthDayCheckBox.setVisibility(View.GONE);
+            showShortMonthCheckBox.setVisibility(View.GONE);
+            showLongMonthCheckBox.setVisibility(View.GONE);
+            showYearCheckBox.setVisibility(View.GONE);
+        }
+
         String s = "";
         try
         {
@@ -663,7 +671,7 @@ public class SettingsActivity extends Activity {
                         showYearCheckBox.setVisibility(View.VISIBLE);
                     }
                     prefs.edit().putInt(
-                        "showShortDate", showShortDate).commit();
+                        "WshowShortDate", showShortDate).commit();
                     prefs.edit().putInt("WshowMonthDay", showMonthDay).commit();
                     prefs.edit().putInt("WshowMonth", showMonth).commit();
                     prefs.edit().putInt("WshowYear", showYear).commit();

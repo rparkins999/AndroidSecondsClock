@@ -40,13 +40,13 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Bundle newOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
         int minWidth = newOptions.getInt(
             AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 93);
-        int minHeight = newOptions.getInt(
-            AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 121);
+        int maxHeight = newOptions.getInt(
+            AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 121);
         /* debugging
         int maxWidth = newOptions.getInt(
             AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 93);
-        int maxHeight = newOptions.getInt(
-            AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 121);
+        int minHeight = newOptions.getInt(
+            AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 121);
         String s = "Width min " + minWidth
                       + " max " + maxWidth
               + ", Height min " + minHeight
@@ -69,7 +69,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
         int showYear = prefs.getInt("WshowYear", 1);
         int bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
         int fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
-        f.set(context, minWidth, minHeight,
+        f.set(context, minWidth, maxHeight,
             showTime, showWeekDay, showShortDate,
             showMonthDay, showMonth, showYear);
         // Construct the RemoteViews object
@@ -82,8 +82,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
             "setFormat12Hour", f.time12 + f.rest);
         views.setCharSequence(R.id.appwidget_textclock,
             "setFormat24Hour", f.time24 + f.rest);
-        views.setInt(R.id.appwidget_textclock,
-            "setLines",f.lines);
+        views.setInt(R.id.appwidget_textclock,"setLines",f.lines);
 
         // for analogue clock,
         // views.setImageViewBitmap(int viewId, Bitmap bitmap)
@@ -121,9 +120,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        /* Re-enable for debugging
-        Toast.makeText(context,
-            "onReceive " + intent.getAction(),
+        /* debugging
+        Toast.makeText(context, intent.getAction(),
             Toast.LENGTH_LONG).show();
         // */
         super.onReceive(context, intent);

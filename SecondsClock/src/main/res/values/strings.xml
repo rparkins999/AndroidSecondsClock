@@ -9,13 +9,14 @@
     <string name="app_label">Seconds Clock</string>
     <string name="appwidget_text">Clock</string>
     <string name="app_widget_description">1x1 seconds clock</string>
-    <string name="demohelp">This shows what a 1x1 widget would look like.
+    <string name="demohelp">This shows what the widget looks like.
         If there is currently no home screen widget, the size may not be correct
-        because SecondsClock can\'t find out what size the widget would be.
+        because SecondsClock can\'t find out what size the widget would be:
+        it will use an estimate for the size of a 1x1 widget.
         If you resize the widget on the home screen to a larger size,
-        the widget will rearrange its layout to use a larger font size,
-        but this will not be shown here. The background pattern shows
-        the effect of the widget background.</string>
+        the widget will rearrange its layout to use a larger font size.
+        The background pattern shows the effect of the widget background
+        if it is not transparent.</string>
     <string name="longpresslabel">Long press here for help information.</string>
     <string name="editwidgethelp">This screen allows you to define the
         characteristics of the clock widget. When you have done, press
@@ -27,8 +28,8 @@
     <string name="show_seconds">Show time with seconds in widget</string>
     <string name="showsecondshelp">If this box is checked, the widget will
         display the time in locale-appropriate format including seconds.
-        This will increase battery drain
-        since the widget has to update itself every second.</string>
+        This will increase battery drain since the widget has to update itself
+        every second.</string>
     <string name="show_short_weekday">Show abbreviated day name
         in widget</string>
     <string name="showshortweekdayhelp">If this box is checked, the widget will
@@ -45,8 +46,7 @@
     <string name="show_month_day">Show day of month in widget</string>
     <string name="showmonthdayhelp">If this box is checked, the widget will
         display the day of the month.</string>
-    <string name="show_short_month">Show abbreviated month name
-        in widget</string>
+    <string name="show_short_month">Show abbreviated month name in widget</string>
     <string name="showshortmonthhelp">If this box is checked, the widget will
         display the locale-appropriate abbreviation for the month.</string>
     <string name="show_long_month">Show full month name in widget</string>
@@ -54,7 +54,7 @@
         display the locale-appropriate full name for the month.</string>
     <string name="show_year">Show year in widget</string>
     <string name="showyearhelp">If this box is checked, the widget will
-        display the year.</string>
+        display the (Gregorian) year.</string>
     <string name="set_bg_colour">Set widget background colour</string>
     <string name="setbgcolourhelp">Touch this button to bring up a colour
         chooser for the background colour of the widget.</string>
