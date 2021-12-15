@@ -18,7 +18,13 @@ You can also configure the text colour of the widget's text and the colour and t
 
 Displaying the seconds will increase battery drain because the widget has to update itself every second, but it doesn't update when the widget isn't visible.
 
-This is version 0.1 which isn't quite ready for prime time yet, but it works so I'm posting the source because it answers a question asked on StackOverflow. In due course I plan to provide a release with a built APK.
+Touching the widget will open the device's built-in clock application (assuming it has one).
+
+This is version 1.0.
+
+Currently it has a problem running on Android 12 (API 31). Its toasts get truncated to two lines. Since I use toasts to display help information, this makes it a bit harder to use, but it should be fairly apparent how the configurator for the widget works.
+
+Truncating toasts is documented behaviour for applications which *target* Android 12, but SecondsClock doesn't do so, so IMHO it's a bug in Android, not in SecondsClock. If I find a workaround, I'll apply it, but for the time being I'm not willing to rewrite all my help information.
 
 It works on Android 8.0 API 26 or later.
 
