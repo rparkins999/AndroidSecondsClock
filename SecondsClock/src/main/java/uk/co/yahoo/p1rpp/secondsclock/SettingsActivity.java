@@ -8,6 +8,8 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
+import static android.text.InputType.TYPE_CLASS_NUMBER;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
@@ -21,8 +23,10 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.os.Build;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -31,6 +35,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,32 +50,40 @@ public class SettingsActivity extends Activity {
     private ComponentName secondsClockWidget;
     private int maxHeight = 121;
     private int minWidth = 93;
+    private boolean recursive = false;
+    private EditText alphaValue;
     private SeekBar alphaSlider;
+    private EditText redValue;
     private SeekBar redSlider;
+    private EditText greenValue;
     private SeekBar greenSlider;
+    private EditText blueValue;
     private SeekBar blueSlider;
+    private int currentView;
+    static final int SETWIDGETBACKGROUNDCOLOUR = 0;
+    static final int SETWIDGETTEXTCOLOUR = 1;
+    static final int CONFIGUREWIDGET = 2;
+    private int m_bgcolour;
+    private TextClock demo;
+    private SharedPreferences prefs;
+    private int m_fgcolour;
     private int showTime;
     private int showWeekDay;
     private int showShortDate;
     private int showMonthDay;
     private int showMonth;
     private int showYear;
-    private TextClock demo;
     private DisplayMetrics metrics;
-    private int currentView;
-        static final int SETWIDGETBACKGROUNDCOLOUR = 0;
-        static final int SETWIDGETTEXTCOLOUR = 1;
-        static final int CONFIGUREWIDGET = 2;
-    private int m_bgcolour;
-    private SharedPreferences prefs;
-    private int m_fgcolour;
     private BitmapWrapper m_activeWrapper = null;
+    private Bitmap m_bitmap;
     private int multiplier;
     private Configuration config;
     private TextView helptext;
+    private ImageView m_colourmap;
     private FrameLayout topLayout;
     private LinearLayout demobox;
     private LinearLayout demoboxbox;
+    private LinearLayout.LayoutParams lpWrapMatch;
     private CheckBox showTimeCheckBox;
     private CheckBox showSecondsCheckBox;
     private CheckBox showShortWeekDayCheckBox;
@@ -82,13 +95,14 @@ public class SettingsActivity extends Activity {
     private CheckBox showYearCheckBox;
     private Button bgButton;
     private Button fgButton;
-    private Bitmap m_bitmap;
-    private ImageView m_colourmap;
-    private SettingsActivity ac;
+    private LinearLayout.LayoutParams lpMatchWrap;
+    private ViewGroup.LayoutParams lpWrapWrap;
     private boolean colourmaplongclicked = false;
+    private SettingsActivity ac;
+    private SeekBar hueSlider;
+    private LinearLayout.LayoutParams lpMMWeight;
+    private LinearLayout.LayoutParams lpMatchMatch;
     private Button okButton;
-    private static final int[][] EMPTY = new int[][] { new int[0] };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,19 +127,45 @@ public class SettingsActivity extends Activity {
         sendBroadcast(intent);
     }
 
-    private void setSliders(int colour) {
-        int val = (colour >> 24) & 0xFF;
-        alphaSlider.setProgress(val);
-        //alphaValue.setText(Integer.toString(val));
-        val = (colour >> 16) & 0xFF;
-        //redValue.setText(Integer.toString(val));
-        redSlider.setProgress(val);
-        val = (colour >> 8) & 0xFF;
-        //greenValue.setText(Integer.toString(val));
-        greenSlider.setProgress(val);
-        val = colour & 0xFF;
-        //blueValue.setText(Integer.toString(val));
-        blueSlider.setProgress(val);
+    @SuppressLint({"SetTextI18n", "ApplySharedPref"})
+    private void setColour(int colour) {
+        if (!recursive) {
+            recursive = true;
+            int val = (colour >> 24) & 0xFF;
+            alphaValue.setText(Integer.toString(val));
+            alphaSlider.setProgress(val);
+            val = (colour >> 16) & 0xFF;
+            redValue.setText(Integer.toString(val));
+            redSlider.setProgress(val);
+            val = (colour >> 8) & 0xFF;
+            greenValue.setText(Integer.toString(val));
+            greenSlider.setProgress(val);
+            val = colour & 0xFF;
+            blueValue.setText(Integer.toString(val));
+            blueSlider.setProgress(val);
+            switch (currentView) {
+                case SETWIDGETBACKGROUNDCOLOUR:
+                    m_bgcolour = colour;
+                    demo.setBackgroundColor(colour);
+                    prefs.edit().putInt("Wbgcolour", colour).commit();
+                    alphaSlider.setBackground(new GradientDrawable(
+                        GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[] {0xFF000000, m_bgcolour | 0xFF000000}));
+                    ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                    alphaSlider.setProgressTintList(cl);
+                    alphaSlider.setThumbTintList(cl);
+                    break;
+                case SETWIDGETTEXTCOLOUR:
+                    m_fgcolour = colour;
+                    demo.setTextColor(colour);
+                    prefs.edit().putInt("Wfgcolour", colour).commit();
+                    break;
+                case CONFIGUREWIDGET:
+            }
+            updateDemo();
+            updateWidget();
+            recursive = false;
+        }
     }
 
     void updateDemo() {
@@ -144,28 +184,6 @@ public class SettingsActivity extends Activity {
         demo.setLines(f.lines);
         demo.setAutoSizeTextTypeWithDefaults(
             TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-    }
-
-    @SuppressLint("ApplySharedPref")
-    private void setColour(int colour) {
-        switch (currentView) {
-            case SETWIDGETBACKGROUNDCOLOUR:
-                m_bgcolour = colour;
-                demo.setBackgroundColor(m_bgcolour);
-                prefs.edit().putInt("Wbgcolour", colour).commit();
-                updateDemo();
-                setSliders(colour);
-                break;
-            case SETWIDGETTEXTCOLOUR:
-                m_fgcolour = colour;
-                demo.setTextColor(m_fgcolour);
-                prefs.edit().putInt("Wfgcolour", colour).commit();
-                setSliders(colour);
-                updateDemo();
-                break;
-            case CONFIGUREWIDGET:
-        }
-        updateWidget();
     }
 
     private void fillBitmapInBackground(int colour, boolean firstTime) {
@@ -223,6 +241,7 @@ public class SettingsActivity extends Activity {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     void doMainLayout() {
         removeAllViews(topLayout);
         demobox.addView(demo);
@@ -230,9 +249,7 @@ public class SettingsActivity extends Activity {
         LinearLayout l1 = new LinearLayout(this);
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
-            demoboxbox.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
+            demoboxbox.setLayoutParams(lpWrapMatch);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_VERTICAL);
             l1.addView(demoboxbox);
@@ -268,9 +285,7 @@ public class SettingsActivity extends Activity {
             l1.addView(l2);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
-            demoboxbox.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+            demoboxbox.setLayoutParams(lpMatchWrap);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l1.addView(demoboxbox);
@@ -295,16 +310,11 @@ public class SettingsActivity extends Activity {
             l1.addView(showYearCheckBox);
             showYearCheckBox.setGravity(Gravity.START);
             LinearLayout l2 = new LinearLayout(this);
-            l2.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+            l2.setLayoutParams(lpMatchWrap);
             l2.setOrientation(LinearLayout.VERTICAL);
             l2.setGravity(Gravity.CENTER_HORIZONTAL);
-            ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-            l2.addView(bgButton, lp);
-            l2.addView(fgButton, lp);
+            l2.addView(bgButton, lpWrapWrap);
+            l2.addView(fgButton, lpWrapWrap);
             l1.addView(l2);
             /* debugging
             Button testButton = new Button(this);
@@ -327,7 +337,7 @@ public class SettingsActivity extends Activity {
         topLayout.addView(l1);
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint({"ClickableViewAccessibility"})
     void doChooserLayout() {
         setMultiplier();
         /* These have to be created to order because their sizes can depend
@@ -337,6 +347,7 @@ public class SettingsActivity extends Activity {
         m_bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
             fillBitmapInBackground(m_bgcolour, true);
+            setColour(m_bgcolour);
         } else {
             fillBitmapInBackground(m_fgcolour, true);
             setColour(m_fgcolour);
@@ -352,9 +363,15 @@ public class SettingsActivity extends Activity {
                 if (  (event.getAction() == MotionEvent.ACTION_UP)
                     && !colourmaplongclicked)
                 {
-                    setColour(m_bitmap.getPixel(
-                        (int)event.getX(), (int)event.getY()));
-                    return true;
+                    int colour = m_bitmap.getPixel(
+                        (int)event.getX(), (int)event.getY());
+                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        // don't change opacity from colourmap touch
+                        setColour((m_bgcolour & 0xFF000000) | (colour & 0xFFFFFF));
+                    } else {
+                        setColour(colour);
+                    }
+                    return false;
                 } else {
                     colourmaplongclicked = false;
                     return false;
@@ -375,123 +392,337 @@ public class SettingsActivity extends Activity {
         });
         int colour = (currentView == SETWIDGETTEXTCOLOUR)
             ? m_fgcolour : m_bgcolour;
+        int pad =(int)(5 * metrics.density);
         removeAllViews(topLayout);
-        alphaSlider.setProgress((colour >> 24) & 0xFF);
-        redSlider.setProgress((colour >> 16) & 0xFF);
-        greenSlider.setProgress((colour >> 8) & 0xFF);
-        blueSlider.setProgress(colour & 0xFF);
         LinearLayout l1 = new LinearLayout(this);
         demobox.addView(demo);
         demoboxbox.addView(demobox);
-        helptext.setPadding(20, 0, 20, 0);
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.HORIZONTAL);
-            l2.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
+            l2.setLayoutParams(lpWrapMatch);
             l2.setGravity(Gravity.CENTER_VERTICAL);
-            l2.setPadding(20, 0, 0, 0);
+            l2.setPadding(pad, pad, pad, pad);
             l2.addView(m_colourmap);
             l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
-            l3.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
-            demoboxbox.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+            l3.setLayoutParams(lpMatchMatch);
+            l3.setPadding(pad, 0, pad, 0);
+            demoboxbox.setLayoutParams(lpMatchWrap);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
-                demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
+            demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l3.addView(demoboxbox);
             l3.addView(helptext);
-            l3.addView(redSlider);
-            l3.addView(greenSlider);
-            l3.addView(blueSlider);
+            LinearLayout l4 = new LinearLayout(this);
+            l4.setOrientation(LinearLayout.VERTICAL);
+            l4.setLayoutParams(lpMatchWrap);
+            l4.addView(hueSlider);
+            l3.addView(l4);
+            LinearLayout l5 = new LinearLayout(this);
+            l5.setOrientation(LinearLayout.HORIZONTAL);
+            l5.setLayoutParams(lpMatchWrap);
+            LinearLayout l6 = new LinearLayout(this);
+            l6.setLayoutParams(lpMMWeight);
+            l6.setOrientation(LinearLayout.VERTICAL);
+            l6.setGravity(Gravity.CENTER_VERTICAL);
+            l6.addView(redSlider);
+            l5.addView(l6);
+            LinearLayout l7 = new LinearLayout(this);
+            l7.setLayoutParams(lpWrapWrap);
+            l7.addView(redValue);
+            l5.addView(l7);
+            l3.addView(l5);
+            LinearLayout l8 = new LinearLayout(this);
+            l8.setOrientation(LinearLayout.HORIZONTAL);
+            l8.setLayoutParams(lpMatchWrap);
+            LinearLayout l9 = new LinearLayout(this);
+            l9.setLayoutParams(lpMMWeight);
+            l9.setOrientation(LinearLayout.VERTICAL);
+            l9.setGravity(Gravity.CENTER_VERTICAL);
+            l9.addView(greenSlider);
+            l8.addView(l9);
+            LinearLayout l10 = new LinearLayout(this);
+            l10.setLayoutParams(lpWrapWrap);
+            l10.addView(greenValue);
+            l8.addView(l10);
+            l3.addView(l8);
+            LinearLayout l11 = new LinearLayout(this);
+            l11.setOrientation(LinearLayout.HORIZONTAL);
+            l11.setLayoutParams(lpMatchWrap);
+            LinearLayout l12 = new LinearLayout(this);
+            l12.setLayoutParams(lpMMWeight);
+            l12.setOrientation(LinearLayout.VERTICAL);
+            l12.setGravity(Gravity.CENTER_VERTICAL);
+            l12.addView(blueSlider);
+            l11.addView(l12);
+            LinearLayout l13 = new LinearLayout(this);
+            l13.setLayoutParams(lpWrapWrap);
+            l13.addView(blueValue);
+            l11.addView(l13);
+            l3.addView(l11);
             if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
-                l3.addView(alphaSlider);
+                LinearLayout l14 = new LinearLayout(this);
+                l14.setOrientation(LinearLayout.HORIZONTAL);
+                l14.setLayoutParams(lpMatchWrap);
+                LinearLayout l15 = new LinearLayout(this);
+                l15.setLayoutParams(lpMMWeight);
+                l15.setOrientation(LinearLayout.VERTICAL);
+                l15.setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout l16 = new LinearLayout(this);
+                l16.setBackgroundResource(R.drawable.background);
+                l16.setOrientation(LinearLayout.VERTICAL);
+                l16.setLayoutParams(lpMatchWrap);
+                l16.addView(alphaSlider);
+                l15.addView(l16);
+                l14.addView(l15);
+                LinearLayout l17 = new LinearLayout(this);
+                l17.setLayoutParams(lpWrapWrap);
+                l17.addView(alphaValue);
+                l14.addView(l17);
+                l3.addView(l14);
+                // This seems to be needed to make the background pattern visible
+                alphaValue.setText(alphaValue.getText());
             }
+            LinearLayout l18 = new LinearLayout(this);
+            l18.setLayoutParams(lpMatchWrap);
+            l18.setOrientation(LinearLayout.VERTICAL);
+            l18.setGravity(Gravity.CENTER_HORIZONTAL);
+            l18.addView(okButton, lpWrapWrap);
+            l3.addView(l18);
             l1.addView(l3);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
-            demoboxbox.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+            l1.setPadding(pad, 0, pad, 0);
+            demoboxbox.setLayoutParams(lpMatchWrap);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l1.addView(demoboxbox);
             l1.addView(helptext);
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.VERTICAL);
-            l2.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+            l2.setLayoutParams(lpMatchWrap);
             l2.setGravity(Gravity.CENTER_HORIZONTAL);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
-            l3.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+            l3.setLayoutParams(lpWrapWrap);
             l3.addView(m_colourmap);
             l2.addView(l3);
             l1.addView(l2);
-            l1.addView(redSlider);
-            l1.addView(greenSlider);
-            l1.addView(blueSlider);
-            if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
-                l1.addView(alphaSlider);
-            }
             LinearLayout l4 = new LinearLayout(this);
-            l4.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
             l4.setOrientation(LinearLayout.VERTICAL);
-            l4.setGravity(Gravity.CENTER_HORIZONTAL);
-            ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-            l4.addView(okButton, lp);
+            l4.setLayoutParams(lpMatchWrap);
+            l4.setPadding(pad, pad, pad, pad);
+            l4.addView(hueSlider);
             l1.addView(l4);
+            LinearLayout l5 = new LinearLayout(this);
+            l5.setOrientation(LinearLayout.HORIZONTAL);
+            l5.setLayoutParams(lpMatchWrap);
+            LinearLayout l6 = new LinearLayout(this);
+            l6.setLayoutParams(lpMMWeight);
+            l6.setOrientation(LinearLayout.VERTICAL);
+            l6.setGravity(Gravity.CENTER_VERTICAL);
+            l6.addView(redSlider);
+            l5.addView(l6);
+            LinearLayout l7 = new LinearLayout(this);
+            l7.setLayoutParams(lpWrapWrap);
+            l7.addView(redValue);
+            l5.addView(l7);
+            l1.addView(l5);
+            LinearLayout l8= new LinearLayout(this);
+            l8.setOrientation(LinearLayout.HORIZONTAL);
+            l8.setLayoutParams(lpMatchWrap);
+            LinearLayout l9 = new LinearLayout(this);
+            l9.setLayoutParams(lpMMWeight);
+            l9.setOrientation(LinearLayout.VERTICAL);
+            l9.setGravity(Gravity.CENTER_VERTICAL);
+            l9.addView(greenSlider);
+            l8.addView(l9);
+            LinearLayout l10 = new LinearLayout(this);
+            l10.setLayoutParams(lpWrapWrap);
+            l10.addView(greenValue);
+            l8.addView(l10);
+            l1.addView(l8);
+            LinearLayout l11 = new LinearLayout(this);
+            l11.setOrientation(LinearLayout.HORIZONTAL);
+            l11.setLayoutParams(lpMatchWrap);
+            LinearLayout l12 = new LinearLayout(this);
+            l12.setLayoutParams(lpMMWeight);
+            l12.setOrientation(LinearLayout.VERTICAL);
+            l12.setGravity(Gravity.CENTER_VERTICAL);
+            l12.addView(blueSlider);
+            l11.addView(l12);
+            LinearLayout l13 = new LinearLayout(this);
+            l13.setLayoutParams(lpWrapWrap);
+            l13.addView(blueValue);
+            l11.addView(l13);
+            l1.addView(l11);
+            if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                LinearLayout l14 = new LinearLayout(this);
+                l14.setOrientation(LinearLayout.HORIZONTAL);
+                l14.setLayoutParams(lpMatchWrap);
+                l14.setPadding(pad, pad, pad, pad);
+                LinearLayout l15 = new LinearLayout(this);
+                l15.setLayoutParams(lpMMWeight);
+                l15.setOrientation(LinearLayout.VERTICAL);
+                l15.setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout l16 = new LinearLayout(this);
+                l16.setBackgroundResource(R.drawable.background);
+                l16.setOrientation(LinearLayout.VERTICAL);
+                l16.setLayoutParams(lpMatchWrap);
+                l16.addView(alphaSlider);
+                l15.addView(l16);
+                l14.addView(l15);
+                LinearLayout l17 = new LinearLayout(this);
+                l17.setLayoutParams(lpWrapWrap);
+                l17.addView(alphaValue);
+                l14.addView(l17);
+                l1.addView(l14);
+                // This seems to be needed to make the background pattern visible
+                alphaValue.setText(alphaValue.getText());
+            }
+            LinearLayout l17 = new LinearLayout(this);
+            l17.setLayoutParams(lpMatchWrap);
+            l17.setOrientation(LinearLayout.VERTICAL);
+            l17.setGravity(Gravity.CENTER_HORIZONTAL);
+            l17.addView(okButton, lpWrapWrap);
+            l1.addView(l17);
         }
         topLayout.addView(l1);
     }
 
-    @Override
+    int safeParseInt(String s) {
+        if ((s == null) || s.isEmpty()) { return 0; }
+        return Integer.parseInt(s);
+    }
+
+    @SuppressLint({"ApplySharedPref", "SetTextI18n"})
+    private void handleHueChanged(int val, int oldColour) {
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        if (val < 256) { r = 255; g = val; }
+        else if (val < 511) { r = 510 - val; g = 255; }
+        else if (val < 766) { g = 255; b = val - 510; }
+        else if (val < 1021) { g = 1020 - val; b = 255; }
+        else if (val < 1275) { b = 255; r = val - 1020; }
+        else { b = 1530 - val; r = 255; }
+        int whiteness = 255;
+        int blackness = 0;
+        int col = (oldColour >> 16) & 0xFF;
+        if (whiteness > col) { whiteness = col; }
+        if (blackness < col) { blackness = col; }
+        col = (oldColour >> 8) & 0xFF;
+        if (whiteness > col) { whiteness = col; }
+        if (blackness < col) { blackness = col; }
+        col = oldColour & 0xFF;
+        if (whiteness > col) { whiteness = col; }
+        if (blackness < col) { blackness = col; }
+        r = whiteness + r * (blackness - whiteness) / 255;
+        if (r > 255) { r = 255; } // safety check
+        g = whiteness + g * (blackness - whiteness) / 255;
+        if (g > 255) { g = 255; } // safety check
+        b = whiteness + b * (blackness - whiteness) / 255;
+        if (b > 255) { b = 255; } // safety check
+        redSlider.setProgress(r);
+        redValue.setText(Integer.toString(r));
+        greenSlider.setProgress(g);
+        greenValue.setText(Integer.toString(g));
+        blueSlider.setProgress(b);
+        blueValue.setText(Integer.toString(b));
+        col = (oldColour & 0xFF000000) + (((r << 8) + g) << 8) + b;
+        fillBitmapInBackground(col, false);
+        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+            m_bgcolour = col;
+            demo.setBackgroundColor(m_bgcolour);
+            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+            alphaSlider.setBackground(new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[] {
+                    m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+        } else {
+            m_fgcolour = col;
+            demo.setTextColor(m_fgcolour);
+            ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+            alphaSlider.setProgressTintList(cl);
+            alphaSlider.setThumbTintList(cl);
+            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+        }
+        updateWidget();
+    }
+
+    void setHueSlider(int colour) {
+        int r = (colour >> 16) & 0xFF;
+        int g = (colour >> 8) & 0xFF;
+        int b = colour & 0xFF;
+        int hue = 0;
+        if (r >= g) {
+            if (g >= b) {
+                if (r > b) {
+                    // r >= g >= b, not both ==
+                    hue = (g - b) * 255 / (r - b);
+                } // else r == g == b, hue is indeterminate, 0 will do
+            } else if (r >= b) {
+                // r >= b > g
+                hue = 1530 - (b - g) * 255 / (r - g);
+            } else {
+                // b > r >= g
+                hue = 1020 + (r - g) * 255 / (b - g);
+            }
+        } else if (r >= b) {
+            // g > r >= b
+            hue = 510 - (r - b) * 255 / (g - b);
+        } else if (g >= b) {
+            // g >= b > r
+            hue = 510 + (b - r) * 255 / (g - r);
+        } else {
+            // b > g > r
+            hue = 1020 - (g - r) * 255 / (b - r);
+        }
+        hueSlider.setProgress(hue);
+    }
+
+@Override
     @SuppressLint({"ApplySharedPref", "RtlHardcoded", "SetTextI18n"})
     protected void onResume() {
         super.onResume();
-        Resources res = getResources();
-        metrics = res.getDisplayMetrics();
-        config = res.getConfiguration();
+        appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
         secondsClockWidget = new ComponentName(
             getApplicationContext(), SecondsClockWidget.class);
-        appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
-        ac = this;
+        alphaValue = new EditText(this);
+        alphaSlider = new SeekBar(this);
+        redValue = new EditText(this);
+        redSlider = new SeekBar(this);
+        greenValue = new EditText(this);
+        greenSlider = new SeekBar(this);
+        blueValue = new EditText(this);
+        blueSlider = new SeekBar(this);
+        demo = new TextClock(this);
         prefs = getSharedPreferences("SecondsClock", Context.MODE_PRIVATE);
+        currentView = prefs.getInt("Wview", CONFIGUREWIDGET);
+        m_bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
+        m_fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
         showTime = prefs.getInt("WshowTime", 2); // include seconds
         showWeekDay = prefs.getInt("WshowWeekDay",2); // long format
         showShortDate = prefs.getInt("WshowShortDate",0);
         showMonthDay = prefs.getInt("WshowMonthDay",1);
         showMonth = prefs.getInt("WshowMonth", 2); // long format
         showYear = prefs.getInt("WshowYear", 1);
-        m_bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
-        m_fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
-        currentView = prefs.getInt("Wview", CONFIGUREWIDGET);
-
-        demo = new TextClock(this);
-        demo.setGravity(Gravity.CENTER_HORIZONTAL);
-        demo.setBackgroundColor(m_bgcolour);
-        demo.setTextColor(m_fgcolour);
-        demobox = new LinearLayout(this);
-        demobox.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        demobox.setBackgroundResource(R.drawable.background);
-        demoboxbox = new LinearLayout(this);
-        demoboxbox.setPadding(10, 0, 10, 0);
+        Resources res = getResources();
+        metrics = res.getDisplayMetrics();
+        config = res.getConfiguration();
         helptext = new TextView(this);
+
+        // The 1.2 is a fudge factor = I don't know why it is needed.
+        int numberWidth = (int)(alphaValue.getPaint().measureText("000") * 1.2);
+        demo.setGravity(Gravity.CENTER_HORIZONTAL);
+        topLayout = findViewById(R.id.settingslayout);
+        demobox = new LinearLayout(this);
+        demoboxbox = new LinearLayout(this);
+        lpWrapMatch =  new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.MATCH_PARENT);
         showTimeCheckBox = new CheckBox(this);
         showSecondsCheckBox = new CheckBox(this);
         showShortWeekDayCheckBox = new CheckBox(this);
@@ -503,19 +734,420 @@ public class SettingsActivity extends Activity {
         showYearCheckBox = new CheckBox(this);
         bgButton = new Button(this);
         fgButton = new Button(this);
-        alphaSlider = new SeekBar(this);
-        redSlider = new SeekBar(this);
-        greenSlider = new SeekBar(this);
-        blueSlider = new SeekBar(this);
+        lpMatchWrap = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        lpWrapWrap = new ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+        ac = this;
+        hueSlider = new SeekBar(this);
+        lpMMWeight = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.MATCH_PARENT);
+        lpMMWeight.weight = 1.0F;
+        lpMatchMatch = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.MATCH_PARENT);
         okButton = new Button(this);
 
-        if (showShortDate != 0) {
-            showMonthDayCheckBox.setVisibility(View.GONE);
-            showShortMonthCheckBox.setVisibility(View.GONE);
-            showLongMonthCheckBox.setVisibility(View.GONE);
-            showYearCheckBox.setVisibility(View.GONE);
-        }
-
+        alphaSlider.setMax(255);
+        alphaSlider.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener()
+            {
+                @Override
+                public void onProgressChanged(
+                    SeekBar seekBar, int progress, boolean fromUser)
+                {
+                    if (!recursive) {
+                        recursive = true;
+                        int val = seekBar.getProgress();
+                        alphaValue.setText(Integer.toString(val));
+                        m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
+                        demo.setBackgroundColor(m_bgcolour);
+                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        alphaSlider.setBackground(new GradientDrawable(
+                            GradientDrawable.Orientation.LEFT_RIGHT,
+                            new int[] {
+                                m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                        updateWidget();
+                        recursive = false;
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        alphaSlider.setLongClickable(true);
+        alphaSlider.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.setalphasliderhelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+        alphaSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+        ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+        alphaSlider.setProgressTintList(cl);
+        alphaSlider.setThumbTintList(cl);
+        alphaValue.setInputType(TYPE_CLASS_NUMBER);
+        alphaValue.setText("0");
+        alphaValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(
+                CharSequence s, int start, int count, int after)
+            {}
+            @Override
+            public void onTextChanged(
+                CharSequence s, int start, int before, int count)
+            {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!recursive) {
+                    recursive = true;
+                    int val = safeParseInt(s.toString());
+                    if (val > 255) {
+                        alphaValue.setText("255");
+                        val = 255;
+                    }
+                    alphaSlider.setProgress(val);
+                    m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
+                    prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                    demo.setBackgroundColor(m_bgcolour);
+                    alphaSlider.setBackground(new GradientDrawable(
+                        GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[] {
+                            m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                    updateWidget();
+                    recursive = false;
+                }
+            }
+        });
+        alphaValue.setWidth(numberWidth);
+        redSlider.setMax(255);
+        redSlider.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener()
+            {
+                @Override
+                public void onProgressChanged(
+                    SeekBar seekBar, int progress, boolean fromUser)
+                {
+                    if (!recursive) {
+                        recursive = true;
+                        int val = seekBar.getProgress();
+                        redValue.setText(Integer.toString(val));
+                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                            m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
+                            fillBitmapInBackground(m_bgcolour, false);
+                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                            demo.setBackgroundColor(m_bgcolour);
+                            alphaSlider.setBackground(new GradientDrawable(
+                                GradientDrawable.Orientation.LEFT_RIGHT,
+                                new int[] {
+                                    m_bgcolour & 0xFFFFFF,
+                                    m_bgcolour | 0xFF000000}));
+                            setHueSlider(m_bgcolour);
+                        } else {
+                            m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
+                            fillBitmapInBackground(m_fgcolour, false);
+                            prefs.edit().putInt("Wbgcolour", m_fgcolour).commit();
+                            demo.setTextColor(m_fgcolour);
+                            ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                            alphaSlider.setProgressTintList(cl);
+                            alphaSlider.setThumbTintList(cl);
+                            setHueSlider(m_fgcolour);
+                        }
+                        updateWidget();
+                        recursive = false;
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        redSlider.setLongClickable(true);
+        redSlider.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.setredsliderhelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+        redSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xFF000000, 0xFFFF0000}));
+        cl = ColorStateList.valueOf(0xFFFFFFFF);
+        redSlider.setProgressTintList(cl);
+        redSlider.setThumbTintList(cl);
+        redValue.setInputType(TYPE_CLASS_NUMBER);
+        redValue.setText("0");
+        redValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(
+                CharSequence s, int start, int count, int after)
+            {}
+            @Override
+            public void onTextChanged(
+                CharSequence s, int start, int before, int count)
+            {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!recursive) {
+                    recursive = true;
+                    int val = safeParseInt(s.toString());
+                    if (val > 255) {
+                        redValue.setText("255");
+                        val = 255;
+                    }
+                    redSlider.setProgress(val);
+                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
+                        fillBitmapInBackground(m_bgcolour, false);
+                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        demo.setBackgroundColor(m_bgcolour);
+                        alphaSlider.setBackground(new GradientDrawable(
+                            GradientDrawable.Orientation.LEFT_RIGHT,
+                            new int[] {
+                                m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                        setHueSlider(m_bgcolour);
+                    } else {
+                        m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
+                        fillBitmapInBackground(m_fgcolour, false);
+                        prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                        demo.setTextColor(m_fgcolour);
+                        ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                        alphaSlider.setProgressTintList(cl);
+                        alphaSlider.setThumbTintList(cl);
+                        setHueSlider(m_fgcolour);
+                    }
+                    updateWidget();
+                    recursive = false;
+                }
+            }
+        });
+        redValue.setWidth(numberWidth);
+        greenSlider.setMax(255);
+        greenSlider.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener()
+            {
+                @Override
+                public void onProgressChanged(
+                    SeekBar seekBar, int progress, boolean fromUser)
+                {
+                    if (!recursive) {
+                        recursive = true;
+                        int val = seekBar.getProgress();
+                        greenValue.setText(Integer.toString(val));
+                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                            m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
+                            fillBitmapInBackground(m_bgcolour, false);
+                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                            demo.setBackgroundColor(m_bgcolour);
+                            alphaSlider.setBackground(new GradientDrawable(
+                                GradientDrawable.Orientation.LEFT_RIGHT,
+                                new int[] {
+                                    m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                            setHueSlider(m_bgcolour);
+                        } else {
+                            m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
+                            fillBitmapInBackground(m_fgcolour, false);
+                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                            demo.setTextColor(m_fgcolour);
+                            ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                            alphaSlider.setProgressTintList(cl);
+                            alphaSlider.setThumbTintList(cl);
+                            setHueSlider(m_fgcolour);
+                        }
+                        updateWidget();
+                        recursive = false;
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        greenSlider.setLongClickable(true);
+        greenSlider.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.setgreensliderhelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+        greenSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xFF000000, 0xFF00FF00}));
+        greenSlider.setProgressTintList(cl);
+        greenSlider.setThumbTintList(cl);
+        greenValue.setInputType(TYPE_CLASS_NUMBER);
+        greenValue.setText("0");
+        greenValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(
+                CharSequence s, int start, int count, int after)
+            {}
+            @Override
+            public void onTextChanged(
+                CharSequence s, int start, int before, int count)
+            {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!recursive) {
+                    recursive = true;
+                    int val = safeParseInt(s.toString());
+                    if (val > 255) {
+                        greenValue.setText("255");
+                        val = 255;
+                    }
+                    greenSlider.setProgress(val);
+                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
+                        fillBitmapInBackground(m_bgcolour, false);
+                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        demo.setBackgroundColor(m_bgcolour);
+                        alphaSlider.setBackground(new GradientDrawable(
+                            GradientDrawable.Orientation.LEFT_RIGHT,
+                            new int[] {
+                                m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                        setHueSlider(m_bgcolour);
+                    } else {
+                        m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
+                        fillBitmapInBackground(m_fgcolour, false);
+                        prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                        demo.setTextColor(m_fgcolour);
+                        ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                        alphaSlider.setProgressTintList(cl);
+                        alphaSlider.setThumbTintList(cl);
+                        setHueSlider(m_fgcolour);
+                    }
+                    updateWidget();
+                    recursive = false;
+                }
+            }
+        });
+        greenValue.setWidth(numberWidth);
+        blueSlider.setMax(255);
+        blueSlider.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener()
+            {
+                @Override
+                public void onProgressChanged(
+                    SeekBar seekBar, int progress, boolean fromUser)
+                {
+                    if (!recursive) {
+                        recursive = true;
+                        int val = seekBar.getProgress();
+                        blueValue.setText(Integer.toString(val));
+                        int colour;
+                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                            m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
+                            fillBitmapInBackground(m_bgcolour, false);
+                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                            demo.setBackgroundColor(m_bgcolour);
+                            alphaSlider.setBackground(new GradientDrawable(
+                                GradientDrawable.Orientation.LEFT_RIGHT,
+                                new int[]{
+                                    m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                            setHueSlider(m_bgcolour);
+                        } else {
+                            m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
+                            fillBitmapInBackground(m_fgcolour, false);
+                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                            demo.setTextColor(m_fgcolour);
+                            fillBitmapInBackground(m_fgcolour, false);
+                            ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                            alphaSlider.setProgressTintList(cl);
+                            alphaSlider.setThumbTintList(cl);
+                            setHueSlider(m_bgcolour);
+                        }
+                        updateWidget();
+                        recursive = false;
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        blueSlider.setLongClickable(true);
+        blueSlider.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.setbluesliderhelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+        blueSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xFF000000, 0xFF0000FF}));
+        blueSlider.setProgressTintList(cl);
+        blueSlider.setThumbTintList(cl);
+        blueValue.setInputType(TYPE_CLASS_NUMBER);
+        blueValue.setText("0");
+        blueValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(
+                CharSequence s, int start, int count, int after)
+            {}
+            @Override
+            public void onTextChanged(
+                CharSequence s, int start, int before, int count)
+            {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!recursive) {
+                    recursive = true;
+                    int val = safeParseInt(s.toString());
+                    if (val > 255) {
+                        blueValue.setText("255");
+                        val = 255;
+                    }
+                    blueSlider.setProgress(val);
+                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
+                        fillBitmapInBackground(m_bgcolour, false);
+                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        demo.setBackgroundColor(m_bgcolour);
+                        alphaSlider.setBackground(new GradientDrawable(
+                            GradientDrawable.Orientation.LEFT_RIGHT,
+                            new int[] {
+                                m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+                        setHueSlider(m_bgcolour);
+                    } else {
+                        m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
+                        fillBitmapInBackground(m_fgcolour, false);
+                        prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                        demo.setTextColor(m_fgcolour);
+                        ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+                        alphaSlider.setProgressTintList(cl);
+                        alphaSlider.setThumbTintList(cl);
+                        setHueSlider(m_bgcolour);
+                    }
+                    updateWidget();
+                    recursive = false;
+                }
+            }
+        });
+        blueValue.setWidth(numberWidth);
+        demo.setBackgroundColor(m_bgcolour);
+        demo.setTextColor(m_fgcolour);
+        demo.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.demohelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
         String s = "";
         try
         {
@@ -528,19 +1160,34 @@ public class SettingsActivity extends Activity {
         helptext.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.editwidgethelp),
-                    Toast.LENGTH_LONG).show();
+                switch(currentView) {
+                    case SETWIDGETBACKGROUNDCOLOUR:
+                        Toast.makeText(ac, getString(R.string.backgroundcolourhelp),
+                            Toast.LENGTH_LONG).show();
+                        break;
+                    case SETWIDGETTEXTCOLOUR:
+                        Toast.makeText(ac, getString(R.string.textcolourhelphelp),
+                            Toast.LENGTH_LONG).show();
+                        break;
+                    case CONFIGUREWIDGET:
+                        Toast.makeText(ac, getString(R.string.editwidgethelp),
+                            Toast.LENGTH_LONG).show();
+                    break;
+                }
                 return true;
             }
         });
-        demo.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.demohelp),
-                    Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
+        demobox.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT));
+        demobox.setBackgroundResource(R.drawable.background);
+        demoboxbox.setPadding(10, 0, 10, 0);
+        if (showShortDate != 0) {
+            showMonthDayCheckBox.setVisibility(View.GONE);
+            showShortMonthCheckBox.setVisibility(View.GONE);
+            showLongMonthCheckBox.setVisibility(View.GONE);
+            showYearCheckBox.setVisibility(View.GONE);
+        }
         showTimeCheckBox.setText(R.string.show_time);
         showTimeCheckBox.setChecked(showTime != 0);
         showTimeCheckBox.setOnCheckedChangeListener(
@@ -848,162 +1495,54 @@ public class SettingsActivity extends Activity {
                 return true;
             }
         });
-        alphaSlider.setOnSeekBarChangeListener(
-            new SeekBar.OnSeekBarChangeListener()
+    hueSlider.setBackground(new GradientDrawable(
+        GradientDrawable.Orientation.LEFT_RIGHT, new int[]
+        {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00,
+            0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000}));
+    hueSlider.setProgressTintList(ColorStateList.valueOf(0xFFFFFFFF));
+    hueSlider.setThumbTintList(ColorStateList.valueOf(0xFFFFFFFF));
+    hueSlider.setMax(1530);
+    hueSlider.setOnSeekBarChangeListener(
+        new SeekBar.OnSeekBarChangeListener()
+        {
+            @Override
+            public void onProgressChanged(
+                SeekBar seekBar, int progress, boolean fromUser)
             {
-                @Override
-                public void onProgressChanged(
-                    SeekBar seekBar, int progress, boolean fromUser)
-                {
-                    if (fromUser) {
-                        int val = seekBar.getProgress();
-                        //alphaValue.setText(Integer.toString(val));
-                        m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
-                        fillBitmapInBackground(m_bgcolour, false);
-                        demo.setBackgroundColor(m_bgcolour);
-                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
-                        updateWidget();
-                    }
+                if (!recursive) {
+                    recursive = true;
+                    handleHueChanged(seekBar.getProgress(),
+                        (currentView == SETWIDGETBACKGROUNDCOLOUR)
+                            ? m_bgcolour : m_fgcolour);
+                    updateWidget();
+                    recursive = false;
                 }
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-        alphaSlider.setOnLongClickListener(new View.OnLongClickListener() {
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        okButton.setText(R.string.done);
+        okButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentView = CONFIGUREWIDGET;
+                prefs.edit().putInt("Wview", currentView).commit();
+                doMainLayout();
+            }
+        });
+        okButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setalphasliderhelp),
+                Toast.makeText(ac, getString(R.string.donehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
         });
-        alphaSlider.setMax(255);
-        ColorStateList cl = ColorStateList.valueOf(0xFF888888);
-        alphaSlider.setProgressTintList(cl);
-        alphaSlider.setThumbTintList(cl);
-        redSlider.setOnSeekBarChangeListener(
-            new SeekBar.OnSeekBarChangeListener()
-            {
-                @Override
-                public void onProgressChanged(
-                    SeekBar seekBar, int progress, boolean fromUser)
-                {
-                    if (fromUser) {
-                        int val = seekBar.getProgress();
-                        //redValue.setText(Integer.toString(val));
-                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
-                            m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
-                            fillBitmapInBackground(m_bgcolour, false);
-                            demo.setBackgroundColor(m_bgcolour);
-                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
-                        }
-                        // no else, can only set opacity for background colour
-                    }
-                }
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-        redSlider.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setredsliderhelp),
-                    Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-        redSlider.setMax(255);
-        cl = new ColorStateList(EMPTY, new int[] { 0xFFFF0000 });
-        redSlider.setProgressTintList(cl);
-        redSlider.setThumbTintList(cl);
-        greenSlider.setOnSeekBarChangeListener(
-            new SeekBar.OnSeekBarChangeListener()
-            {
-                @Override
-                public void onProgressChanged(
-                    SeekBar seekBar, int progress, boolean fromUser)
-                {
-                    if (fromUser) {
-                        int val = seekBar.getProgress();
-                        //greenValue.setText(Integer.toString(val));
-                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
-                            m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
-                            fillBitmapInBackground(m_bgcolour, false);
-                            demo.setBackgroundColor(m_bgcolour);
-                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
-                        } else {
-                            m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
-                            fillBitmapInBackground(m_fgcolour, false);
-                            demo.setTextColor(m_fgcolour);
-                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
-                        }
-                    }
-                }
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-        greenSlider.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setgreensliderhelp),
-                    Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-        greenSlider.setMax(255);
-        cl = new ColorStateList(EMPTY, new int[] { 0xFF00FF00 });
-        greenSlider.setProgressTintList(cl);
-        greenSlider.setThumbTintList(cl);
-        blueSlider.setOnSeekBarChangeListener(
-            new SeekBar.OnSeekBarChangeListener()
-            {
-                @Override
-                public void onProgressChanged(
-                    SeekBar seekBar, int progress, boolean fromUser)
-                {
-                    if (fromUser) {
-                        int val = seekBar.getProgress();
-                        //blueValue.setText(Integer.toString(val));
-                        int colour;
-                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
-                            m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
-                            fillBitmapInBackground(m_bgcolour, false);
-                            demo.setBackgroundColor(m_bgcolour);
-                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
-                        } else {
-                            m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
-                            fillBitmapInBackground(m_fgcolour, false);
-                            demo.setTextColor(m_fgcolour);
-                            fillBitmapInBackground(m_fgcolour, false);
-                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
-                        }
-                    }
-                }
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-        blueSlider.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setbluesliderhelp),
-                    Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-        blueSlider.setMax(255);
-        cl = new ColorStateList(EMPTY, new int[] { 0xFF0000FF });
-        blueSlider.setProgressTintList(cl);
-        blueSlider.setThumbTintList(cl);
         updateWidget();
         updateDemo();
 
-        topLayout = findViewById(R.id.settingslayout);
         switch (currentView) {
             case SETWIDGETBACKGROUNDCOLOUR:
             case SETWIDGETTEXTCOLOUR:

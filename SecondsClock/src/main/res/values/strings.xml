@@ -16,12 +16,22 @@
         If you resize the widget on the home screen to a larger size,
         the widget will rearrange its layout to use a larger font size.
         The background pattern shows the effect of the widget background
-        if it is not transparent.</string>
+        in case it is not transparent.</string>
     <string name="longpresslabel">Long press here for help information.</string>
     <string name="editwidgethelp">This screen allows you to define the
-        characteristics of the clock widget. When you have done, press
-        the back button. A long press on any of the objects below will bring up
+        characteristics of the clock widget.
+        A long press on any of the objects on this screen will bring up
         some help information about it.</string>
+    <string name="backgroundcolourhelp">This screen provides sliders
+        to set the hue, red, green, blue, and opacity
+        of the clock widget\'s background. You can also type in values
+        for red, green, blue, and opacity or pick a colour from the
+        map of saturation and value for a hue.</string>
+    <string name="textcolourhelphelp">This screen provides sliders
+        to set the hue, red, gree, and blue components of the colour
+        of the clock widget\'s text. You can also type in values
+        for red, green, and blue, or pick a colour from the
+        map of saturation and value for a hue.</string>
     <string name="show_time">Show time in widget</string>
     <string name="showtimehelp">If this box is checked, the widget will
         display the time in locale-appropriate format.</string>
@@ -56,15 +66,15 @@
     <string name="showyearhelp">If this box is checked, the widget will
         display the (Gregorian) year.</string>
     <string name="set_bg_colour">Set widget background colour</string>
-    <string name="setbgcolourhelp">Touch this button to bring up a colour
-        chooser for the background colour of the widget.</string>
+    <string name="setbgcolourhelp">Touch this button to showp a colour
+        chooser screen for the background colour of the widget.</string>
     <string name="set_fg_colour">Set widget text colour</string>
-    <string name="setfgcolourhelp">Touch this button to bring up a colour
-        chooser for the text colour of the widget.</string>
+    <string name="setfgcolourhelp">Touch this button to show a colour
+        chooser screen for the text colour of the widget.</string>
     <string name="fghelp">Touch anywhere in this pane to select
-        the text colour of the widget. </string>
+        the saturation and value of the text colour of the widget.</string>
     <string name="bghelp">Touch anywhere in this pane to select
-        the background colour of the widget.</string>
+        the saturation and value of the background colour of the widget.</string>
     <string name="setredsliderhelp">Move the thumb on this slider
         to adjust the amount of red in the colour.</string>
     <string name="setgreensliderhelp">Move the thumb on this slider
@@ -74,4 +84,7 @@
     <string name="setalphasliderhelp">Move the thumb on this slider
         to adjust the opacity of the widget background:
         zero is transparent and 255 is fully opaque.</string>
+    <string name="done">Done</string>
+    <string name="donehelp">Touch this button or the back button to
+        return to the main configuration screen.</string>
 </resources>
