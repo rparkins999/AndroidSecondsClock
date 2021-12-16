@@ -84,6 +84,9 @@
     <string name="setalphasliderhelp">Move the thumb on this slider
         to adjust the opacity of the widget background:
         zero is transparent and 255 is fully opaque.</string>
+    <string name="sethuesliderhelp">Move the thumb on this slider
+        to set the hue. This will not modify the value or saturation,
+        which can be set by picking a colour from the map pane.</string>
     <string name="done">Done</string>
     <string name="donehelp">Touch this button or the back button to
         return to the main configuration screen.</string>

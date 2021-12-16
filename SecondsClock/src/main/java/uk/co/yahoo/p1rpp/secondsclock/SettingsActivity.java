@@ -691,13 +691,13 @@ public class SettingsActivity extends Activity {
         secondsClockWidget = new ComponentName(
             getApplicationContext(), SecondsClockWidget.class);
         alphaValue = new EditText(this);
-        alphaSlider = new SeekBar(this);
+        alphaSlider = new LongClickableSeekBar(this);
         redValue = new EditText(this);
-        redSlider = new SeekBar(this);
+        redSlider = new LongClickableSeekBar(this);
         greenValue = new EditText(this);
-        greenSlider = new SeekBar(this);
+        greenSlider = new LongClickableSeekBar(this);
         blueValue = new EditText(this);
-        blueSlider = new SeekBar(this);
+        blueSlider = new LongClickableSeekBar(this);
         demo = new TextClock(this);
         prefs = getSharedPreferences("SecondsClock", Context.MODE_PRIVATE);
         currentView = prefs.getInt("Wview", CONFIGUREWIDGET);
@@ -741,7 +741,7 @@ public class SettingsActivity extends Activity {
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT);
         ac = this;
-        hueSlider = new SeekBar(this);
+        hueSlider = new LongClickableSeekBar(this);
         lpMMWeight = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.MATCH_PARENT);
@@ -1495,33 +1495,41 @@ public class SettingsActivity extends Activity {
                 return true;
             }
         });
-    hueSlider.setBackground(new GradientDrawable(
-        GradientDrawable.Orientation.LEFT_RIGHT, new int[]
-        {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00,
-            0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000}));
-    hueSlider.setProgressTintList(ColorStateList.valueOf(0xFFFFFFFF));
-    hueSlider.setThumbTintList(ColorStateList.valueOf(0xFFFFFFFF));
-    hueSlider.setMax(1530);
-    hueSlider.setOnSeekBarChangeListener(
-        new SeekBar.OnSeekBarChangeListener()
-        {
-            @Override
-            public void onProgressChanged(
-                SeekBar seekBar, int progress, boolean fromUser)
+        hueSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT, new int[]
+            {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00,
+                0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000}));
+        hueSlider.setProgressTintList(ColorStateList.valueOf(0xFFFFFFFF));
+        hueSlider.setThumbTintList(ColorStateList.valueOf(0xFFFFFFFF));
+        hueSlider.setMax(1530);
+        hueSlider.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener()
             {
-                if (!recursive) {
-                    recursive = true;
-                    handleHueChanged(seekBar.getProgress(),
-                        (currentView == SETWIDGETBACKGROUNDCOLOUR)
-                            ? m_bgcolour : m_fgcolour);
-                    updateWidget();
-                    recursive = false;
+                @Override
+                public void onProgressChanged(
+                    SeekBar seekBar, int progress, boolean fromUser)
+                {
+                    if (!recursive) {
+                        recursive = true;
+                        handleHueChanged(seekBar.getProgress(),
+                            (currentView == SETWIDGETBACKGROUNDCOLOUR)
+                                ? m_bgcolour : m_fgcolour);
+                        updateWidget();
+                        recursive = false;
+                    }
                 }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        hueSlider.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.sethuesliderhelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
             }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
         okButton.setText(R.string.done);
         okButton.setOnClickListener(new View.OnClickListener() {
