@@ -11,7 +11,7 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 
 android {
-    compileSdk 31
+    compileSdk 28
 
     signingConfigs {
         config {

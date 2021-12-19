@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Copyright © 2021. Richard P. Parkins, M. A.
+   Released under GPL V3 or later
+   This is just to handle the US spelling of 'color'.
+  -->
+
+<resources>
+    <string name="set_bg_colour">Set widget background color</string>
+    <string name="setbgcolourhelp">Touch this button to show a color
+        chooser screen for the background color of the widget.</string>
+    <string name="set_fg_colour">Set widget text color</string>
+    <string name="setfgcolourhelp">Touch this button to show a color
+        chooser screen for the text color of the widget.</string>
+    <string name="fghelp">Touch anywhere in this pane to select
+        the text color of the widget. </string>
+    <string name="bghelp">Touch anywhere in this pane to select
+        the background color of the widget.</string>
+    <string name="backgroundcolourhelp">This screen provides sliders
+        to set the hue, red, green, blue, and opacity
+        of the clock widget\'s background. You can also type in values
+        for red, green, blue, and opacity or pick a color from the
+        map of saturation and value for a hue.</string>
+    <string name="textcolourhelphelp">This screen provides sliders
+        to set the hue, red, gree, and blue components of the colour
+        of the clock widget\'s text. You can also type in values
+        for red, green, and blue, or pick a color from the
+        map of saturation and value for a hue.</string>
+    <string name="setredsliderhelp">Move the thumb on this slider
+        to adjust the amount of red in the color.</string>
+    <string name="redvaluehelp">This number shows the actual amount of red
+        in the color on a scale from 0 to 255. You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="setgreensliderhelp">Move the thumb on this slider
+        to adjust the amount of green in the color.</string>
+    <string name="greenvaluehelp">This number shows the actual amount of green
+        in the color on a scale from 0 to 255. You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="setbluesliderhelp">Move the thumb on this slider
+        to adjust the amount of blue in the color.</string>
+    <string name="bluevaluehelp">This number shows the actual amount of blue
+        in the color on a scale from 0 to 255. You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="sethuesliderhelp">Move the thumb on this slider
+        to set the hue. This will not modify the value or saturation,
+        which can be set by picking a color from the map pane.
+        Black, white and grayscale colors have a saturation of zero,
+        so changing their hue will have no effect.</string>
+</resources>

@@ -714,8 +714,8 @@ public class SettingsActivity extends Activity {
         config = res.getConfiguration();
         helptext = new TextView(this);
 
-        // The 1.2 is a fudge factor = I don't know why it is needed.
-        int numberWidth = (int)(alphaValue.getPaint().measureText("000") * 1.2);
+        // The 1.3 is a fudge factor = I don't know why it is needed.
+        int numberWidth = (int)(alphaValue.getPaint().measureText("000") * 1.3);
         demo.setGravity(Gravity.CENTER_HORIZONTAL);
         topLayout = findViewById(R.id.settingslayout);
         demobox = new LinearLayout(this);
@@ -779,7 +779,6 @@ public class SettingsActivity extends Activity {
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {}
             });
-        alphaSlider.setLongClickable(true);
         alphaSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -827,6 +826,14 @@ public class SettingsActivity extends Activity {
                 }
             }
         });
+        alphaValue.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.alphavaluehelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
         alphaValue.setWidth(numberWidth);
         redSlider.setMax(255);
         redSlider.setOnSeekBarChangeListener(
@@ -854,7 +861,7 @@ public class SettingsActivity extends Activity {
                         } else {
                             m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
                             fillBitmapInBackground(m_fgcolour, false);
-                            prefs.edit().putInt("Wbgcolour", m_fgcolour).commit();
+                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                             alphaSlider.setProgressTintList(cl);
@@ -870,7 +877,6 @@ public class SettingsActivity extends Activity {
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {}
             });
-        redSlider.setLongClickable(true);
         redSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -886,7 +892,6 @@ public class SettingsActivity extends Activity {
         redSlider.setProgressTintList(cl);
         redSlider.setThumbTintList(cl);
         redValue.setInputType(TYPE_CLASS_NUMBER);
-        redValue.setText("0");
         redValue.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
@@ -931,6 +936,14 @@ public class SettingsActivity extends Activity {
                 }
             }
         });
+        redValue.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.redvaluehelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
         redValue.setWidth(numberWidth);
         greenSlider.setMax(255);
         greenSlider.setOnSeekBarChangeListener(
@@ -973,7 +986,6 @@ public class SettingsActivity extends Activity {
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {}
             });
-        greenSlider.setLongClickable(true);
         greenSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -988,7 +1000,6 @@ public class SettingsActivity extends Activity {
         greenSlider.setProgressTintList(cl);
         greenSlider.setThumbTintList(cl);
         greenValue.setInputType(TYPE_CLASS_NUMBER);
-        greenValue.setText("0");
         greenValue.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
@@ -1031,6 +1042,14 @@ public class SettingsActivity extends Activity {
                     updateWidget();
                     recursive = false;
                 }
+            }
+        });
+        greenValue.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.greenvaluehelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
             }
         });
         greenValue.setWidth(numberWidth);
@@ -1077,7 +1096,6 @@ public class SettingsActivity extends Activity {
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {}
             });
-        blueSlider.setLongClickable(true);
         blueSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -1092,7 +1110,6 @@ public class SettingsActivity extends Activity {
         blueSlider.setProgressTintList(cl);
         blueSlider.setThumbTintList(cl);
         blueValue.setInputType(TYPE_CLASS_NUMBER);
-        blueValue.setText("0");
         blueValue.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
@@ -1135,6 +1152,14 @@ public class SettingsActivity extends Activity {
                     updateWidget();
                     recursive = false;
                 }
+            }
+        });
+        blueValue.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(ac, getString(R.string.bluevaluehelp),
+                    Toast.LENGTH_LONG).show();
+                return true;
             }
         });
         blueValue.setWidth(numberWidth);
