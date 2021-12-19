@@ -513,7 +513,7 @@ public class SettingsActivity extends Activity {
             LinearLayout l4 = new LinearLayout(this);
             l4.setOrientation(LinearLayout.VERTICAL);
             l4.setLayoutParams(lpMatchWrap);
-            l4.setPadding(pad, pad, pad, pad);
+            l4.setPadding(0, pad, pad, pad);
             l4.addView(hueSlider);
             l1.addView(l4);
             LinearLayout l5 = new LinearLayout(this);
@@ -562,7 +562,7 @@ public class SettingsActivity extends Activity {
                 LinearLayout l14 = new LinearLayout(this);
                 l14.setOrientation(LinearLayout.HORIZONTAL);
                 l14.setLayoutParams(lpMatchWrap);
-                l14.setPadding(pad, pad, pad, pad);
+                l14.setPadding(0, pad, 0, pad);
                 LinearLayout l15 = new LinearLayout(this);
                 l15.setLayoutParams(lpMMWeight);
                 l15.setOrientation(LinearLayout.VERTICAL);
