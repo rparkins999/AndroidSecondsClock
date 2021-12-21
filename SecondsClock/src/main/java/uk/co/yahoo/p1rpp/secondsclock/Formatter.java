@@ -53,7 +53,7 @@ class Formatter {
         boolean anything = false;
         StringBuilder sbrest = new StringBuilder();
         if (showTime > 0) {
-            time12 = "h:mm";
+            time12 = "h:mm a";
             time24 = "HH:mm";
             if (showTime == 2) { // show seconds
                 int anydate = showWeekDay + showShortDate + showMonthDay

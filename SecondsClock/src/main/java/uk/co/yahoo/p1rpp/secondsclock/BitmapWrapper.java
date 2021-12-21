@@ -15,9 +15,9 @@ class BitmapWrapper {
     public FillBitmap m_active;
     public int m_multiplier;
     public boolean m_firstTime;
-    public SettingsActivity m_owner;
+    public WidgetConfigureActivity m_owner;
     BitmapWrapper(int colour, Bitmap bitmap, int multiplier,
-                  SettingsActivity owner, boolean firstTime) {
+                  WidgetConfigureActivity owner, boolean firstTime) {
         m_Bitmap = bitmap;
         m_colour = colour;
         m_active = null;

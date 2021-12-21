@@ -44,7 +44,7 @@ import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SettingsActivity extends Activity {
+public class WidgetConfigureActivity extends Activity {
 
     private AppWidgetManager appWidgetManager;
     private ComponentName secondsClockWidget;
@@ -98,7 +98,7 @@ public class SettingsActivity extends Activity {
     private LinearLayout.LayoutParams lpMatchWrap;
     private ViewGroup.LayoutParams lpWrapWrap;
     private boolean colourmaplongclicked = false;
-    private SettingsActivity ac;
+    private WidgetConfigureActivity ac;
     private SeekBar hueSlider;
     private LinearLayout.LayoutParams lpMMWeight;
     private LinearLayout.LayoutParams lpMatchMatch;
@@ -107,7 +107,7 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings_activity);
+        setContentView(R.layout.generic_layout);
     }
 
     private void updateWidget() {
@@ -334,6 +334,21 @@ public class SettingsActivity extends Activity {
             l1.addView(testButton);
              */ // end of debugging code
         }
+        Button b = new Button(this);
+        b.setText("clock");
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ac, ClockActivity.class);
+                startActivity(intent);
+            }
+        });
+        LinearLayout l18 = new LinearLayout(this);
+        l18.setLayoutParams(lpMatchWrap);
+        l18.setOrientation(LinearLayout.VERTICAL);
+        l18.setGravity(Gravity.CENTER_HORIZONTAL);
+        l18.addView(b, lpWrapWrap);
+        l1.addView(l18);
         topLayout.addView(l1);
     }
 
@@ -717,7 +732,7 @@ public class SettingsActivity extends Activity {
         // The 1.3 is a fudge factor = I don't know why it is needed.
         int numberWidth = (int)(alphaValue.getPaint().measureText("000") * 1.3);
         demo.setGravity(Gravity.CENTER_HORIZONTAL);
-        topLayout = findViewById(R.id.settingslayout);
+        topLayout = findViewById(R.id.genericlayout);
         demobox = new LinearLayout(this);
         demoboxbox = new LinearLayout(this);
         lpWrapMatch =  new LinearLayout.LayoutParams(

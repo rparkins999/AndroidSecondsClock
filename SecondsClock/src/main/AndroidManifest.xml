@@ -29,7 +29,7 @@
         </receiver>
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".WidgetConfigureActivity"
             android:screenOrientation="fullSensor"
             android:exported="true"
             android:label="@string/app_label">
@@ -38,6 +38,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ClockActivity"
+        />
         <meta-data
             android:name="com.samsung.android.icon_container.has_icon_container"
             android:value="true"/>
