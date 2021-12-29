@@ -17,6 +17,7 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -27,16 +28,72 @@ import android.os.Bundle;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import java.util.Objects;
+
 /*
  * Implementation of App Widget functionality.
  */
 public class SecondsClockWidget extends AppWidgetProvider {
 
+    @SuppressLint("ApplySharedPref")
     void updateAppWidget(
         Context context, AppWidgetManager appWidgetManager, int appWidgetId)
     {
+        int showTime;
+        int showWeekDay;
+        int showShortDate;
+        int showMonthDay;
+        int showMonth;
+        int showYear;
+        int bgcolour;
+        int fgcolour;
+        String key = "W" + appWidgetId;
         SharedPreferences prefs = context.getSharedPreferences(
             "SecondsClock", Context.MODE_PRIVATE);
+        String widgetIds = prefs.getString("widgetIds", "");
+        String thisWidget = "," + String.valueOf(appWidgetId);
+        if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
+            // Get the preference for this widget.
+            showTime =
+                prefs.getInt(key +"showTime", 2); // include seconds
+            showWeekDay =
+                prefs.getInt(key +"showWeekDay", 2); // long format
+            showShortDate = prefs.getInt(key +"showShortDate", 0);
+            showMonthDay =
+                prefs.getInt(key +"showMonthDay", 1);
+            showMonth =
+                prefs.getInt(key +"showMonth", 2); // long format
+            showYear = prefs.getInt(key +"showYear", 1);
+            bgcolour = prefs.getInt(key +"bgcolour", 0x00000000);
+            fgcolour = prefs.getInt(key +"fgcolour",0xFFFFFFFF);
+        } else {
+            // New widget, add to list and set its preferences
+            // to the new widget defaults.
+            showTime =
+                prefs.getInt("WshowTime", 2); // include seconds
+            showWeekDay =
+                prefs.getInt("WshowWeekDay", 2); // long format
+            showShortDate = prefs.getInt("WshowShortDate", 0);
+            showMonthDay =
+                prefs.getInt("WshowMonthDay", 1); // long format
+            showMonth = prefs.getInt("WshowMonth", 2); // long format
+            showYear = prefs.getInt("WshowYear", 1);
+            bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
+            fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
+            widgetIds += thisWidget;
+            prefs.edit()
+                 .putString("widgetIds", widgetIds)
+                 .putInt(key +"showTime", showTime)
+                 .putInt(key +"showWeekDay", showWeekDay)
+                 .putInt(key +"showShortDate", showShortDate)
+                 .putInt(key + "showMonthDay", showMonthDay)
+                 .putInt(key +"showMonth", showMonth)
+                 .putInt(key +"showYear", showYear)
+                 .putInt(key +"bgcolour", bgcolour)
+                 .putInt(key +"fgcolour",fgcolour)
+                 .commit();
+        }
+
         Bundle newOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
         int minWidth = newOptions.getInt(
             AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 93);
@@ -55,20 +112,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
         // */
 
         Formatter f = new Formatter();
-        // if showShortDate is not zero,
-        // showMonthDay, showMonth, and showYear must all be zero
-        // include seconds
-        int showTime =
-            prefs.getInt("WshowTime", 2); // include seconds
-        int showWeekDay =
-            prefs.getInt("WshowWeekDay", 2); // long format
-        int showShortDate = prefs.getInt("WshowShortDate", 0);
-        int showMonthDay =
-            prefs.getInt("WshowMonthDay", 1); // long format
-        int showMonth = prefs.getInt("WshowMonth", 2); // long format
-        int showYear = prefs.getInt("WshowYear", 1);
-        int bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
-        int fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
+        // If showShortDate is not zero,
+        // showMonthDay, showMonth, and showYear must all be zero.
         f.set(context, minWidth, maxHeight,
             showTime, showWeekDay, showShortDate,
             showMonthDay, showMonth, showYear);
@@ -84,12 +129,14 @@ public class SecondsClockWidget extends AppWidgetProvider {
             "setFormat24Hour", f.time24 + f.rest);
         views.setInt(R.id.appwidget_textclock,"setLines",f.lines);
 
-        // for analogue clock,
+        // For analogue clock,
         // views.setImageViewBitmap(int viewId, Bitmap bitmap)
-        // but we need to find a way to force updates every second
+        // but we need to find a way to force updates every second,
+        // but only when the widget is visible.
 
-        // Make a click on the widget go to the clock app
-        Intent ai = new Intent("android.intent.action.SHOW_TIMERS");
+        // Make a click on the widget go to the switch in MainActivity.
+        Intent ai = new Intent("uk.co.yahoo.p1rpp.MainActivity");
+        ai.putExtra("widgetID", appWidgetId);
         PendingIntent pi = PendingIntent.getActivity(
             context, 0, ai, PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.appwidget_textclock, pi);

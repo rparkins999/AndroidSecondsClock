@@ -10,7 +10,7 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.DisplayMetrics;
-//import android.util.Log;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.widget.SeekBar;
@@ -35,6 +35,7 @@ class LongClickableSeekBar extends SeekBar {
         @Override
         public void run() {
             // timeout expired
+            //Log.d("MotionEvent","timer expired");
             m_longClicked = true;
             performLongClick();
             m_timerRunning = false;
@@ -47,6 +48,7 @@ class LongClickableSeekBar extends SeekBar {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         m_Xdelta = DELTA_IN * dm.xdpi;
         m_Ydelta = DELTA_IN * dm.ydpi;
+        setLongClickable(true);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -55,7 +57,7 @@ class LongClickableSeekBar extends SeekBar {
         boolean result;
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-//                Log.d("MotionEvent","ACTION_DOWN");
+                //Log.d("MotionEvent","ACTION_DOWN");
                 // it is possible to get a down event when we think that the pointer
                 // is already down: we abandon any action in  progress
                 removeCallbacks(longClickTimer); // cancel the timeout
@@ -64,6 +66,7 @@ class LongClickableSeekBar extends SeekBar {
                 m_startX = event.getX();
                 m_startY = event.getY();
                 // start the timeout
+                //Log.d("MotionEvent","Starting long click timer");
                 postDelayed(longClickTimer, ViewConfiguration.getLongPressTimeout());
                 m_timerRunning = true;
                 result = super.onTouchEvent(event);
@@ -75,18 +78,18 @@ class LongClickableSeekBar extends SeekBar {
                     m_longClicked = false;
                     setProgress(m_savedProgress);
                     event.setAction(MotionEvent.ACTION_CANCEL);
-//                    Log.d("MotionEvent","ACTION_UP cancelled");
+                    //Log.d("MotionEvent","ACTION_UP cancelled");
                 } else {
                     removeCallbacks(longClickTimer); // cancel the timeout
                     m_timerRunning = false;
-//                    Log.d("MotionEvent","ACTION_UP => super");
+                    //Log.d("MotionEvent","ACTION_UP => super");
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (m_longClicked) {
                     setProgress(m_savedProgress);
                     event.setAction(MotionEvent.ACTION_CANCEL);
-//                    Log.d("MotionEvent","ACTION_MOVE cancelled");
+                    //Log.d("MotionEvent","ACTION_MOVE cancelled");
                 } else if (   (   (event.getX() - m_startX > m_Xdelta)
                                || (m_startX - event.getX() > m_Xdelta)
                                || (event.getY() - m_startY > m_Ydelta)
@@ -96,12 +99,12 @@ class LongClickableSeekBar extends SeekBar {
                     // real move action
                     removeCallbacks(longClickTimer); // cancel the timeout
                     m_timerRunning = false;
-//                    Log.d("MotionEvent","ACTION_MOVE => stop timer");
+                    //Log.d("MotionEvent","ACTION_MOVE => stop timer");
                 } else if (m_timerRunning) { // treat it as finger shake
                     result = super.onTouchEvent(event);
                     // undo the thumb move in case we decide it's a long click
                     setProgress(m_savedProgress);
-//                    Log.d("MotionEvent","ACTION_MOVE => finger shake");
+                    //Log.d("MotionEvent","ACTION_MOVE => finger shake");
                     return result;
                 }
                 break;
@@ -109,10 +112,10 @@ class LongClickableSeekBar extends SeekBar {
                 m_longClicked = false;
                 removeCallbacks(longClickTimer); // cancel the timeout
                 m_timerRunning = false;
-//                Log.d("MotionEvent","ACTION_CANCEL");
+                //Log.d("MotionEvent","ACTION_CANCEL");
                 break;
             default:
-//                Log.d("MotionEvent",event.toString());
+                //Log.d("MotionEvent",event.toString());
                 if (m_longClicked) {
                     event.setAction(MotionEvent.ACTION_CANCEL);
                 } else if (m_timerRunning) {

@@ -11,12 +11,9 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import static android.text.InputType.TYPE_CLASS_NUMBER;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -27,7 +24,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,7 +32,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -44,7 +39,7 @@ import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class WidgetConfigureActivity extends Activity {
+public class WidgetConfigureActivity extends ConfigureActivity {
 
     private AppWidgetManager appWidgetManager;
     private ComponentName secondsClockWidget;
@@ -59,55 +54,36 @@ public class WidgetConfigureActivity extends Activity {
     private SeekBar greenSlider;
     private EditText blueValue;
     private SeekBar blueSlider;
-    private int currentView;
-    static final int SETWIDGETBACKGROUNDCOLOUR = 0;
-    static final int SETWIDGETTEXTCOLOUR = 1;
-    static final int CONFIGUREWIDGET = 2;
+    static final int CONFIGURE = 0;
+    static final int SETTEXTCOLOUR = 1;
+    static final int SETBACKGROUNDCOLOUR = 2;
     private int m_bgcolour;
     private TextClock demo;
-    private SharedPreferences prefs;
     private int m_fgcolour;
     private int showTime;
-    private int showWeekDay;
-    private int showShortDate;
-    private int showMonthDay;
-    private int showMonth;
-    private int showYear;
-    private DisplayMetrics metrics;
     private BitmapWrapper m_activeWrapper = null;
     private Bitmap m_bitmap;
     private int multiplier;
-    private Configuration config;
     private TextView helptext;
     private ImageView m_colourmap;
-    private FrameLayout topLayout;
     private LinearLayout demobox;
     private LinearLayout demoboxbox;
     private LinearLayout.LayoutParams lpWrapMatch;
     private CheckBox showTimeCheckBox;
     private CheckBox showSecondsCheckBox;
-    private CheckBox showShortWeekDayCheckBox;
-    private CheckBox showLongWeekDayCheckBox;
-    private CheckBox showShortDateCheckBox;
-    private CheckBox showMonthDayCheckBox;
-    private CheckBox showShortMonthCheckBox;
-    private CheckBox showLongMonthCheckBox;
-    private CheckBox showYearCheckBox;
     private Button bgButton;
     private Button fgButton;
     private LinearLayout.LayoutParams lpMatchWrap;
     private ViewGroup.LayoutParams lpWrapWrap;
     private boolean colourmaplongclicked = false;
-    private WidgetConfigureActivity ac;
     private SeekBar hueSlider;
     private LinearLayout.LayoutParams lpMMWeight;
     private LinearLayout.LayoutParams lpMatchMatch;
     private Button okButton;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.generic_layout);
+    public boolean onLongClick(View v) {
+        return super.onLongClick(v);
     }
 
     private void updateWidget() {
@@ -144,10 +120,10 @@ public class WidgetConfigureActivity extends Activity {
             blueValue.setText(Integer.toString(val));
             blueSlider.setProgress(val);
             switch (currentView) {
-                case SETWIDGETBACKGROUNDCOLOUR:
+                case SETBACKGROUNDCOLOUR:
                     m_bgcolour = colour;
                     demo.setBackgroundColor(colour);
-                    prefs.edit().putInt("Wbgcolour", colour).commit();
+                    m_prefs.edit().putInt("Wbgcolour", colour).commit();
                     alphaSlider.setBackground(new GradientDrawable(
                         GradientDrawable.Orientation.LEFT_RIGHT,
                         new int[] {0xFF000000, m_bgcolour | 0xFF000000}));
@@ -155,12 +131,12 @@ public class WidgetConfigureActivity extends Activity {
                     alphaSlider.setProgressTintList(cl);
                     alphaSlider.setThumbTintList(cl);
                     break;
-                case SETWIDGETTEXTCOLOUR:
+                case SETTEXTCOLOUR:
                     m_fgcolour = colour;
                     demo.setTextColor(colour);
-                    prefs.edit().putInt("Wfgcolour", colour).commit();
+                    m_prefs.edit().putInt("Wfgcolour", colour).commit();
                     break;
-                case CONFIGUREWIDGET:
+                case CONFIGURE:
             }
             updateDemo();
             updateWidget();
@@ -173,8 +149,8 @@ public class WidgetConfigureActivity extends Activity {
         f.set(this, minWidth, maxHeight,
             showTime, showWeekDay, showShortDate,
             showMonthDay, showMonth, showYear);
-        int width = (int)(minWidth * metrics.density);
-        int height = (int)(maxHeight * metrics.density);
+        int width = (int)(minWidth * m_metrics.density);
+        int height = (int)(maxHeight * m_metrics.density);
         demo.setMinimumWidth(width);
         demo.setMaxWidth(width);
         demo.setMinimumHeight(height);
@@ -203,8 +179,8 @@ public class WidgetConfigureActivity extends Activity {
 
     void setMultiplier() {
         int size;
-        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            size = metrics.heightPixels;
+        if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            size = m_metrics.heightPixels;
             int sb = 72;
             Resources res = getResources();
             int resourceId = res.getIdentifier(
@@ -215,7 +191,7 @@ public class WidgetConfigureActivity extends Activity {
             int hh = helptext.getBottom();
             size -= sb + hh;
         } else {
-            size = metrics.widthPixels;
+            size = m_metrics.widthPixels;
         }
         if (size < 512) {
             multiplier = 1;
@@ -230,24 +206,13 @@ public class WidgetConfigureActivity extends Activity {
         m_colourmap.invalidate();
     }
 
-    // recursive version
-    void removeAllViews(View v) {
-        if (v instanceof ViewGroup) {
-            int n = ((ViewGroup)v).getChildCount();
-            for ( int i = 0; i < n; ++i) {
-                removeAllViews(((ViewGroup) v).getChildAt(i));
-            }
-            ((ViewGroup)v).removeAllViews();
-        }
-    }
-
     @SuppressLint("SetTextI18n")
-    void doMainLayout() {
-        removeAllViews(topLayout);
+    @Override
+    protected void doMainLayout() {
         demobox.addView(demo);
         demoboxbox.addView(demobox);
         LinearLayout l1 = new LinearLayout(this);
-        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             demoboxbox.setLayoutParams(lpWrapMatch);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
@@ -316,30 +281,13 @@ public class WidgetConfigureActivity extends Activity {
             l2.addView(bgButton, lpWrapWrap);
             l2.addView(fgButton, lpWrapWrap);
             l1.addView(l2);
-            /* debugging
-            Button testButton = new Button(this);
-            testButton.setText("Test going to system clock app");
-            testButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    try {
-                        startActivity(new Intent(
-                            "android.intent.action.SHOW_TIMERS"));
-                    } catch (ActivityNotFoundException ignore) {
-                        Toast.makeText(ac, "ActivityNotFoundException",
-                            Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
-            l1.addView(testButton);
-             */ // end of debugging code
         }
         Button b = new Button(this);
         b.setText("clock");
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ac, ClockActivity.class);
+                Intent intent = new Intent(m_activity, ClockActivity.class);
                 startActivity(intent);
             }
         });
@@ -349,18 +297,18 @@ public class WidgetConfigureActivity extends Activity {
         l18.setGravity(Gravity.CENTER_HORIZONTAL);
         l18.addView(b, lpWrapWrap);
         l1.addView(l18);
-        topLayout.addView(l1);
+        m_topLayout.addView(l1);
     }
 
     @SuppressLint({"ClickableViewAccessibility"})
-    void doChooserLayout() {
+    protected void doChooserLayout() {
         setMultiplier();
         /* These have to be created to order because their sizes can depend
          * on whether the device is in portrait or landscape orientation.
          */
         int size = 256 * multiplier;
         m_bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+        if (currentView == SETBACKGROUNDCOLOUR) {
             fillBitmapInBackground(m_bgcolour, true);
             setColour(m_bgcolour);
         } else {
@@ -380,7 +328,7 @@ public class WidgetConfigureActivity extends Activity {
                 {
                     int colour = m_bitmap.getPixel(
                         (int)event.getX(), (int)event.getY());
-                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                    if (currentView == SETBACKGROUNDCOLOUR) {
                         // don't change opacity from colourmap touch
                         setColour((m_bgcolour & 0xFF000000) | (colour & 0xFFFFFF));
                     } else {
@@ -398,21 +346,20 @@ public class WidgetConfigureActivity extends Activity {
             @Override
             public boolean onLongClick(View v) {
                 colourmaplongclicked = true;
-                Toast.makeText(ac, getString((
-                    currentView == SETWIDGETTEXTCOLOUR)
+                Toast.makeText(m_activity, getString((
+                    currentView == SETTEXTCOLOUR)
                         ? R.string.fghelp : R.string.bghelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
         });
-        int colour = (currentView == SETWIDGETTEXTCOLOUR)
+        int colour = (currentView == SETTEXTCOLOUR)
             ? m_fgcolour : m_bgcolour;
-        int pad =(int)(5 * metrics.density);
-        removeAllViews(topLayout);
+        int pad =(int)(5 * m_metrics.density);
         LinearLayout l1 = new LinearLayout(this);
         demobox.addView(demo);
         demoboxbox.addView(demobox);
-        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.HORIZONTAL);
@@ -477,7 +424,7 @@ public class WidgetConfigureActivity extends Activity {
             l13.addView(blueValue);
             l11.addView(l13);
             l3.addView(l11);
-            if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+            if (currentView == SETBACKGROUNDCOLOUR) {
                 LinearLayout l14 = new LinearLayout(this);
                 l14.setOrientation(LinearLayout.HORIZONTAL);
                 l14.setLayoutParams(lpMatchWrap);
@@ -573,7 +520,7 @@ public class WidgetConfigureActivity extends Activity {
             l13.addView(blueValue);
             l11.addView(l13);
             l1.addView(l11);
-            if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+            if (currentView == SETBACKGROUNDCOLOUR) {
                 LinearLayout l14 = new LinearLayout(this);
                 l14.setOrientation(LinearLayout.HORIZONTAL);
                 l14.setLayoutParams(lpMatchWrap);
@@ -604,7 +551,7 @@ public class WidgetConfigureActivity extends Activity {
             l17.addView(okButton, lpWrapWrap);
             l1.addView(l17);
         }
-        topLayout.addView(l1);
+        m_topLayout.addView(l1);
     }
 
     int safeParseInt(String s) {
@@ -648,10 +595,10 @@ public class WidgetConfigureActivity extends Activity {
         blueValue.setText(Integer.toString(b));
         col = (oldColour & 0xFF000000) + (((r << 8) + g) << 8) + b;
         fillBitmapInBackground(col, false);
-        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+        if (currentView == SETBACKGROUNDCOLOUR) {
             m_bgcolour = col;
             demo.setBackgroundColor(m_bgcolour);
-            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+            m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
             alphaSlider.setBackground(new GradientDrawable(
                 GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[] {
@@ -662,7 +609,7 @@ public class WidgetConfigureActivity extends Activity {
             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
             alphaSlider.setProgressTintList(cl);
             alphaSlider.setThumbTintList(cl);
-            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+            m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
         }
         updateWidget();
     }
@@ -698,9 +645,32 @@ public class WidgetConfigureActivity extends Activity {
         hueSlider.setProgress(hue);
     }
 
-@Override
+    @Override
+    protected TextView textLabel(int resid, int id) {
+        return super.textLabel(resid, id);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        m_CorW = "widget";
+    }
+
+    @Override
+    protected void updateFromCheckBox() {
+        updateWidget();
+        updateDemo();
+    }
+
+    @Override
     @SuppressLint({"ApplySharedPref", "RtlHardcoded", "SetTextI18n"})
     protected void onResume() {
+        Intent intent = getIntent();
+        if (intent.hasExtra("widgetID")) {
+            m_key = "W" +  intent.getIntExtra("widgetID", 0);
+        } else {
+            m_key = "W";
+        }
         super.onResume();
         appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
         secondsClockWidget = new ComponentName(
@@ -714,25 +684,15 @@ public class WidgetConfigureActivity extends Activity {
         blueValue = new EditText(this);
         blueSlider = new LongClickableSeekBar(this);
         demo = new TextClock(this);
-        prefs = getSharedPreferences("SecondsClock", Context.MODE_PRIVATE);
-        currentView = prefs.getInt("Wview", CONFIGUREWIDGET);
-        m_bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
-        m_fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
-        showTime = prefs.getInt("WshowTime", 2); // include seconds
-        showWeekDay = prefs.getInt("WshowWeekDay",2); // long format
-        showShortDate = prefs.getInt("WshowShortDate",0);
-        showMonthDay = prefs.getInt("WshowMonthDay",1);
-        showMonth = prefs.getInt("WshowMonth", 2); // long format
-        showYear = prefs.getInt("WshowYear", 1);
-        Resources res = getResources();
-        metrics = res.getDisplayMetrics();
-        config = res.getConfiguration();
+        currentView = m_prefs.getInt("Wview", CONFIGURE);
+        m_bgcolour = m_prefs.getInt("Wbgcolour", 0x00000000);
+        m_fgcolour = m_prefs.getInt("Wfgcolour",0xFFFFFFFF);
+        showTime = m_prefs.getInt("WshowTime", 2); // include seconds
         helptext = new TextView(this);
 
         // The 1.3 is a fudge factor = I don't know why it is needed.
         int numberWidth = (int)(alphaValue.getPaint().measureText("000") * 1.3);
         demo.setGravity(Gravity.CENTER_HORIZONTAL);
-        topLayout = findViewById(R.id.genericlayout);
         demobox = new LinearLayout(this);
         demoboxbox = new LinearLayout(this);
         lpWrapMatch =  new LinearLayout.LayoutParams(
@@ -740,13 +700,6 @@ public class WidgetConfigureActivity extends Activity {
             LinearLayout.LayoutParams.MATCH_PARENT);
         showTimeCheckBox = new CheckBox(this);
         showSecondsCheckBox = new CheckBox(this);
-        showShortWeekDayCheckBox = new CheckBox(this);
-        showLongWeekDayCheckBox = new CheckBox(this);
-        showShortDateCheckBox = new CheckBox(this);
-        showMonthDayCheckBox = new CheckBox(this);
-        showShortMonthCheckBox = new CheckBox(this);
-        showLongMonthCheckBox = new CheckBox(this);
-        showYearCheckBox = new CheckBox(this);
         bgButton = new Button(this);
         fgButton = new Button(this);
         lpMatchWrap = new LinearLayout.LayoutParams(
@@ -755,7 +708,6 @@ public class WidgetConfigureActivity extends Activity {
         lpWrapWrap = new ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT);
-        ac = this;
         hueSlider = new LongClickableSeekBar(this);
         lpMMWeight = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -780,7 +732,7 @@ public class WidgetConfigureActivity extends Activity {
                         alphaValue.setText(Integer.toString(val));
                         m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
                         demo.setBackgroundColor(m_bgcolour);
-                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         alphaSlider.setBackground(new GradientDrawable(
                             GradientDrawable.Orientation.LEFT_RIGHT,
                             new int[] {
@@ -797,7 +749,7 @@ public class WidgetConfigureActivity extends Activity {
         alphaSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setalphasliderhelp),
+                Toast.makeText(m_activity, getString(R.string.setalphasliderhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -830,7 +782,7 @@ public class WidgetConfigureActivity extends Activity {
                     }
                     alphaSlider.setProgress(val);
                     m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
-                    prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                    m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                     demo.setBackgroundColor(m_bgcolour);
                     alphaSlider.setBackground(new GradientDrawable(
                         GradientDrawable.Orientation.LEFT_RIGHT,
@@ -844,7 +796,7 @@ public class WidgetConfigureActivity extends Activity {
         alphaValue.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.alphavaluehelp),
+                Toast.makeText(m_activity, getString(R.string.alphavaluehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -862,10 +814,10 @@ public class WidgetConfigureActivity extends Activity {
                         recursive = true;
                         int val = seekBar.getProgress();
                         redValue.setText(Integer.toString(val));
-                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        if (currentView == SETBACKGROUNDCOLOUR) {
                             m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
                             fillBitmapInBackground(m_bgcolour, false);
-                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                            m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                             demo.setBackgroundColor(m_bgcolour);
                             alphaSlider.setBackground(new GradientDrawable(
                                 GradientDrawable.Orientation.LEFT_RIGHT,
@@ -876,7 +828,7 @@ public class WidgetConfigureActivity extends Activity {
                         } else {
                             m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
                             fillBitmapInBackground(m_fgcolour, false);
-                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                            m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                             alphaSlider.setProgressTintList(cl);
@@ -895,7 +847,7 @@ public class WidgetConfigureActivity extends Activity {
         redSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setredsliderhelp),
+                Toast.makeText(m_activity, getString(R.string.setredsliderhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -926,10 +878,10 @@ public class WidgetConfigureActivity extends Activity {
                         val = 255;
                     }
                     redSlider.setProgress(val);
-                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                    if (currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
                         fillBitmapInBackground(m_bgcolour, false);
-                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         demo.setBackgroundColor(m_bgcolour);
                         alphaSlider.setBackground(new GradientDrawable(
                             GradientDrawable.Orientation.LEFT_RIGHT,
@@ -939,7 +891,7 @@ public class WidgetConfigureActivity extends Activity {
                     } else {
                         m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
                         fillBitmapInBackground(m_fgcolour, false);
-                        prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                        m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         demo.setTextColor(m_fgcolour);
                         ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                         alphaSlider.setProgressTintList(cl);
@@ -954,7 +906,7 @@ public class WidgetConfigureActivity extends Activity {
         redValue.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.redvaluehelp),
+                Toast.makeText(m_activity, getString(R.string.redvaluehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -972,10 +924,10 @@ public class WidgetConfigureActivity extends Activity {
                         recursive = true;
                         int val = seekBar.getProgress();
                         greenValue.setText(Integer.toString(val));
-                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        if (currentView == SETBACKGROUNDCOLOUR) {
                             m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
                             fillBitmapInBackground(m_bgcolour, false);
-                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                            m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                             demo.setBackgroundColor(m_bgcolour);
                             alphaSlider.setBackground(new GradientDrawable(
                                 GradientDrawable.Orientation.LEFT_RIGHT,
@@ -985,7 +937,7 @@ public class WidgetConfigureActivity extends Activity {
                         } else {
                             m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
                             fillBitmapInBackground(m_fgcolour, false);
-                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                            m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                             alphaSlider.setProgressTintList(cl);
@@ -1004,7 +956,7 @@ public class WidgetConfigureActivity extends Activity {
         greenSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setgreensliderhelp),
+                Toast.makeText(m_activity, getString(R.string.setgreensliderhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1034,10 +986,10 @@ public class WidgetConfigureActivity extends Activity {
                         val = 255;
                     }
                     greenSlider.setProgress(val);
-                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                    if (currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
                         fillBitmapInBackground(m_bgcolour, false);
-                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         demo.setBackgroundColor(m_bgcolour);
                         alphaSlider.setBackground(new GradientDrawable(
                             GradientDrawable.Orientation.LEFT_RIGHT,
@@ -1047,7 +999,7 @@ public class WidgetConfigureActivity extends Activity {
                     } else {
                         m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
                         fillBitmapInBackground(m_fgcolour, false);
-                        prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                        m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         demo.setTextColor(m_fgcolour);
                         ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                         alphaSlider.setProgressTintList(cl);
@@ -1062,7 +1014,7 @@ public class WidgetConfigureActivity extends Activity {
         greenValue.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.greenvaluehelp),
+                Toast.makeText(m_activity, getString(R.string.greenvaluehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1081,10 +1033,10 @@ public class WidgetConfigureActivity extends Activity {
                         int val = seekBar.getProgress();
                         blueValue.setText(Integer.toString(val));
                         int colour;
-                        if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                        if (currentView == SETBACKGROUNDCOLOUR) {
                             m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
                             fillBitmapInBackground(m_bgcolour, false);
-                            prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                            m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                             demo.setBackgroundColor(m_bgcolour);
                             alphaSlider.setBackground(new GradientDrawable(
                                 GradientDrawable.Orientation.LEFT_RIGHT,
@@ -1094,7 +1046,7 @@ public class WidgetConfigureActivity extends Activity {
                         } else {
                             m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
                             fillBitmapInBackground(m_fgcolour, false);
-                            prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                            m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
                             fillBitmapInBackground(m_fgcolour, false);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
@@ -1114,7 +1066,7 @@ public class WidgetConfigureActivity extends Activity {
         blueSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setbluesliderhelp),
+                Toast.makeText(m_activity, getString(R.string.setbluesliderhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1144,10 +1096,10 @@ public class WidgetConfigureActivity extends Activity {
                         val = 255;
                     }
                     blueSlider.setProgress(val);
-                    if (currentView == SETWIDGETBACKGROUNDCOLOUR) {
+                    if (currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
                         fillBitmapInBackground(m_bgcolour, false);
-                        prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
+                        m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         demo.setBackgroundColor(m_bgcolour);
                         alphaSlider.setBackground(new GradientDrawable(
                             GradientDrawable.Orientation.LEFT_RIGHT,
@@ -1157,7 +1109,7 @@ public class WidgetConfigureActivity extends Activity {
                     } else {
                         m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
                         fillBitmapInBackground(m_fgcolour, false);
-                        prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+                        m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         demo.setTextColor(m_fgcolour);
                         ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                         alphaSlider.setProgressTintList(cl);
@@ -1172,7 +1124,7 @@ public class WidgetConfigureActivity extends Activity {
         blueValue.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.bluevaluehelp),
+                Toast.makeText(m_activity, getString(R.string.bluevaluehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1183,7 +1135,7 @@ public class WidgetConfigureActivity extends Activity {
         demo.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.demohelp),
+                Toast.makeText(m_activity, getString(R.string.demohelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1201,16 +1153,16 @@ public class WidgetConfigureActivity extends Activity {
             @Override
             public boolean onLongClick(View v) {
                 switch(currentView) {
-                    case SETWIDGETBACKGROUNDCOLOUR:
-                        Toast.makeText(ac, getString(R.string.backgroundcolourhelp),
+                    case SETBACKGROUNDCOLOUR:
+                        Toast.makeText(m_activity, getString(R.string.backgroundcolourhelp),
                             Toast.LENGTH_LONG).show();
                         break;
-                    case SETWIDGETTEXTCOLOUR:
-                        Toast.makeText(ac, getString(R.string.textcolourhelphelp),
+                    case SETTEXTCOLOUR:
+                        Toast.makeText(m_activity, getString(R.string.textcolourhelphelp),
                             Toast.LENGTH_LONG).show();
                         break;
-                    case CONFIGUREWIDGET:
-                        Toast.makeText(ac, getString(R.string.editwidgethelp),
+                    case CONFIGURE:
+                        Toast.makeText(m_activity, getString(R.string.editwidgethelp),
                             Toast.LENGTH_LONG).show();
                     break;
                 }
@@ -1222,12 +1174,6 @@ public class WidgetConfigureActivity extends Activity {
             LinearLayout.LayoutParams.WRAP_CONTENT));
         demobox.setBackgroundResource(R.drawable.background);
         demoboxbox.setPadding(10, 0, 10, 0);
-        if (showShortDate != 0) {
-            showMonthDayCheckBox.setVisibility(View.GONE);
-            showShortMonthCheckBox.setVisibility(View.GONE);
-            showLongMonthCheckBox.setVisibility(View.GONE);
-            showYearCheckBox.setVisibility(View.GONE);
-        }
         showTimeCheckBox.setText(R.string.show_time);
         showTimeCheckBox.setChecked(showTime != 0);
         showTimeCheckBox.setOnCheckedChangeListener(
@@ -1241,7 +1187,7 @@ public class WidgetConfigureActivity extends Activity {
                         showSecondsCheckBox.setVisibility(View.VISIBLE);
                     } else {
                         showTime = 0;
-                        if (config.orientation !=
+                        if (m_config.orientation !=
                             Configuration.ORIENTATION_LANDSCAPE)
                         {
                             showSecondsCheckBox.setVisibility(View.GONE);
@@ -1249,7 +1195,7 @@ public class WidgetConfigureActivity extends Activity {
                             showSecondsCheckBox.setVisibility(View.INVISIBLE);
                         }
                     }
-                    prefs.edit().putInt("WshowTime", showTime).commit();
+                    m_prefs.edit().putInt("WshowTime", showTime).commit();
                     updateWidget();
                     updateDemo();
                 }
@@ -1257,7 +1203,7 @@ public class WidgetConfigureActivity extends Activity {
         showTimeCheckBox.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.showtimehelp),
+                Toast.makeText(m_activity, getString(R.string.showtimehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1274,7 +1220,7 @@ public class WidgetConfigureActivity extends Activity {
                     } else {
                         showTime = 1;
                     }
-                    prefs.edit().putInt("WshowTime", showTime).commit();
+                    m_prefs.edit().putInt("WshowTime", showTime).commit();
                     updateWidget();
                     updateDemo();
                 }
@@ -1284,217 +1230,7 @@ public class WidgetConfigureActivity extends Activity {
             {
                 @Override
                 public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showsecondshelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showShortWeekDayCheckBox.setText(R.string.show_short_weekday);
-        showShortWeekDayCheckBox.setChecked(showWeekDay == 1);
-        showShortWeekDayCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showLongWeekDayCheckBox.setChecked(false);
-                        showWeekDay = 1;
-                    } else {
-                        showWeekDay = 0;
-                    }
-                    prefs.edit().putInt("WshowWeekDay", showWeekDay).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showShortWeekDayCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showshortweekdayhelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showLongWeekDayCheckBox.setText(R.string.show_long_weekday);
-        showLongWeekDayCheckBox.setChecked(showWeekDay == 2);
-        showLongWeekDayCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showShortWeekDayCheckBox.setChecked(false);
-                        showWeekDay = 2;
-                    } else {
-                        showWeekDay = 0;
-                    }
-                    prefs.edit().putInt("WshowWeekDay", showWeekDay).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showLongWeekDayCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showlongweekdayhelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showShortDateCheckBox.setText(R.string.show_short_date);
-        showShortDateCheckBox.setChecked(showShortDate != 0);
-        showShortDateCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showShortDate = 1;
-                        showMonthDayCheckBox.setChecked(false);
-                        showShortMonthCheckBox.setChecked(false);
-                        showLongMonthCheckBox.setChecked(false);
-                        showYearCheckBox.setChecked(false);
-                        showYearCheckBox.setVisibility(View.GONE);
-                        showMonthDayCheckBox.setVisibility(View.GONE);
-                        showShortMonthCheckBox.setVisibility(View.GONE);
-                        showLongMonthCheckBox.setVisibility(View.GONE);
-                        showYearCheckBox.setVisibility(View.GONE);
-                    } else {
-                        showShortDate = 0;
-                        showMonthDayCheckBox.setVisibility(View.VISIBLE);
-                        showShortMonthCheckBox.setVisibility(View.VISIBLE);
-                        showLongMonthCheckBox.setVisibility(View.VISIBLE);
-                        showYearCheckBox.setVisibility(View.VISIBLE);
-                    }
-                    prefs.edit().putInt(
-                        "WshowShortDate", showShortDate).commit();
-                    prefs.edit().putInt("WshowMonthDay", showMonthDay).commit();
-                    prefs.edit().putInt("WshowMonth", showMonth).commit();
-                    prefs.edit().putInt("WshowYear", showYear).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showShortDateCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showshortdatehelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showMonthDayCheckBox.setText(R.string.show_month_day);
-        showMonthDayCheckBox.setChecked(showMonthDay != 0);
-        showMonthDayCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showMonthDay = 1;
-                    } else {
-                        showMonthDay = 0;
-                    }
-                    prefs.edit().putInt("WshowMonthDay", showMonthDay).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showMonthDayCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showmonthdayhelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showShortMonthCheckBox.setText(R.string.show_short_month);
-        showShortMonthCheckBox.setChecked(showMonth == 1);
-        showShortMonthCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showLongMonthCheckBox.setChecked(false);
-                        showMonth = 1;
-                    } else {
-                        showMonth = 0;
-                    }
-                    prefs.edit().putInt("WshowMonth", showMonth).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showShortMonthCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showshortmonthhelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showLongMonthCheckBox.setText(R.string.show_long_month);
-        showLongMonthCheckBox.setChecked(showMonth == 2);
-        showLongMonthCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showShortMonthCheckBox.setChecked(false);
-                        showMonth = 2;
-                    } else {
-                        showMonth = 0;
-                    }
-                    prefs.edit().putInt("WshowMonth", showMonth).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showLongMonthCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showlongmonthhelp),
-                        Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        showYearCheckBox.setText(R.string.show_year);
-        showYearCheckBox.setChecked(showYear != 0);
-        showYearCheckBox.setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(
-                    CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        showYear = 1;
-                    } else {
-                        showYear = 0;
-                    }
-                    prefs.edit().putInt("WshowYear", showYear).commit();
-                    updateWidget();
-                    updateDemo();
-                }
-            });
-        showYearCheckBox.setOnLongClickListener(
-            new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v) {
-                    Toast.makeText(ac, getString(R.string.showyearhelp),
+                    Toast.makeText(m_activity, getString(R.string.showsecondshelp),
                         Toast.LENGTH_LONG).show();
                     return true;
                 }
@@ -1504,15 +1240,13 @@ public class WidgetConfigureActivity extends Activity {
         bgButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentView = SETWIDGETBACKGROUNDCOLOUR;
-                prefs.edit().putInt("Wview", currentView).commit();
-                doChooserLayout();
+                setCurrentView(SETBACKGROUNDCOLOUR);
             }
         });
         bgButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setbgcolourhelp),
+                Toast.makeText(m_activity, getString(R.string.setbgcolourhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1522,15 +1256,13 @@ public class WidgetConfigureActivity extends Activity {
         fgButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentView = SETWIDGETTEXTCOLOUR;
-                prefs.edit().putInt("Wview", currentView).commit();
-                doChooserLayout();
+                setCurrentView(SETTEXTCOLOUR);
             }
         });
         fgButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.setfgcolourhelp),
+                Toast.makeText(m_activity, getString(R.string.setfgcolourhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1552,7 +1284,7 @@ public class WidgetConfigureActivity extends Activity {
                     if (!recursive) {
                         recursive = true;
                         handleHueChanged(seekBar.getProgress(),
-                            (currentView == SETWIDGETBACKGROUNDCOLOUR)
+                            (currentView == SETBACKGROUNDCOLOUR)
                                 ? m_bgcolour : m_fgcolour);
                         updateWidget();
                         recursive = false;
@@ -1566,7 +1298,7 @@ public class WidgetConfigureActivity extends Activity {
         hueSlider.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.sethuesliderhelp),
+                Toast.makeText(m_activity, getString(R.string.sethuesliderhelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
@@ -1575,46 +1307,31 @@ public class WidgetConfigureActivity extends Activity {
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentView = CONFIGUREWIDGET;
-                prefs.edit().putInt("Wview", currentView).commit();
-                doMainLayout();
+                setCurrentView(CONFIGURE);
             }
         });
         okButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(ac, getString(R.string.donehelp),
+                Toast.makeText(m_activity, getString(R.string.donehelp),
                     Toast.LENGTH_LONG).show();
                 return true;
             }
         });
         updateWidget();
         updateDemo();
-
-        switch (currentView) {
-            case SETWIDGETBACKGROUNDCOLOUR:
-            case SETWIDGETTEXTCOLOUR:
-                doChooserLayout();
-                break;
-            case CONFIGUREWIDGET:
-                doMainLayout();
-                break;
-        }
+        setCurrentView(currentView);
     }
 
     @SuppressLint("ApplySharedPref")
     @Override
-    public void onBackPressed() {
-        switch (currentView) {
-            case SETWIDGETBACKGROUNDCOLOUR:
-            case SETWIDGETTEXTCOLOUR:
-                currentView = CONFIGUREWIDGET;
-                prefs.edit().putInt("Wview", currentView).commit();
-                doMainLayout();
-                break;
-            case CONFIGUREWIDGET:
-                super.onBackPressed();
-                break;
+    protected void setCurrentView(int viewnum) {
+        currentView = viewnum;
+        m_prefs.edit().putInt("Wview", currentView).commit();
+        if (currentView == CONFIGURE) {
+            doMainLayout();
+        } else {
+            doChooserLayout();
         }
     }
 }

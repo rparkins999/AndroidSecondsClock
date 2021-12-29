@@ -5,8 +5,34 @@
   -->
 
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="widget">widget</string>
+    <string name="clock">clock</string>
     <string name="app_name">SecondsClock</string>
     <string name="app_label">Seconds Clock</string>
+    <string name="nosysclock">Cannot find system clock app.</string>
+    <string name="noclockpermission">Cannot launch system clock:
+        try giving SecondsClock permission SET_ALARMS.</string>
+    <string name="gosysclock">Go to system clock app</string>
+    <string name="helpsysclock">Touch this button to go to the device\'s
+        default clock app.</string>
+    <string name="confignewwidget">Configure new widget</string>
+    <string name="helpnewwidget">Touch this button to set the configuration
+        for new widgets. To create a new widget, long press in an empty
+        space in your home screen.</string>
+    <string name="configoldwwidget">Configure existing widget</string>
+    <string name="helpoldwidget">Touch this button to configure a widget that
+        you have created previously: you will be sent back to your home screen
+        and the first widget (from this app) that you touch will take you
+        to the widget configure screen for that widget.</string>
+    <string name="actionoldwidget">When you see your home screen, if necessary
+        move to the appropriate page, and touch the widget that you want
+        to configure.</string>
+    <string name="confignightclock">Configure full screen clock</string>
+    <string name="helpnightclock">Touch this button to configure the
+        full screen clock.</string>
+    <string name="runnightclock">Run full screen clock</string>
+    <string name="helprunclock">Touch this button to run
+        the full screen clock.</string>
     <string name="appwidget_text">Clock</string>
     <string name="app_widget_description">1x1 seconds clock</string>
     <string name="demohelp">This shows what the widget looks like.
@@ -31,29 +57,29 @@
         This will increase battery drain since the widget has to update itself
         every second.</string>
     <string name="show_short_weekday">Show abbreviated day name
-        in widget</string>
-    <string name="showshortweekdayhelp">If this box is checked, the widget will
+        in %1s.</string>
+    <string name="showshortweekdayhelp">If this box is checked, the %1s will
         display the locale-appropriate abbreviation for the day of the
         week.</string>
-    <string name="show_long_weekday">Show full day name in widget</string>
-    <string name="showlongweekdayhelp">If this box is checked, the widget will
+    <string name="show_long_weekday">Show full day name in %1s.</string>
+    <string name="showlongweekdayhelp">If this box is checked, the %1s will
         display the locale-appropriate full name for the day of the
         week.</string>
-    <string name="show_short_date">Show numeric date in widget</string>
-    <string name="showshortdatehelp">If this box is checked, the widget will
+    <string name="show_short_date">Show numeric date in %1s.</string>
+    <string name="showshortdatehelp">If this box is checked, the %1s will
         display the locale-appropriate numeric date. If the numeric date
         is shown, the full date cannot be shown as well.</string>
-    <string name="show_month_day">Show day of month in widget</string>
-    <string name="showmonthdayhelp">If this box is checked, the widget will
+    <string name="show_month_day">Show day of month in %1s.</string>
+    <string name="showmonthdayhelp">If this box is checked, the %1s will
         display the day of the month.</string>
-    <string name="show_short_month">Show abbreviated month name in widget</string>
-    <string name="showshortmonthhelp">If this box is checked, the widget will
+    <string name="show_short_month">Show abbreviated month name in %1s.</string>
+    <string name="showshortmonthhelp">If this box is checked, the %1s will
         display the locale-appropriate abbreviation for the month.</string>
-    <string name="show_long_month">Show full month name in widget</string>
-    <string name="showlongmonthhelp">If this box is checked, the widget will
+    <string name="show_long_month">Show full month name in %1s.</string>
+    <string name="showlongmonthhelp">If this box is checked, the %1s will
         display the locale-appropriate full name for the month.</string>
-    <string name="show_year">Show year in widget</string>
-    <string name="showyearhelp">If this box is checked, the widget will
+    <string name="show_year">Show year in %1s.</string>
+    <string name="showyearhelp">If this box is checked, the %1s will
         display the (Gregorian) year.</string>
     <string name="set_bg_colour">Set widget background colour</string>
     <string name="setbgcolourhelp">Touch this button to show a colour
@@ -112,4 +138,17 @@
     <string name="done">Done</string>
     <string name="donehelp">Touch this button or the back button to
         return to the main configuration screen.</string>
+    <string name="secondssizerhelp">This slider adjusts the size of the seconds.
+        All the way to the left is no seconds at all.
+        All the way to the right is the same size as the hours and minutes.</string>
+    <string name="nosecondshelp">Touch this end of the slider for a clock
+        with no seconds shown.</string>
+    <string name="smallsecondshelp">Touch in the middle of the slider for a clock
+        with seconds shown at a smaller size.</string>
+    <string name="largesecondshelp">Touch this end of the slider for a clock
+        with seconds shown at the same size as the hours and minutes.</string>
+    <string name="sevensegments">Simulate seven segment LED.</string>
+    <string name="sevensegmentshelp">If you really want to waste your high
+        resolution display simulating a seven segment LED clock,
+        check this box.</string>
 </resources>

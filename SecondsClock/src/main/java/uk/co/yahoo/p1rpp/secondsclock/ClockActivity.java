@@ -1,8 +1,14 @@
+/*
+ * Copyright © 2021. Richard P. Parkins, M. A.
+ * Released under GPL V3 or later
+ *
+ * This is the activity which runs the fullscreen clock.
+ */
+
 package uk.co.yahoo.p1rpp.secondsclock;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.hardware.Sensor;
@@ -28,19 +34,22 @@ import androidx.annotation.Nullable;
 
 import java.util.Calendar;
 
-public class ClockActivity extends Activity implements SensorEventListener {
+public class ClockActivity extends Activity_common
+    implements SensorEventListener, View.OnLongClickListener
+{
 
     private Calendar m_now;
     private TextView m_timeView;
     private String m_timeFormat;
-    private TextView m_smallSeconds;
+    private TextView m_SecondsView;
     private final Handler m_handler = new Handler();
     private int m_showSeconds;
     private SensorManager sensorManager;
     private Sensor luxSensor = null;
-    private SharedPreferences m_prefs;
     private Configuration m_config;
     private TextView m_date;
+    private FrameLayout m_topLayout;
+    private int m_fgColour;
 
     /* We adjust the screen brightness to be the user's preferred brightness
      * reduced by the ratio of the current illumination
@@ -64,17 +73,30 @@ public class ClockActivity extends Activity implements SensorEventListener {
                 lp.screenBrightness = br; // set screen brightness
                 window.setAttributes(lp);
             }
+            // This only works on HDR screens
+            int colour = m_fgColour;
+            if (br < 1F / 255F) {
+                int opacity = (int)(br * 255);
+                if (opacity == 0) { opacity = 1; }
+                colour = (opacity << 24) | (colour & 0xFFFFFF);
+            }
+            m_topLayout.setForegroundTintList(ColorStateList.valueOf(colour));
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
+    @Override
+    public boolean onLongClick(View v) {
+        return false;
+    }
+
     private void updateTime() {
         m_now = Calendar.getInstance(); // new one in case time zone changed
         m_timeView.setText(DateFormat.format(m_timeFormat, m_now));
-        if (m_smallSeconds != null) {
-            m_smallSeconds.setText(DateFormat.format("ss", m_now));
+        if (m_SecondsView != null) {
+            m_SecondsView.setText(DateFormat.format("ss", m_now));
         }
     }
 
@@ -112,53 +134,75 @@ public class ClockActivity extends Activity implements SensorEventListener {
 
     @Override
     protected void onResume() {
+        m_key = "C";
         super.onResume();
-        m_prefs = getSharedPreferences("SecondsClock", Context.MODE_PRIVATE);
-        m_showSeconds = m_prefs.getInt(("CshowSeconds"), 2);
-        int showWeekDay = m_prefs.getInt(
-            "WshowWeekDay",2); // long format
-        int showShortDate = m_prefs.getInt("WshowShortDate",0);
-        int showMonthDay = m_prefs.getInt("WshowMonthDay",1);
-        int showMonth = m_prefs.getInt("WshowMonth", 2); // long format
-        int showYear = m_prefs.getInt("WshowYear", 1);
+        m_showSeconds = m_prefs.getInt(("CshowSeconds"), 1);
+        m_fgColour = m_prefs.getInt("CfgColour", 0xFFFFFFFF);
         Resources res = getResources();
         m_config = res.getConfiguration();
-        FrameLayout topLayout = findViewById(R.id.genericlayout);
+        m_topLayout = findViewById(R.id.genericlayout);
+        removeAllViews(m_topLayout);
+        m_topLayout.setBackgroundTintList(ColorStateList.valueOf(0xFF000000));
         m_timeView = new TextView(this);
         m_timeView.setAutoSizeTextTypeUniformWithConfiguration(
             10, 3000,
             3, TypedValue.COMPLEX_UNIT_PX);
         m_timeView.setGravity(Gravity.CENTER_HORIZONTAL);
-        int nlines = 0;
+        int nlines;
         View v1;
         boolean is24 = DateFormat.is24HourFormat(this);
         switch (m_showSeconds) {
             case 0: // no seconds
-                m_timeFormat = is24 ? "HH:mm" : "h:mm a";
-                m_smallSeconds = null;
-                nlines = 1;
+                if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE)
+                {
+                    m_timeFormat = is24 ? "HH:mm" : "h:mm' 'a";
+                    nlines = 1;
+                } else { // ORIENTATION_PORTRAIT
+                    if (is24) {
+                        m_timeFormat = "HH'\n'mm";
+                        nlines = 2;
+                    } else {
+                        m_timeFormat = "h'\n'mm'\n'a";
+                        nlines = 3;
+                    }
+                }
+                m_SecondsView = null;
                 v1 = m_timeView;
                 break;
             case 1: // small seconds
-                m_timeFormat = is24 ? "HH:mm" : "h:mm a";
-                m_smallSeconds = new TextView(this);
-                m_smallSeconds.setAutoSizeTextTypeWithDefaults(
+                if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE)
+                {
+                    m_timeFormat = is24 ? "HH:mm" : "h:mm' 'a";
+                    nlines = 1;
+                } else { // ORIENTATION_PORTRAIT
+                    if (is24) {
+                        m_timeFormat = "HH'\n'mm";
+                        nlines = 3;
+                    } else {
+                        m_timeFormat = "h'\n'mm'\n'a";
+                        nlines = 4;
+                    }
+                }
+                m_SecondsView = new TextView(this);
+                m_SecondsView.setAutoSizeTextTypeWithDefaults(
                     TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
                 LinearLayout ll = new LinearLayout(this);
                 if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE)
                 {
                     ll.setOrientation(LinearLayout.HORIZONTAL);
+                    m_SecondsView.setGravity(Gravity.CENTER);
                     nlines = 1;
                 } else {
                     ll.setOrientation(LinearLayout.VERTICAL);
+                    m_SecondsView.setGravity(Gravity.CENTER_HORIZONTAL);
                     nlines = 2;
                 }
                 ll.addView(m_timeView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0.67F));
-                ll.addView(m_smallSeconds, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0.2F));
+                ll.addView(m_SecondsView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0.33F));
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0.8F));
                 v1 = ll;
                 break;
             default: // large seconds
@@ -167,23 +211,28 @@ public class ClockActivity extends Activity implements SensorEventListener {
                     m_timeFormat = is24 ? "HH:mm:ss" : "h:mm:ss' 'a";
                     nlines = 1;
                 } else { // ORIENTATION_PORTRAIT
-                    m_timeFormat = is24 ? "HH:mm'\n'ss" : "h:mm:ss'\n'a";
-                    nlines = 2;
+                    if (is24) {
+                        m_timeFormat = "HH'\n'mm'\n'ss";
+                        nlines = 3;
+                    } else {
+                        m_timeFormat = "h'\n'mm'\n'ss'\n'a";
+                        nlines = 4;
+                    }
                 }
-                m_smallSeconds = null;
-                m_timeView.setLines(nlines);
+                m_SecondsView = null;
                 v1 = m_timeView;
         }
+        m_timeView.setLines(nlines);
         if (showWeekDay + showShortDate + showMonthDay + showMonth + showYear == 0)
         {
             m_date = null;
-            topLayout.addView(v1, new LinearLayout.LayoutParams(
+            m_topLayout.addView(v1, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         } else {
             // just for testing
             m_date = null;
-            topLayout.addView(v1, new LinearLayout.LayoutParams(
+            m_topLayout.addView(v1, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         }

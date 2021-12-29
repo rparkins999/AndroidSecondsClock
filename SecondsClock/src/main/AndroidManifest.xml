@@ -29,18 +29,44 @@
         </receiver>
 
         <activity
-            android:name=".WidgetConfigureActivity"
+            android:name=".ClockActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="uk.co.yahoo.p1rpp.ClockActivity" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ClockConfigureActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="uk.co.yahoo.p1rpp.ClockConfigureActivity" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
             android:screenOrientation="fullSensor"
             android:exported="true"
             android:label="@string/app_label">
             <intent-filter>
+                <action android:name="uk.co.yahoo.p1rpp.MainActivity" />
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".ClockActivity"
-        />
+            android:name=".WidgetConfigureActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="uk.co.yahoo.p1rpp.WidgetConfigureActivity" />
+            </intent-filter>
+        </activity>
+
         <meta-data
             android:name="com.samsung.android.icon_container.has_icon_container"
             android:value="true"/>
