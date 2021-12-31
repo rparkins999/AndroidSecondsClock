@@ -59,9 +59,11 @@ class Formatter {
                 int anydate = showWeekDay + showShortDate + showMonthDay
                     + showMonth + showYear;
                 if ((minWidth >= maxHeight) || (anydate != 0)) {
-                    sbrest.append(":ss");
+                    time12 = "h:mm:ss a";
+                    time24 = "HH:mm:ss";
                 } else {
-                    sbrest.append("'\n'ss");
+                    time12 = "h:mm'\n'ss a";
+                    time24 = "HH:mm'\n'ss";
                     ++lines;
                 }
             }

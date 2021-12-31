@@ -44,10 +44,17 @@
         The background pattern shows the effect of the widget background
         in case it is not transparent.</string>
     <string name="longpresslabel">Long press here for help information.</string>
-    <string name="editwidgethelp">This screen allows you to define the
-        characteristics of the clock widget.
-        A long press on any of the objects on this screen will bring up
-        some help information about it.</string>
+    <string name="mainactivityhelp">This screen allows you to choose what to do next.
+        Long press on any of the buttons for a longer description of what it does.
+        This could have been a menu, but that would make you do an unnecessary
+        extra click.</string>
+    <string name="widgetconfighelp">This screen allows you to configure a widget.
+        If you came here from a particular widget, it reconfigures that: if you came here
+        from the top level screen, it sets the the configuration for new widgets.
+        You can make multiple widgets with different configurations.
+        Long press on anything for a longer description of what it does.</string>
+    <string name="clockconfighelp">This screen allows you to configure the full screen clock.
+        Long press on anything for a longer description of what it does.</string>
     <string name="show_time">Show time in widget</string>
     <string name="showtimehelp">If this box is checked, the widget will
         display the time in locale-appropriate format.</string>
@@ -151,4 +158,28 @@
     <string name="sevensegmentshelp">If you really want to waste your high
         resolution display simulating a seven segment LED clock,
         check this box.</string>
+    <string name="clockdemo">This half size demonstration shows what
+        the full screen clock will look like
+        (in %1s orientation at the current ambient light level).</string>
+    <string name="landscape">landscape</string>
+    <string name="portrait">portrait</string>
+    <string name="brightnesshelp">This slider adjusts the minimum brightness
+        of the full screen clock at low ambient light level.
+        All the way to the left is a minimum brightness of 1 (if your device supports it)
+        All the way to the right is no brightness reduction.</string>
+    <string name="forcevertical">Force vertical time layout</string>
+    <string name="forceverticalhelp">If this box is checked, in portrait orientation
+        the hours minutes, seconds if present, and AM/PM marker if present,
+        are arranged vertically down the screen. Otherwise if any of
+        the numeric date or the full weekday or the full month name
+        are displayed, the time is displayed across the screen.</string>
+    <string name="setclockcolour">Set full screen clock colour</string>
+    <string name="setclockcolourhelp">Touch this button to show a colour
+        chooser screen for the colour of the full screen clock.</string>
+    <string name="runclock">Test full screen clock</string>
+    <string name="runclockhelp">Touch this button to show the full screen clock.
+        Touching the screen or the back button from there will bring back
+        this screen: this is different from the normal action when the
+        clock has been invoked from the top level screen, which is to
+        return to the home screen.</string>
 </resources>

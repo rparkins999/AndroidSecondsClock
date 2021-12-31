@@ -8,6 +8,7 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -27,25 +28,57 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.Calendar;
+import java.util.Locale;
 
 class ClockView extends LinearLayout implements SensorEventListener {
 
-    public String m_dateFormat;
-    public String m_timeFormat;
+    public String m_dateFormat = " ";
+    public String m_hoursFormat = " ";
+    public String m_monthFormat =  " ";
+    public String m_timeFormat = " ";
+    public String m_weekdayFormat = " ";
 
+    private final TextView m_ampmView;
     private final Context m_context;
     private final TextView m_dateView;
     private final Handler m_handler = new Handler();
+    private final TextView m_hoursView;
+    private final TextView m_minutesView;
+    private final TextView m_monthdayView;
+    private final TextView m_monthView;
     private final TextView m_secondsView;
     private final SensorManager m_sensorManager;
     private final SharedPreferences m_prefs;
     private final TextView m_timeView;
+    private final TextView m_weekdayView;
+    private final TextView m_yearView;
 
     private int m_fgColour;
-    private boolean m_haveDate;
-    private boolean m_haveSeconds;
+    private int m_height;
+    public float m_lightLevel = 100F;
     private Sensor m_lightSensor;
+    private ClockConfigureActivity m_owner = null;
+    private boolean m_trim = false; // chop off last char of time
     private boolean m_visible;
+
+    /* This adjusts the colour and opacity of the clock display.
+     * It can be called from the configuration screen
+     * or from onSensorChanged when the ambient light level changes
+     */
+    public void adjustColour() {
+        int brightness = m_prefs.getInt("Cbrightness", 255);
+        m_fgColour = m_prefs.getInt("CfgColour", 0xFFFFFFFF);
+        int opacity = (int) (m_lightLevel * (255F / 100F));
+        if (opacity < 1) {
+            opacity = 1;
+        } else if (opacity > 255) {
+            opacity = 255;
+        }
+        m_owner.setOpacity(opacity);
+        opacity = brightness + opacity * (255 - brightness) / 255;
+        setForegroundTintList(ColorStateList.valueOf(
+            (opacity << 24) | (m_fgColour & 0xFFFFFF)));
+    }
 
     /* We set the foreground opacity of this view as the ratio of the current illumination
      * to the illumination of a typical brightly lit room (100 lux).
@@ -53,30 +86,43 @@ class ClockView extends LinearLayout implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
-            int opacity = (int) (event.values[0] * (255F / 100F));
-            if (opacity < 1) {
-                opacity = 1;
-            } else if (opacity > 255) {
-                opacity = 255;
-            }
-            setForegroundTintList(ColorStateList.valueOf(
-                (opacity << 24) | (m_fgColour & 0xFFFFFF)));
+            m_lightLevel = event.values[0];
+            adjustColour();
         }
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
     private Calendar updateTime() {
         Calendar next = Calendar.getInstance(); // new one in case time zone changed
-        m_timeView.setText(DateFormat.format(m_timeFormat, next));
-        if (m_haveSeconds) {
-            m_secondsView.setText(DateFormat.format("ss", next));
+        CharSequence ampm = DateFormat.format("a", next);
+        CharSequence time = DateFormat.format(m_timeFormat, next);
+        // Remove this bit of code if you're happy with the default for en_GB
+        // of lower-case am/pm, which I don't like.
+        if (Locale.getDefault().getDisplayName().equals("English (United Kingdom)")) {
+            if (m_trim) {
+                // We're in AM/PM mode with the seven segment font,
+                // which doesn't have a decent "M", so we remove it.
+                time = time.subSequence(0, time.length() - 1);
+                ampm = ampm.subSequence(0, ampm.length() - 1);
+            }
+            m_ampmView.setAllCaps(true);
+            m_timeView.setAllCaps(true);
+        } else {
+            m_ampmView.setAllCaps(false);
+            m_timeView.setAllCaps(false);
         }
-        if (m_haveDate) {
-            m_dateView.setText(DateFormat.format(m_dateFormat, next));
-        }
+        m_ampmView.setText(ampm);
+        m_dateView.setText(DateFormat.format(m_dateFormat, next));
+        m_hoursView.setText(DateFormat.format(m_hoursFormat, next));
+        m_minutesView.setText(DateFormat.format("mm", next));
+        m_monthdayView.setText(DateFormat.format("dd", next));
+        m_monthView.setText(DateFormat.format(m_monthFormat, next));
+        m_secondsView.setText(DateFormat.format("ss", next));
+        m_timeView.setText(time);
+        m_weekdayView.setText(DateFormat.format(m_weekdayFormat, next));
+        m_yearView.setText(DateFormat.format("yyyy", next));
         return next;
     }
 
@@ -101,6 +147,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
             m_handler.postDelayed(this, offset);
         }
     };
+
+    public void setHeight (int height) { m_height = height; }
 
     // recursive version
     void removeAllViews(View v) {
@@ -131,7 +179,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         removeAllViews(this);
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_context);
-        int secondsSize = m_prefs.getInt("CsecondsSize", 255);
+        boolean forceVertical = m_prefs.getBoolean("CforceVertical", false);
+        int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
         int showMonth = m_prefs.getInt("CshowMonth", 2); // long format
         int showMonthDay = m_prefs.getInt("CshowMonthDay",1);
         int showShortDate = m_prefs.getInt("CshowShortDate",0);
@@ -140,46 +189,52 @@ class ClockView extends LinearLayout implements SensorEventListener {
         int showYear = m_prefs.getInt("CshowYear", 1);
         m_fgColour = m_prefs.getInt("CfgColour", 0xFFFFFFFF);
         Typeface font;
+        float lsp = 1.0F;
         if (m_prefs.getBoolean("C7seg", false)) {
             font = Typeface.createFromAsset(
-                m_context.getAssets(), "DSEG7Classic-BoldItalic.ttf");
+            m_context.getAssets(), "DSEG7Classic-BoldItalic.ttf");
+            // The seven segment font has no line spacing....
+            lsp = 1.1F;
+            m_trim = !is24;
         } else {
             font = Typeface.DEFAULT;
+            m_trim = false;
         }
-        m_timeView.setTypeface(font);
+        m_ampmView.setTypeface(font);
+        m_hoursView.setTypeface(font);
+        m_minutesView.setTypeface(font);
         m_secondsView.setTypeface(font);
-        m_haveDate =
-            showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
+        m_timeView.setTypeface(font);
+        boolean m_haveDate = showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgColour));
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             m_secondsView.setGravity(Gravity.CENTER);
-            if (is24) {
-                if (secondsSize == 255) {
-                    m_haveSeconds = false;
+            boolean haveSeconds;
+            if (m_secondsSize == 255) {
+                haveSeconds = false;
+                if (is24) {
                     m_timeFormat = "HH:mm:ss";
                 } else {
-                    m_timeFormat = "HH:mm";
-                    m_haveSeconds = secondsSize > 0;
+                    m_timeFormat = "h:mm:ss a";
                 }
             } else {
-                if (secondsSize == 255) {
-                    m_haveSeconds = false;
-                    m_timeFormat = "h:mm:ss' 'A";
+                haveSeconds = m_secondsSize > 0;
+                if (is24) {
+                    m_timeFormat = "HH:mm";
                 } else {
-                    m_timeFormat = "h:mm' 'A";
-                    m_haveSeconds = secondsSize > 0;
+                    m_timeFormat = "h:mm a";
                 }
             }
-            m_timeView.setLines(1);
             if (m_haveDate) {
+                setOrientation(VERTICAL);
                 boolean first = true;
                 StringBuilder sb = new StringBuilder();
                 if (showWeekDay > 0) {
                     first = false;
                     if (showWeekDay == 1) {
-                        sb.append("c");
+                        sb.append("EEE");
                     } else {
-                        sb.append("cccc");
+                        sb.append("EEEE");
                     }
                 }
                 if (showShortDate > 0) {
@@ -206,13 +261,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     }
                 }
                 m_dateFormat = sb.toString();
-                m_dateView.setLines(1);
                 m_ticker.run();
-                if (m_haveSeconds) {
+                if (haveSeconds) {
                     float timeWidth = m_timeView.getPaint().measureText(
                         String.valueOf(m_timeView.getText()));
                     float secondsWidth =
-                        m_timeView.getPaint().measureText("00") * secondsSize / 255F;
+                        m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
                     LinearLayout ll = new LinearLayout(m_context);
                     ll.setOrientation(HORIZONTAL);
                     ll.addView(m_timeView, new LinearLayout.LayoutParams(
@@ -239,156 +293,162 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 }
             } else {
                 m_ticker.run();
-                if (m_haveSeconds) {
+                if (haveSeconds) {
                     setOrientation(HORIZONTAL);
+                    float timeWidth = m_timeView.getPaint().measureText(
+                        String.valueOf(m_timeView.getText()));
+                    float secondsWidth =
+                        m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
                     addView(m_timeView, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        secondsSize / 255F));
+                        secondsWidth / (timeWidth + secondsWidth)));
                     addView(m_secondsView, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        1F - secondsSize / 255F));
+                        timeWidth / (timeWidth + secondsWidth)));
                 } else {
-                    addView(m_timeView);
+                    addView(m_timeView, new LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
                 }
             }
         } else { // assume PORTRAIT
-            m_secondsView.setGravity(Gravity.CENTER_HORIZONTAL);
-            int nlines = 1;
-            if (is24) {
-                if (secondsSize == 255) {
-                    nlines = 3;
-                    m_haveSeconds = false;
-                    m_timeFormat = "HH`\n`mm`\n`ss";
+            setOrientation(VERTICAL);
+            float space = 0;
+            boolean horizontalTime =
+                (   (showMonth == 2) || (showWeekDay == 2) || (showShortDate > 0))
+                 && !(m_prefs.getBoolean("Cforcevertical", false));
+            // first work out how much space we need
+            if (horizontalTime)
+            {
+                if (m_secondsSize > 0) {
+                    if (is24) {
+                        m_timeFormat = "HH:mm:ss";
+                    } else {
+                        m_timeFormat = "h:mm:ss a";
+                    }
                 } else {
-                    nlines = 2;
-                    m_timeFormat = "HH`\n`mm";
-                    m_haveSeconds = secondsSize > 0;
+                    if (is24) {
+                        m_timeFormat = "HH:mm";
+                    } else {
+                        m_timeFormat = "h:mm a";
+                    }
                 }
+                space += lsp;
             } else {
-                if (secondsSize == 255) {
-                    nlines = 4;
-                    m_haveSeconds = false;
-                    m_timeFormat = "h`\n`mm`\n`ss'\n'A";
+                if (is24) {
+                    m_hoursFormat = "HH";
+                    space += 2F + lsp;  // hours + minutes (fixed format)
                 } else {
-                    nlines = 3;
-                    m_timeFormat = "h`\n`mm`\n'A";
-                    m_haveSeconds = secondsSize > 0;
+                    m_hoursFormat = "KK";  // hours + minutes (fixed format) + AM/PM
+                    space += 3F * lsp;
                 }
             }
-            m_timeView.setLines(nlines);
-            if (m_haveDate) {
-                nlines = 0;
-                StringBuilder sb = new StringBuilder();
-                if (showWeekDay > 0) {
-                    nlines = 1;
-                    if (showWeekDay == 1) {
-                        sb.append("c");
-                    } else {
-                        sb.append("cccc");
-                    }
-                }
-                if (showShortDate > 0) {
-                    if (nlines != 0) { sb.append("'\n'"); }
-                    ++nlines;
-                    sb.append(shortDateFormat());
-                } else {
-                    if (showMonthDay > 0) {
-                        if (nlines != 0) { sb.append("'\n'"); }
-                        ++nlines;
-                        sb.append("d");
-                    }
-                    if (showMonth == 1) {
-                        if (showMonthDay > 0) {
-                            sb.append(" ");
-                        } else {
-                            if (nlines != 0) { sb.append("'\n'"); }
-                            ++nlines;
-                        }
-                        sb.append("LLL");
-                    } else if (showMonth == 2) {
-                        if (nlines != 0) { sb.append("'\n'"); }
-                        ++nlines;
-                        sb.append("LLLL");
-                    }
-                    if (showYear > 0) {
-                        if (nlines != 0) { sb.append("'\n'"); }
-                        ++nlines;
-                        sb.append("yyyy");
-                    }
-                }
-                m_dateFormat = sb.toString();
-                m_dateView.setLines(nlines);
-                m_ticker.run();
-                if (m_haveSeconds) {
-                    addView(m_timeView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        0.2F * secondsSize / 255F));
-                    addView(m_secondsView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        0.2F * (1F - secondsSize / 255F)));
-                    addView(m_dateView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.8F));
-                } else {
-                    addView(m_timeView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.2F));
-                    addView(m_dateView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.8F));
-                }
+            if (m_secondsSize > 0) { space += (lsp * m_secondsSize) / 255F; }
+            if (showWeekDay == 1) { space += 1F; m_weekdayFormat = "EEE"; }
+            else if (showWeekDay == 2) { space += 1F; m_weekdayFormat = "EEEE"; }
+            if (showMonthDay != 0) { space += 1F; }
+            if (showMonth == 1) { space += 1F; m_monthFormat = "LLL"; }
+            else if (showMonth == 2) { space += 1F; m_monthFormat = "LLLL"; }
+            if (showYear != 0) { space += 1F; }
+            // now add the views
+            LinearLayout.LayoutParams lpmm = new LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, (int)(m_height / space));
+            if (horizontalTime) {
+                addView(m_timeView, new LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (int)(lsp * m_height / space)));
             } else {
-                m_ticker.run();
-                if (m_haveSeconds) {
-                    addView(m_timeView, new LinearLayout.LayoutParams(
+                addView(m_hoursView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                if (lsp > 1F) {
+                    addView(new View(m_context), new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        secondsSize / 255F));
+                        (int) (((lsp - 1F) * m_height) / space)));
+                }
+                addView(m_minutesView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                if (m_secondsSize > 0) {
+                    if (lsp > 1F) {
+                        addView(new View(m_context), new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            (int) (((lsp - 1F) * m_height) / space)));
+                    }
                     addView(m_secondsView, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        1F - secondsSize / 255F));
-                } else {
-                    addView(m_timeView);
+                        (int) ((m_height * m_secondsSize) / (space * 255F))));
+                }
+                if (!is24) {
+                    if (lsp > 1F) {
+                        addView(new View(m_context), new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            (int) (((lsp - 1F) * m_height) / space)));
+                    }
+                    addView(m_ampmView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                }
+            }
+            m_ticker.run();
+            if (showWeekDay > 0) {
+                addView(m_weekdayView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+            }
+            if (showShortDate > 0) {
+                addView(m_dateView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+            } else {
+                if (showMonthDay > 0) {
+                    addView(m_monthdayView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                }
+                if (showMonth > 0) {
+                    addView(m_monthView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                }
+                if (showYear > 0) {
+                    addView(m_yearView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
                 }
             }
         }
     }
 
+    private TextView createInstance() {
+        TextView tv = new TextView(m_context);
+        tv.setAutoSizeTextTypeUniformWithConfiguration(
+            10, 3000,
+            3, TypedValue.COMPLEX_UNIT_PX);
+        tv.setGravity(Gravity.CENTER);
+        tv.setLines(1);
+        return tv;
+    }
+
     public ClockView(Context context) {
         super(context);
         setOrientation(VERTICAL);
-        setBackgroundColor(0xFF000000);
         m_context = context;
-        m_dateView = new TextView(context);
-        m_dateView.setAutoSizeTextTypeUniformWithConfiguration(
-            10, 3000,
-            3, TypedValue.COMPLEX_UNIT_PX);
-        m_dateView.setGravity(Gravity.CENTER);
+        m_ampmView = createInstance();
+        m_dateView = createInstance();
+        m_hoursView = createInstance();
+        m_minutesView = createInstance();
+        m_monthdayView = createInstance();
+        m_monthView = createInstance();
+        m_secondsView = createInstance();
+        m_timeView = createInstance();
+        m_weekdayView = createInstance();
+        m_yearView = createInstance();
         m_prefs = context.getSharedPreferences("SecondsClock", Context.MODE_PRIVATE);
-        m_secondsView = new TextView(context);
-        m_secondsView.setAutoSizeTextTypeUniformWithConfiguration(
-            10, 3000,
-            3, TypedValue.COMPLEX_UNIT_PX);
-        m_secondsView.setLines(1);
         m_sensorManager =
             (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         if (m_sensorManager != null) {
             m_lightSensor = m_sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         }
-        m_timeView = new TextView(context);
-        m_timeView.setAutoSizeTextTypeUniformWithConfiguration(
-            10, 3000,
-            3, TypedValue.COMPLEX_UNIT_PX);
-        m_timeView.setGravity(Gravity.CENTER);
-        m_timeView.setIncludeFontPadding(false);
         m_visible = false;
         updateLayout();
     }
+
+    public void setOwner(ClockConfigureActivity owner) { m_owner = owner; }
 
     @Override
     public void onVisibilityAggregated(boolean isVisible) {

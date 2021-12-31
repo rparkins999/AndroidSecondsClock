@@ -10,9 +10,7 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -23,6 +21,7 @@ import androidx.annotation.Nullable;
 
 abstract class Activity_common extends Activity implements View.OnLongClickListener {
 
+    protected TextView m_helptext;
     protected String m_key;
     protected FrameLayout m_topLayout;
     protected Activity m_activity = this;
@@ -32,7 +31,6 @@ abstract class Activity_common extends Activity implements View.OnLongClickListe
     protected int showMonthDay;
     protected int showMonth;
     protected int showYear;
-
 
     protected TextView textLabel(CharSequence cs, int id) {
         TextView tv = new TextView(this);

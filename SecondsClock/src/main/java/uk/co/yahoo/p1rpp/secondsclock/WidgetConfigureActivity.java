@@ -14,8 +14,6 @@ import android.annotation.SuppressLint;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -64,7 +62,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
     private BitmapWrapper m_activeWrapper = null;
     private Bitmap m_bitmap;
     private int multiplier;
-    private TextView helptext;
     private ImageView m_colourmap;
     private LinearLayout demobox;
     private LinearLayout demoboxbox;
@@ -83,6 +80,22 @@ public class WidgetConfigureActivity extends ConfigureActivity {
 
     @Override
     public boolean onLongClick(View v) {
+        if (v.getId() == LONGPRESSHELP) {
+            switch(currentView) {
+                case SETBACKGROUNDCOLOUR:
+                    Toast.makeText(m_activity, getString(R.string.backgroundcolourhelp),
+                        Toast.LENGTH_LONG).show();
+                    return true;
+                case SETTEXTCOLOUR:
+                    Toast.makeText(m_activity, getString(R.string.textcolourhelphelp),
+                        Toast.LENGTH_LONG).show();
+                    return true;
+                case CONFIGURE:
+                    Toast.makeText(m_activity, getString(R.string.widgetconfighelp),
+                        Toast.LENGTH_LONG).show();
+                    return true;
+            }
+        }
         return super.onLongClick(v);
     }
 
@@ -188,7 +201,7 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             if (resourceId > 0) {
                 sb = res.getDimensionPixelSize(resourceId);
             }
-            int hh = helptext.getBottom();
+            int hh = m_helptext.getBottom();
             size -= sb + hh;
         } else {
             size = m_metrics.widthPixels;
@@ -220,7 +233,7 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             l1.addView(demoboxbox);
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.VERTICAL);
-            l2.addView(helptext);
+            l2.addView(m_helptext);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.HORIZONTAL);
             l3.addView(showTimeCheckBox);
@@ -254,8 +267,8 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l1.addView(demoboxbox);
-            l1.addView(helptext);
-            helptext.setGravity(Gravity.START);
+            l1.addView(m_helptext);
+            m_helptext.setGravity(Gravity.START);
             l1.addView(showTimeCheckBox);
             showTimeCheckBox.setGravity(Gravity.START);
             l1.addView(showSecondsCheckBox);
@@ -282,21 +295,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             l2.addView(fgButton, lpWrapWrap);
             l1.addView(l2);
         }
-        Button b = new Button(this);
-        b.setText("clock");
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(m_activity, ClockActivity.class);
-                startActivity(intent);
-            }
-        });
-        LinearLayout l18 = new LinearLayout(this);
-        l18.setLayoutParams(lpMatchWrap);
-        l18.setOrientation(LinearLayout.VERTICAL);
-        l18.setGravity(Gravity.CENTER_HORIZONTAL);
-        l18.addView(b, lpWrapWrap);
-        l1.addView(l18);
         m_topLayout.addView(l1);
     }
 
@@ -376,7 +374,7 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l3.addView(demoboxbox);
-            l3.addView(helptext);
+            l3.addView(m_helptext);
             LinearLayout l4 = new LinearLayout(this);
             l4.setOrientation(LinearLayout.VERTICAL);
             l4.setLayoutParams(lpMatchWrap);
@@ -461,7 +459,7 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l1.addView(demoboxbox);
-            l1.addView(helptext);
+            l1.addView(m_helptext);
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.VERTICAL);
             l2.setLayoutParams(lpMatchWrap);
@@ -688,7 +686,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
         m_bgcolour = m_prefs.getInt("Wbgcolour", 0x00000000);
         m_fgcolour = m_prefs.getInt("Wfgcolour",0xFFFFFFFF);
         showTime = m_prefs.getInt("WshowTime", 2); // include seconds
-        helptext = new TextView(this);
 
         // The 1.3 is a fudge factor = I don't know why it is needed.
         int numberWidth = (int)(alphaValue.getPaint().measureText("000") * 1.3);
@@ -1137,35 +1134,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             public boolean onLongClick(View v) {
                 Toast.makeText(m_activity, getString(R.string.demohelp),
                     Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-        String s = "";
-        try
-        {
-            PackageManager pm = getPackageManager();
-            PackageInfo pi = pm.getPackageInfo(getPackageName (), 0);
-            s = getString(R.string.app_name) + " " + pi.versionName
-                + " built " + getString(R.string.build_time) + "\n";
-        } catch (PackageManager.NameNotFoundException ignore) {}
-        helptext.setText(s + getString(R.string.longpresslabel));
-        helptext.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                switch(currentView) {
-                    case SETBACKGROUNDCOLOUR:
-                        Toast.makeText(m_activity, getString(R.string.backgroundcolourhelp),
-                            Toast.LENGTH_LONG).show();
-                        break;
-                    case SETTEXTCOLOUR:
-                        Toast.makeText(m_activity, getString(R.string.textcolourhelphelp),
-                            Toast.LENGTH_LONG).show();
-                        break;
-                    case CONFIGURE:
-                        Toast.makeText(m_activity, getString(R.string.editwidgethelp),
-                            Toast.LENGTH_LONG).show();
-                    break;
-                }
                 return true;
             }
         });

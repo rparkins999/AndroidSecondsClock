@@ -11,6 +11,8 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -33,7 +35,8 @@ public class MainActivity extends Activity_common
     // also used as widget touch preference values, except that
     // CONFIGURE_NEW_WIDGET isn't a widget touch preference, and
     // CHOOSE_ACTION isn't a button, as we're already doing it if we get here.
-    private static final int GO_SYSTEM_CLOCK = 9091;
+    private static final int LONGPRESSHELP = 9091;
+    private static final int GO_SYSTEM_CLOCK = LONGPRESSHELP + 1;
     private static final int CONFIGURE_NEW_WIDGET = GO_SYSTEM_CLOCK + 1;
     private static final int CONFIGURE_EXISTING_WIDGET = CONFIGURE_NEW_WIDGET + 1;
     private static final int CONFIGURE_NIGHT_CLOCK = CONFIGURE_EXISTING_WIDGET + 1;
@@ -88,12 +91,10 @@ public class MainActivity extends Activity_common
             case CONFIGURE_NEW_WIDGET:
                 startActivity(new Intent(
                     this, WidgetConfigureActivity.class));
-                finish();
                 break;
             case CONFIGURE_EXISTING_WIDGET:
                 m_configuring = true;
                 doToast(R.string.actionoldwidget);
-                finish();
                 break;
             case CONFIGURE_NIGHT_CLOCK:
                 startActivity(new Intent(
@@ -111,25 +112,21 @@ public class MainActivity extends Activity_common
     @Override
     public boolean onLongClick(View v) {
         switch (v.getId()) {
+            case LONGPRESSHELP:
+                doToast(R.string.mainactivityhelp); return true;
             case GO_SYSTEM_CLOCK:
-                doToast(R.string.helpsysclock);
-                break;
+                doToast(R.string.helpsysclock); return true;
             case CONFIGURE_NEW_WIDGET:
-                doToast(R.string.helpnewwidget);
-                break;
+                doToast(R.string.helpnewwidget); return true;
             case CONFIGURE_EXISTING_WIDGET:
-                doToast(R.string.helpoldwidget);
-                break;
+                doToast(R.string.helpoldwidget); return true;
             case CONFIGURE_NIGHT_CLOCK:
-                doToast(R.string.helpnightclock);
-                break;
+                doToast(R.string.helpnightclock); return true;
             case GO_NIGHT_CLOCK:
-                doToast(R.string.helprunclock);
-                break;
+                doToast(R.string.helprunclock); return true;
             default:
                 return false;
         }
-        return true;
     }
 
     @Override
@@ -151,6 +148,7 @@ public class MainActivity extends Activity_common
         m_topLayout.setOrientation(LinearLayout.VERTICAL);
         m_topLayout.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         vg.addView(m_topLayout);
+        m_topLayout.setBackgroundColor(0xFF000000);
     }
 
     @Override
@@ -207,23 +205,37 @@ public class MainActivity extends Activity_common
         m_key = ""; // date preferences not used in this activity
         super.onResume();
         removeAllViews(m_topLayout);
-        TextView tv = new TextView(this);
-        tv.setText(R.string.longpresslabel);
-        m_topLayout.addView(tv);
+        m_helptext = new TextView(this);
+        LinearLayout.LayoutParams centreButton = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        centreButton.gravity = Gravity.CENTER_HORIZONTAL;
+        String s = "";
+        try
+        {
+            PackageManager pm = getPackageManager();
+            PackageInfo pi = pm.getPackageInfo(getPackageName (), 0);
+            s = getString(R.string.app_name) + " " + pi.versionName
+                + " built " + getString(R.string.build_time) + "\n";
+        } catch (PackageManager.NameNotFoundException ignore) {}
+        m_helptext.setText(s + getString(R.string.longpresslabel));
+        m_helptext.setId(LONGPRESSHELP);
+        m_helptext.setOnLongClickListener(this);
+        m_topLayout.addView(m_helptext);
         Button b = new Button(this);
         b.setText(R.string.gosysclock);
         b.setId(GO_SYSTEM_CLOCK);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b);
+        m_topLayout.addView(b, centreButton);
         b = new Button(this);
         b.setText(R.string.confignewwidget);
         b.setId(CONFIGURE_NEW_WIDGET);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b);
+        m_topLayout.addView(b, centreButton);
         if (m_widgetIds.length() > 0) {
             b = new Button(this);
             b.setText(R.string.configoldwwidget);
@@ -231,7 +243,7 @@ public class MainActivity extends Activity_common
             b.setAllCaps(false);
             b.setOnClickListener(this);
             b.setOnLongClickListener(this);
-            m_topLayout.addView(b);
+            m_topLayout.addView(b, centreButton);
         }
         b = new Button(this);
         b.setText(R.string.confignightclock);
@@ -239,14 +251,14 @@ public class MainActivity extends Activity_common
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b);
+        m_topLayout.addView(b, centreButton);
         b = new Button(this);
         b.setText(R.string.runnightclock);
         b.setId(GO_NIGHT_CLOCK);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b);
+        m_topLayout.addView(b, centreButton);
     }
 
     @Override

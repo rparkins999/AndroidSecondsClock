@@ -10,7 +10,8 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -18,11 +19,11 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.TextView;
 
 abstract class ConfigureActivity extends Activity_common
     implements View.OnLongClickListener, CompoundButton.OnCheckedChangeListener
 {
-
     protected String m_CorW;
     protected int currentView;
     protected Configuration m_config;
@@ -38,13 +39,15 @@ abstract class ConfigureActivity extends Activity_common
     protected static final int CONFIGURE = 0;
     protected static final int SETTEXTCOLOUR = 1;
 
-    protected static final int SHORTWEEKDAY = 666;
+    protected static final int LONGPRESSHELP = 666;
+    protected static final int SHORTWEEKDAY = LONGPRESSHELP + 1;
     protected static final int LONGWEEKDAY = SHORTWEEKDAY + 1;
     protected static final int SHORTDATE = LONGWEEKDAY + 1;
     protected static final int MONTHDAY = SHORTDATE + 1;
     protected static final int SHORTMONTH = MONTHDAY + 1;
     protected static final int LONGMONTH = SHORTMONTH + 1;
     protected static final int SHOWYEAR = LONGMONTH + 1;
+    protected static final int LASTITEM = SHOWYEAR;
 
     @Override
     public boolean onLongClick(View v) {
@@ -145,7 +148,7 @@ abstract class ConfigureActivity extends Activity_common
                 break;
             case SHOWYEAR:
                 showYear = isChecked ? 1: 0;
-                m_prefs.edit().putInt(m_key + "showYear", showMonth).commit();
+                m_prefs.edit().putInt(m_key + "showYear", showYear).commit();
                 updateFromCheckBox();
                 break;
         }
@@ -171,6 +174,10 @@ abstract class ConfigureActivity extends Activity_common
         Resources res = getResources();
         m_metrics = res.getDisplayMetrics();
         m_config = res.getConfiguration();
+        m_helptext = new TextView(this);
+        m_helptext.setId(LONGPRESSHELP);
+        m_helptext.setText(R.string.longpresslabel);
+        m_helptext.setOnLongClickListener(this);
         showShortWeekDayCheckBox = new CheckBox(this);
         showShortWeekDayCheckBox.setId(SHORTWEEKDAY);
         showShortWeekDayCheckBox.setChecked(showWeekDay == 1);
