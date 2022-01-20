@@ -19,7 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-abstract class Activity_common extends Activity implements View.OnLongClickListener {
+public abstract class Activity_common extends Activity implements View.OnLongClickListener {
 
     protected TextView m_helptext;
     protected String m_key;

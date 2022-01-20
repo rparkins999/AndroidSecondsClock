@@ -18,7 +18,7 @@
         android:supportsRtl="true">
 
         <receiver
-            android:name=".SecondsClockWidget"
+            android:name="uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -29,7 +29,7 @@
         </receiver>
 
         <activity
-            android:name=".ClockActivity"
+            android:name="uk.co.yahoo.p1rpp.secondsclock.ClockActivity"
             android:screenOrientation="fullSensor"
             android:exported="false">
             <intent-filter>
@@ -38,7 +38,7 @@
         </activity>
 
         <activity
-            android:name=".ClockConfigureActivity"
+            android:name="uk.co.yahoo.p1rpp.secondsclock.ClockConfigureActivity"
             android:screenOrientation="fullSensor"
             android:exported="false">
             <intent-filter>
@@ -47,10 +47,10 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
-            android:screenOrientation="fullSensor"
+            android:name="uk.co.yahoo.p1rpp.secondsclock.MainActivity"
             android:exported="true"
-            android:label="@string/app_label">
+            android:label="@string/app_label"
+            android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="uk.co.yahoo.p1rpp.MainActivity" />
                 <action android:name="android.intent.action.MAIN" />
@@ -59,7 +59,7 @@
         </activity>
 
         <activity
-            android:name=".WidgetConfigureActivity"
+            android:name="uk.co.yahoo.p1rpp.secondsclock.WidgetConfigureActivity"
             android:screenOrientation="fullSensor"
             android:exported="false">
             <intent-filter>

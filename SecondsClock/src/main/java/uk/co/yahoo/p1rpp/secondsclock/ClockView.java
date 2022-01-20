@@ -8,7 +8,8 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
-import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -19,11 +20,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,6 +36,10 @@ import java.util.Locale;
 
 class ClockView extends LinearLayout implements SensorEventListener {
 
+    // This is the ambient light level (in lux)
+    // above which we display at the user's set brightness.
+    private final static float MAXLIGHT = 255F;
+
     public String m_dateFormat = " ";
     public String m_hoursFormat = " ";
     public String m_monthFormat =  " ";
@@ -39,7 +47,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public String m_weekdayFormat = " ";
 
     private final TextView m_ampmView;
-    private final Context m_context;
+    private final Activity m_owner;
     private final TextView m_dateView;
     private final Handler m_handler = new Handler();
     private final TextView m_hoursView;
@@ -55,38 +63,72 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     private int m_fgColour;
     private int m_height;
-    public float m_lightLevel = 100F;
+    public float m_lightLevel = MAXLIGHT;
     private Sensor m_lightSensor;
-    private ClockConfigureActivity m_owner = null;
     private boolean m_trim = false; // chop off last char of time
     private boolean m_visible;
 
-    /* This adjusts the colour and opacity of the clock display.
-     * It can be called from the configuration screen
-     * or from onSensorChanged when the ambient light level changes
-     */
-    public void adjustColour() {
-        int brightness = m_prefs.getInt("Cbrightness", 255);
-        m_fgColour = m_prefs.getInt("CfgColour", 0xFFFFFFFF);
-        int opacity = (int) (m_lightLevel * (255F / 100F));
-        if (opacity < 1) {
-            opacity = 1;
-        } else if (opacity > 255) {
-            opacity = 255;
-        }
-        m_owner.setOpacity(opacity);
-        opacity = brightness + opacity * (255 - brightness) / 255;
-        setForegroundTintList(ColorStateList.valueOf(
-            (opacity << 24) | (m_fgColour & 0xFFFFFF)));
+    // Set the colour of all of our display objects.
+    private void setColour(int colour) {
+        m_ampmView.setTextColor(colour);
+        m_dateView.setTextColor(colour);
+        m_hoursView.setTextColor(colour);
+        m_minutesView.setTextColor(colour);
+        m_monthdayView.setTextColor(colour);
+        m_monthView.setTextColor(colour);
+        m_secondsView.setTextColor(colour);
+        m_timeView.setTextColor(colour);
+        m_weekdayView.setTextColor(colour);
+        m_yearView.setTextColor(colour);
     }
 
-    /* We set the foreground opacity of this view as the ratio of the current illumination
-     * to the illumination of a typical brightly lit room (100 lux).
+    /* This adjusts the colour and brightness of the clock display.
+     * It can be called from our configuration screen
+     * or from onSensorChanged when the ambient light level changes.
+     *
+     * The minimum brightness comes from our configuration screen and
+     * the maximum brightness comes from the user's settings page. We vary
+     * the actual brightness between them according to the ambient light level.
+     *
+     * We used a mixed algorithm, partly using the overall screen brightness
+     * in order to save power on backlit displays, and partly using the opacity
+     * of the actual TextViews in order to make use of high dynamic resolution
+     * if the device supports it.
+     *
+     * On the configuration screen we can't do this because reducing the overall
+     * screen brightness would dim the controls as well.
      */
+    public void adjustColour() {
+        int minbright= m_prefs.getInt("Cbrightness", 255);
+        ContentResolver cr = m_owner.getContentResolver();
+        int userbright = Settings.System.getInt(
+            cr, Settings.System.SCREEN_BRIGHTNESS, 255);
+        float alpha;
+        if (m_owner instanceof ClockConfigureActivity) { // not full screen
+            alpha = (255F * m_lightLevel + minbright * (255F - m_lightLevel))
+                    / 255F;
+        } else { // full screen
+            if (minbright < userbright) {
+                alpha = (userbright * m_lightLevel + minbright * (255F - m_lightLevel))
+                        / 255F;
+            } else { alpha = userbright; }
+            alpha = (float)Math.sqrt(alpha * 255F);
+            if (alpha > 255F) { alpha = 255F; }
+            if (alpha < 1F) { alpha = 1F; }
+            Window w = m_owner.getWindow();
+            WindowManager.LayoutParams lp = w.getAttributes();
+            lp.screenBrightness = alpha / 255F;
+            w.setAttributes(lp);
+        }
+        setColour(((int)alpha << 24) | (m_fgColour & 0xFFFFFF));
+    }
+
+    // This gets the current ambient light level in lux and limits it to MAXLIGHT,
+    // the light level in a typical brightly lit room.
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
-            m_lightLevel = event.values[0];
+            m_lightLevel = Math.min(MAXLIGHT, event.values[0]);
             adjustColour();
         }
     }
@@ -162,7 +204,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     }
 
     private String shortDateFormat() {
-        char[] order = DateFormat.getDateFormatOrder(m_context);
+        char[] order = DateFormat.getDateFormatOrder(m_owner);
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < 3; ++i) {
             if (i != 0) { result.append("/"); }
@@ -178,8 +220,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void updateLayout() {
         removeAllViews(this);
         Configuration config = getResources().getConfiguration();
-        boolean is24 = DateFormat.is24HourFormat(m_context);
-        boolean forceVertical = m_prefs.getBoolean("CforceVertical", false);
+        boolean is24 = DateFormat.is24HourFormat(m_owner);
         int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
         int showMonth = m_prefs.getInt("CshowMonth", 2); // long format
         int showMonthDay = m_prefs.getInt("CshowMonthDay",1);
@@ -192,7 +233,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         float lsp = 1.0F;
         if (m_prefs.getBoolean("C7seg", false)) {
             font = Typeface.createFromAsset(
-            m_context.getAssets(), "DSEG7Classic-BoldItalic.ttf");
+            m_owner.getAssets(), "DSEG7Classic-BoldItalic.ttf");
             // The seven segment font has no line spacing....
             lsp = 1.1F;
             m_trim = !is24;
@@ -204,11 +245,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_hoursView.setTypeface(font);
         m_minutesView.setTypeface(font);
         m_secondsView.setTypeface(font);
+        m_secondsView.setGravity(Gravity.CENTER);
         m_timeView.setTypeface(font);
-        boolean m_haveDate = showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
+        boolean m_haveDate =
+            showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgColour));
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            m_secondsView.setGravity(Gravity.CENTER);
             boolean haveSeconds;
             if (m_secondsSize == 255) {
                 haveSeconds = false;
@@ -261,13 +303,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     }
                 }
                 m_dateFormat = sb.toString();
-                m_ticker.run();
                 if (haveSeconds) {
                     float timeWidth = m_timeView.getPaint().measureText(
                         String.valueOf(m_timeView.getText()));
                     float secondsWidth =
                         m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
-                    LinearLayout ll = new LinearLayout(m_context);
+                    LinearLayout ll = new LinearLayout(m_owner);
                     ll.setOrientation(HORIZONTAL);
                     ll.addView(m_timeView, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -292,7 +333,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
                         ViewGroup.LayoutParams.MATCH_PARENT, 0.85F));
                 }
             } else {
-                m_ticker.run();
                 if (haveSeconds) {
                     setOrientation(HORIZONTAL);
                     float timeWidth = m_timeView.getPaint().measureText(
@@ -320,15 +360,17 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 (   (showMonth == 2) || (showWeekDay == 2) || (showShortDate > 0))
                  && !(m_prefs.getBoolean("Cforcevertical", false));
             // first work out how much space we need
+            boolean haveSeconds = false;
             if (horizontalTime)
             {
-                if (m_secondsSize > 0) {
+                if (m_secondsSize == 255) {
                     if (is24) {
                         m_timeFormat = "HH:mm:ss";
                     } else {
                         m_timeFormat = "h:mm:ss a";
                     }
                 } else {
+                    haveSeconds = m_secondsSize > 0;
                     if (is24) {
                         m_timeFormat = "HH:mm";
                     } else {
@@ -356,14 +398,34 @@ class ClockView extends LinearLayout implements SensorEventListener {
             LinearLayout.LayoutParams lpmm = new LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, (int)(m_height / space));
             if (horizontalTime) {
-                addView(m_timeView, new LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int)(lsp * m_height / space)));
+                if (haveSeconds) {
+                    float timeWidth = m_timeView.getPaint().measureText(
+                        String.valueOf(m_timeView.getText()));
+                    float secondsWidth =
+                        m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
+                    LinearLayout ll = new LinearLayout(m_owner);
+                    ll.setOrientation(HORIZONTAL);
+                    ll.addView(m_timeView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        secondsWidth / (timeWidth + secondsWidth)));
+                    ll.addView(m_secondsView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        timeWidth / (timeWidth + secondsWidth)));
+                    addView(ll, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (lsp * m_height / space)));
+                } else {
+                    addView(m_timeView, new LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (lsp * m_height / space)));
+                }
             } else {
                 addView(m_hoursView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
                 if (lsp > 1F) {
-                    addView(new View(m_context), new LinearLayout.LayoutParams(
+                    addView(new View(m_owner), new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         (int) (((lsp - 1F) * m_height) / space)));
                 }
@@ -371,7 +433,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
                 if (m_secondsSize > 0) {
                     if (lsp > 1F) {
-                        addView(new View(m_context), new LinearLayout.LayoutParams(
+                        addView(new View(m_owner), new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             (int) (((lsp - 1F) * m_height) / space)));
                     }
@@ -381,7 +443,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 }
                 if (!is24) {
                     if (lsp > 1F) {
-                        addView(new View(m_context), new LinearLayout.LayoutParams(
+                        addView(new View(m_owner), new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             (int) (((lsp - 1F) * m_height) / space)));
                     }
@@ -389,7 +451,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
                         ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
                 }
             }
-            m_ticker.run();
             if (showWeekDay > 0) {
                 addView(m_weekdayView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
@@ -412,10 +473,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 }
             }
         }
+        m_ticker.run();
     }
 
     private TextView createInstance() {
-        TextView tv = new TextView(m_context);
+        TextView tv = new TextView(m_owner);
         tv.setAutoSizeTextTypeUniformWithConfiguration(
             10, 3000,
             3, TypedValue.COMPLEX_UNIT_PX);
@@ -424,10 +486,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
         return tv;
     }
 
-    public ClockView(Context context) {
+
+    public ClockView(Activity context) {
         super(context);
         setOrientation(VERTICAL);
-        m_context = context;
+        m_owner = context;
         m_ampmView = createInstance();
         m_dateView = createInstance();
         m_hoursView = createInstance();
@@ -447,8 +510,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_visible = false;
         updateLayout();
     }
-
-    public void setOwner(ClockConfigureActivity owner) { m_owner = owner; }
 
     @Override
     public void onVisibilityAggregated(boolean isVisible) {

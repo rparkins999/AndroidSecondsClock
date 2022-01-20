@@ -13,7 +13,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -259,6 +265,8 @@ public class MainActivity extends Activity_common
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
         m_topLayout.addView(b, centreButton);
+
+        View v = new MySeekBar(this);
     }
 
     @Override

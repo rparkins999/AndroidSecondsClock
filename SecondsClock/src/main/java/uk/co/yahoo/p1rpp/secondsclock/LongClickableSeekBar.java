@@ -67,7 +67,12 @@ class LongClickableSeekBar extends SeekBar {
                 m_startY = event.getY();
                 // start the timeout
                 //Log.d("MotionEvent","Starting long click timer");
-                postDelayed(longClickTimer, ViewConfiguration.getLongPressTimeout());
+                /* We give it twice the normal long click timeout because of the
+                 * user's reaction time to see that they have
+                 * touched the thumb before moving it.
+                 */
+                postDelayed(longClickTimer,
+                    2L * ViewConfiguration.getLongPressTimeout());
                 m_timerRunning = true;
                 result = super.onTouchEvent(event);
                 // undo the thumb move in case we decide it's a long click

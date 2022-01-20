@@ -182,4 +182,23 @@
         this screen: this is different from the normal action when the
         clock has been invoked from the top level screen, which is to
         return to the home screen.</string>
+    <string name="secondssizelabel">Seconds size</string>
+    <string name="sshelpland">Use the slider below to set the size of the seconds
+        for the full screen clock:
+        all the way to the left shows no seconds at all;
+        intermediate values from left to right show seconds of increasing size;
+        all the way to the right shows seconds the same size as the hours and minutes.
+    </string>
+    <string name="sshelpport">Use the slider below to set the size of the seconds
+        for the full screen clock:
+        all the way to the bottom shows no seconds at all;
+        intermediate values from bottom to top show seconds of increasing size;
+        all the way to the top shows seconds the same size as the hours and minutes.
+    </string>
+    <string name="minbright">Minimum brightness</string>
+    <string name="minbrighthelp">Use the slider below to set the minimum brightness
+    of the full screen clock at low ambient light level:
+    all the way to the left is the lowest nonzero brightness that the screen can do;
+    intermediate values from left to right use increasing brightness levels;
+    all the way to the right uses your set screen brightness with no reduction.</string>
 </resources>
