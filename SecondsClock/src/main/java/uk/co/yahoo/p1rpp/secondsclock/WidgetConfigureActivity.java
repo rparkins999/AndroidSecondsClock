@@ -16,21 +16,17 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextClock;
@@ -59,10 +55,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
     private TextClock demo;
     private int m_fgcolour;
     private int showTime;
-    private BitmapWrapper m_activeWrapper = null;
-    private Bitmap m_bitmap;
-    private int multiplier;
-    private ImageView m_colourmap;
     private LinearLayout demobox;
     private LinearLayout demoboxbox;
     private LinearLayout.LayoutParams lpWrapMatch;
@@ -72,7 +64,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
     private Button fgButton;
     private LinearLayout.LayoutParams lpMatchWrap;
     private ViewGroup.LayoutParams lpWrapWrap;
-    private boolean colourmaplongclicked = false;
     private SeekBar hueSlider;
     private LinearLayout.LayoutParams lpMMWeight;
     private LinearLayout.LayoutParams lpMatchMatch;
@@ -99,64 +90,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
         return super.onLongClick(v);
     }
 
-    private void updateWidget() {
-        int[] widgetIds = appWidgetManager.getAppWidgetIds(secondsClockWidget);
-        if (widgetIds.length > 0) {
-            Bundle newOptions =
-                appWidgetManager.getAppWidgetOptions(widgetIds[0]);
-            maxHeight = newOptions.getInt(
-                AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxHeight);
-            minWidth = newOptions.getInt(
-                AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
-        }
-        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
-            "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
-        sendBroadcast(intent);
-    }
-
-    @SuppressLint({"SetTextI18n", "ApplySharedPref"})
-    private void setColour(int colour) {
-        if (!recursive) {
-            recursive = true;
-            int val = (colour >> 24) & 0xFF;
-            alphaValue.setText(Integer.toString(val));
-            alphaSlider.setProgress(val);
-            val = (colour >> 16) & 0xFF;
-            redValue.setText(Integer.toString(val));
-            redSlider.setProgress(val);
-            val = (colour >> 8) & 0xFF;
-            greenValue.setText(Integer.toString(val));
-            greenSlider.setProgress(val);
-            val = colour & 0xFF;
-            blueValue.setText(Integer.toString(val));
-            blueSlider.setProgress(val);
-            switch (currentView) {
-                case SETBACKGROUNDCOLOUR:
-                    m_bgcolour = colour;
-                    demo.setBackgroundColor(colour);
-                    m_prefs.edit().putInt("Wbgcolour", colour).commit();
-                    alphaSlider.setBackground(new GradientDrawable(
-                        GradientDrawable.Orientation.LEFT_RIGHT,
-                        new int[] {0xFF000000, m_bgcolour | 0xFF000000}));
-                    ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
-                    alphaSlider.setProgressTintList(cl);
-                    alphaSlider.setThumbTintList(cl);
-                    break;
-                case SETTEXTCOLOUR:
-                    m_fgcolour = colour;
-                    demo.setTextColor(colour);
-                    m_prefs.edit().putInt("Wfgcolour", colour).commit();
-                    break;
-                case CONFIGURE:
-            }
-            updateDemo();
-            updateWidget();
-            recursive = false;
-        }
-    }
-
     void updateDemo() {
         Formatter f = new Formatter();
         f.set(this, minWidth, maxHeight,
@@ -175,53 +108,124 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
     }
 
-    private void fillBitmapInBackground(int colour, boolean firstTime) {
-        FillBitmap task;
-        if (m_activeWrapper != null) {
-            task = m_activeWrapper.m_active;
-            if (task != null) {
-                task.cancel(true);
-            }
+    private void updateWidget() {
+        int[] widgetIds = appWidgetManager.getAppWidgetIds(secondsClockWidget);
+        if (widgetIds.length > 0) {
+            Bundle newOptions =
+                appWidgetManager.getAppWidgetOptions(widgetIds[0]);
+            maxHeight = newOptions.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxHeight);
+            minWidth = newOptions.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
         }
-        m_activeWrapper = new BitmapWrapper(
-            colour, m_bitmap, multiplier, this, firstTime);
-        task = new FillBitmap();
-        m_activeWrapper.m_active = task;
-        task.execute(m_activeWrapper);
+        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
+            "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+        sendBroadcast(intent);
     }
 
-    void setMultiplier() {
-        int size;
-        if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            size = m_metrics.heightPixels;
-            int sb = 72;
-            Resources res = getResources();
-            int resourceId = res.getIdentifier(
-                "status_bar_height", "dimen", "android");
-            if (resourceId > 0) {
-                sb = res.getDimensionPixelSize(resourceId);
+    void setHueSlider(int colour) {
+        int r = (colour >> 16) & 0xFF;
+        int g = (colour >> 8) & 0xFF;
+        int b = colour & 0xFF;
+        int hue = 0;
+        if (r >= g) {
+            if (g >= b) {
+                if (r > b) {
+                    // r >= g >= b, not both ==
+                    hue = (g - b) * 255 / (r - b);
+                } // else r == g == b, hue is indeterminate, 0 will do
+            } else if (r >= b) {
+                // r >= b > g
+                hue = 1530 - (b - g) * 255 / (r - g);
+            } else {
+                // b > r >= g
+                hue = 1020 + (r - g) * 255 / (b - g);
             }
-            int hh = m_helptext.getBottom();
-            size -= sb + hh;
+        } else if (r >= b) {
+            // g > r >= b
+            hue = 510 - (r - b) * 255 / (g - b);
+        } else if (g >= b) {
+            // g >= b > r
+            hue = 510 + (b - r) * 255 / (g - r);
         } else {
-            size = m_metrics.widthPixels;
+            // b > g > r
+            hue = 1020 - (g - r) * 255 / (b - r);
         }
-        if (size < 512) {
-            multiplier = 1;
-        } else if (size < 1024) {
-            multiplier = 2;
-        } else {
-            multiplier = 4;
+        hueSlider.setProgress(hue);
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void setSliders(int colour) {
+        ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
+        alphaSlider.setProgressTintList(cl);
+        alphaSlider.setThumbTintList(cl);
+        int val = (colour >> 16) & 0xFF;
+        redValue.setText(Integer.toString(val));
+        redSlider.setProgress(val);
+        val = (colour >> 8) & 0xFF;
+        greenValue.setText(Integer.toString(val));
+        greenSlider.setProgress(val);
+        val = colour & 0xFF;
+        blueValue.setText(Integer.toString(val));
+        blueSlider.setProgress(val);
+        setHueSlider(colour);
+        updateDemo();
+        updateWidget();
+    }
+
+    private void setFgColour(int colour) {
+        demo.setTextColor(colour);
+        setSliders(colour);
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void setBgColour(int colour) {
+        demo.setBackgroundColor(colour);
+        int val = (colour >> 24) & 0xFF;
+        alphaValue.setText(Integer.toString(val));
+        alphaSlider.setProgress(val);
+        alphaSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[]{
+                m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
+        setSliders(colour);
+    }
+
+    @SuppressLint({ "ApplySharedPref"})
+    private void setColour(int colour) {
+        switch (currentView) {
+            case SETBACKGROUNDCOLOUR:
+                m_bgcolour = colour;
+                m_prefs.edit().putInt("Wbgcolour", colour).commit();
+                setBgColour(colour);
+                break;
+            case SETTEXTCOLOUR:
+                m_fgcolour = colour;
+                m_prefs.edit().putInt("Wfgcolour", colour).commit();
+                setFgColour(colour);
+                break;
+            case CONFIGURE:
         }
     }
 
-    void redisplayBitmap() {
-        m_colourmap.invalidate();
+    private void setColour() {
+        switch (currentView) {
+            case SETBACKGROUNDCOLOUR:
+                setBgColour(m_bgcolour);
+                break;
+            case SETTEXTCOLOUR:
+                setFgColour(m_fgcolour);
+                break;
+            case CONFIGURE:
+        }
     }
 
     @SuppressLint("SetTextI18n")
     @Override
     protected void doMainLayout() {
+        super.doMainLayout();
         demobox.addView(demo);
         demoboxbox.addView(demobox);
         LinearLayout l1 = new LinearLayout(this);
@@ -300,72 +304,13 @@ public class WidgetConfigureActivity extends ConfigureActivity {
 
     @SuppressLint({"ClickableViewAccessibility"})
     protected void doChooserLayout() {
-        setMultiplier();
-        /* These have to be created to order because their sizes can depend
-         * on whether the device is in portrait or landscape orientation.
-         */
-        int size = 256 * multiplier;
-        m_bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        if (currentView == SETBACKGROUNDCOLOUR) {
-            fillBitmapInBackground(m_bgcolour, true);
-            setColour(m_bgcolour);
-        } else {
-            fillBitmapInBackground(m_fgcolour, true);
-            setColour(m_fgcolour);
-        }
-        m_colourmap = new ImageView(this);
-        m_colourmap.setAdjustViewBounds(true);
-        m_colourmap.setMaxWidth(size);
-        m_colourmap.setMaxHeight(size);
-        m_colourmap.setImageBitmap(m_bitmap);
-        m_colourmap.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (  (event.getAction() == MotionEvent.ACTION_UP)
-                    && !colourmaplongclicked)
-                {
-                    int colour = m_bitmap.getPixel(
-                        (int)event.getX(), (int)event.getY());
-                    if (currentView == SETBACKGROUNDCOLOUR) {
-                        // don't change opacity from colourmap touch
-                        setColour((m_bgcolour & 0xFF000000) | (colour & 0xFFFFFF));
-                    } else {
-                        setColour(colour);
-                    }
-                    return false;
-                } else {
-                    colourmaplongclicked = false;
-                    return false;
-                }
-            }
-        });
-        m_colourmap.setLongClickable(true);
-        m_colourmap.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                colourmaplongclicked = true;
-                Toast.makeText(m_activity, getString((
-                    currentView == SETTEXTCOLOUR)
-                        ? R.string.fghelp : R.string.bghelp),
-                    Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-        int colour = (currentView == SETTEXTCOLOUR)
-            ? m_fgcolour : m_bgcolour;
+        super.doChooserLayout();
         int pad =(int)(5 * m_metrics.density);
         LinearLayout l1 = new LinearLayout(this);
         demobox.addView(demo);
         demoboxbox.addView(demobox);
         if (m_config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout l2 = new LinearLayout(this);
-            l2.setOrientation(LinearLayout.HORIZONTAL);
-            l2.setLayoutParams(lpWrapMatch);
-            l2.setGravity(Gravity.CENTER_VERTICAL);
-            l2.setPadding(pad, pad, pad, pad);
-            l2.addView(m_colourmap);
-            l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
             l3.setLayoutParams(lpMatchMatch);
@@ -464,11 +409,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             l2.setOrientation(LinearLayout.VERTICAL);
             l2.setLayoutParams(lpMatchWrap);
             l2.setGravity(Gravity.CENTER_HORIZONTAL);
-            LinearLayout l3 = new LinearLayout(this);
-            l3.setOrientation(LinearLayout.VERTICAL);
-            l3.setLayoutParams(lpWrapWrap);
-            l3.addView(m_colourmap);
-            l2.addView(l3);
             l1.addView(l2);
             LinearLayout l4 = new LinearLayout(this);
             l4.setOrientation(LinearLayout.VERTICAL);
@@ -550,6 +490,11 @@ public class WidgetConfigureActivity extends ConfigureActivity {
             l1.addView(l17);
         }
         m_topLayout.addView(l1);
+        if (!recursive) {
+            recursive = true;
+            setColour();
+            recursive = false;
+        }
     }
 
     int safeParseInt(String s) {
@@ -585,67 +530,11 @@ public class WidgetConfigureActivity extends ConfigureActivity {
         if (g > 255) { g = 255; } // safety check
         b = whiteness + b * (blackness - whiteness) / 255;
         if (b > 255) { b = 255; } // safety check
-        redSlider.setProgress(r);
-        redValue.setText(Integer.toString(r));
-        greenSlider.setProgress(g);
-        greenValue.setText(Integer.toString(g));
-        blueSlider.setProgress(b);
-        blueValue.setText(Integer.toString(b));
-        col = (oldColour & 0xFF000000) + (((r << 8) + g) << 8) + b;
-        fillBitmapInBackground(col, false);
-        if (currentView == SETBACKGROUNDCOLOUR) {
-            m_bgcolour = col;
-            demo.setBackgroundColor(m_bgcolour);
-            m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
-            alphaSlider.setBackground(new GradientDrawable(
-                GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[] {
-                    m_bgcolour & 0xFFFFFF, m_bgcolour | 0xFF000000}));
-        } else {
-            m_fgcolour = col;
-            demo.setTextColor(m_fgcolour);
-            ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
-            alphaSlider.setProgressTintList(cl);
-            alphaSlider.setThumbTintList(cl);
-            m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
+        if (!recursive) {
+            recursive = true;
+            setColour((oldColour & 0xFF000000) + (((r << 8) + g) << 8) + b);
+            recursive = false;
         }
-        updateWidget();
-    }
-
-    void setHueSlider(int colour) {
-        int r = (colour >> 16) & 0xFF;
-        int g = (colour >> 8) & 0xFF;
-        int b = colour & 0xFF;
-        int hue = 0;
-        if (r >= g) {
-            if (g >= b) {
-                if (r > b) {
-                    // r >= g >= b, not both ==
-                    hue = (g - b) * 255 / (r - b);
-                } // else r == g == b, hue is indeterminate, 0 will do
-            } else if (r >= b) {
-                // r >= b > g
-                hue = 1530 - (b - g) * 255 / (r - g);
-            } else {
-                // b > r >= g
-                hue = 1020 + (r - g) * 255 / (b - g);
-            }
-        } else if (r >= b) {
-            // g > r >= b
-            hue = 510 - (r - b) * 255 / (g - b);
-        } else if (g >= b) {
-            // g >= b > r
-            hue = 510 + (b - r) * 255 / (g - r);
-        } else {
-            // b > g > r
-            hue = 1020 - (g - r) * 255 / (b - r);
-        }
-        hueSlider.setProgress(hue);
-    }
-
-    @Override
-    protected TextView textLabel(int resid, int id) {
-        return super.textLabel(resid, id);
     }
 
     @Override
@@ -658,6 +547,18 @@ public class WidgetConfigureActivity extends ConfigureActivity {
     protected void updateFromCheckBox() {
         updateWidget();
         updateDemo();
+    }
+
+    @SuppressLint("ApplySharedPref")
+    @Override
+    protected void setCurrentView(int viewnum) {
+        currentView = viewnum;
+        m_prefs.edit().putInt("Wview", currentView).commit();
+        if (currentView == CONFIGURE) {
+            doMainLayout();
+        } else {
+            doChooserLayout();
+        }
     }
 
     @Override
@@ -813,7 +714,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                         redValue.setText(Integer.toString(val));
                         if (currentView == SETBACKGROUNDCOLOUR) {
                             m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
-                            fillBitmapInBackground(m_bgcolour, false);
                             m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                             demo.setBackgroundColor(m_bgcolour);
                             alphaSlider.setBackground(new GradientDrawable(
@@ -824,7 +724,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                             setHueSlider(m_bgcolour);
                         } else {
                             m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
-                            fillBitmapInBackground(m_fgcolour, false);
                             m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
@@ -877,7 +776,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                     redSlider.setProgress(val);
                     if (currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
-                        fillBitmapInBackground(m_bgcolour, false);
                         m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         demo.setBackgroundColor(m_bgcolour);
                         alphaSlider.setBackground(new GradientDrawable(
@@ -887,7 +785,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                         setHueSlider(m_bgcolour);
                     } else {
                         m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
-                        fillBitmapInBackground(m_fgcolour, false);
                         m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         demo.setTextColor(m_fgcolour);
                         ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
@@ -923,7 +820,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                         greenValue.setText(Integer.toString(val));
                         if (currentView == SETBACKGROUNDCOLOUR) {
                             m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
-                            fillBitmapInBackground(m_bgcolour, false);
                             m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                             demo.setBackgroundColor(m_bgcolour);
                             alphaSlider.setBackground(new GradientDrawable(
@@ -933,7 +829,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                             setHueSlider(m_bgcolour);
                         } else {
                             m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
-                            fillBitmapInBackground(m_fgcolour, false);
                             m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
@@ -985,7 +880,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                     greenSlider.setProgress(val);
                     if (currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
-                        fillBitmapInBackground(m_bgcolour, false);
                         m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         demo.setBackgroundColor(m_bgcolour);
                         alphaSlider.setBackground(new GradientDrawable(
@@ -995,7 +889,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                         setHueSlider(m_bgcolour);
                     } else {
                         m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
-                        fillBitmapInBackground(m_fgcolour, false);
                         m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         demo.setTextColor(m_fgcolour);
                         ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
@@ -1032,7 +925,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                         int colour;
                         if (currentView == SETBACKGROUNDCOLOUR) {
                             m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
-                            fillBitmapInBackground(m_bgcolour, false);
                             m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                             demo.setBackgroundColor(m_bgcolour);
                             alphaSlider.setBackground(new GradientDrawable(
@@ -1042,10 +934,8 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                             setHueSlider(m_bgcolour);
                         } else {
                             m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
-                            fillBitmapInBackground(m_fgcolour, false);
                             m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                             demo.setTextColor(m_fgcolour);
-                            fillBitmapInBackground(m_fgcolour, false);
                             ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
                             alphaSlider.setProgressTintList(cl);
                             alphaSlider.setThumbTintList(cl);
@@ -1095,7 +985,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                     blueSlider.setProgress(val);
                     if (currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
-                        fillBitmapInBackground(m_bgcolour, false);
                         m_prefs.edit().putInt("Wbgcolour", m_bgcolour).commit();
                         demo.setBackgroundColor(m_bgcolour);
                         alphaSlider.setBackground(new GradientDrawable(
@@ -1105,7 +994,6 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                         setHueSlider(m_bgcolour);
                     } else {
                         m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
-                        fillBitmapInBackground(m_fgcolour, false);
                         m_prefs.edit().putInt("Wfgcolour", m_fgcolour).commit();
                         demo.setTextColor(m_fgcolour);
                         ColorStateList cl = ColorStateList.valueOf(m_fgcolour);
@@ -1249,14 +1137,10 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                 public void onProgressChanged(
                     SeekBar seekBar, int progress, boolean fromUser)
                 {
-                    if (!recursive) {
-                        recursive = true;
-                        handleHueChanged(seekBar.getProgress(),
-                            (currentView == SETBACKGROUNDCOLOUR)
-                                ? m_bgcolour : m_fgcolour);
-                        updateWidget();
-                        recursive = false;
-                    }
+                    handleHueChanged(seekBar.getProgress(),
+                        (currentView == SETBACKGROUNDCOLOUR)
+                            ? m_bgcolour : m_fgcolour);
+                    updateWidget();
                 }
                 @Override
                 public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -1286,20 +1170,7 @@ public class WidgetConfigureActivity extends ConfigureActivity {
                 return true;
             }
         });
-        updateWidget();
         updateDemo();
         setCurrentView(currentView);
-    }
-
-    @SuppressLint("ApplySharedPref")
-    @Override
-    protected void setCurrentView(int viewnum) {
-        currentView = viewnum;
-        m_prefs.edit().putInt("Wview", currentView).commit();
-        if (currentView == CONFIGURE) {
-            doMainLayout();
-        } else {
-            doChooserLayout();
-        }
     }
 }
