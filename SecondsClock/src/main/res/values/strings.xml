@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Copyright © 2021. Richard P. Parkins, M. A.
+   Copyright © 2022. Richard P. Parkins, M. A.
    Released under GPL V3 or later
   -->
 
@@ -33,6 +33,12 @@
     <string name="runnightclock">Run full screen clock</string>
     <string name="helprunclock">Touch this button to run
         the full screen clock.</string>
+    <string name="calibrate">Calibrate</string>
+    <string name="calibratehelp">Touch this button to open the calibration page,
+        which enables you to set the (nonlinear) relationship between the
+        brightness of the demo clock on the full screen clock configuration
+        page and the brightness of the real full screen clock.
+    </string>
     <string name="appwidget_text">Clock</string>
     <string name="app_widget_description">1x1 seconds clock</string>
     <string name="demohelp">This shows what the widget looks like.
@@ -90,51 +96,70 @@
         display the (Gregorian) year.</string>
     <string name="set_bg_colour">Set widget background colour</string>
     <string name="setbgcolourhelp">Touch this button to show a colour
-        chooser screen for the background colour of the widget.</string>
-    <string name="set_fg_colour">Set widget text colour</string>
+        chooser screen for the background colour and opacity of the widget.</string>
+    <string name="set_fg_colour">Set %1s text colour</string>
     <string name="setfgcolourhelp">Touch this button to show a colour
-        chooser screen for the text colour of the widget.</string>
-    <string name="fghelp">Touch anywhere in this pane to select
-        the saturation and value of the text colour of the widget.</string>
-    <string name="bghelp">Touch anywhere in this pane to select
-        the saturation and value of the background colour of the widget.</string>
-    <string name="backgroundcolourhelp">This screen provides sliders
-        to set the hue, red, green, blue, and opacity
-        of the clock widget\'s background. You can also type in values
-        for red, green, blue, and opacity or pick a colour from the
-        map of saturation and value for a hue.</string>
-    <string name="textcolourhelphelp">This screen provides sliders
-        to set the hue, red, gree, and blue components of the colour
-        of the clock widget\'s text. You can also type in values
-        for red, green, and blue, or pick a colour from the
-        map of saturation and value for a hue.</string>
-    <string name="setredsliderhelp">Move the thumb on this slider
+        chooser screen for the text colour of the %1s.</string>
+    <string name="bgcolourhelp">This screen provides sliders
+        to set the hue, saturation, value, red, green, blue, and opacity values
+        of the colour of the widget\'s background. You can also type in values
+        for any of these except the hue.</string>
+    <string name="textcolourhelp">This screen provides sliders
+        to set the hue, saturation, value, red, green, and blue values
+        of the colour of the %1s\'s text. You can also type in values
+        for any of these except the hue.</string>
+    <string name="huelabel">Hue</string>
+    <string name="huesliderhelp">Move the thumb on this slider
+        to set the hue. This will not modify the value or saturation.
+        Black, white and grayscale colours have a saturation of zero,
+        so changing their hue will have no effect.</string>
+    <string name="saturationlabel">Saturation</string>
+    <string name="saturationsliderhelp">Move the thumb on this slider
+        to set the saturation. This will not modify the hue or the value.
+        Decreasing the saturation increases the amount of white in the colour:
+        pale pink is unsaturated, while pure red is saturated.</string>
+    <string name="saturationvaluehelp">This number shows the saturation
+        of the colour on a scale from 0 to 255. You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="valuelabel">Value</string>
+    <string name="valuesliderhelp">Move the thumb on this slider
+        to set the value. This will not modify the hue or the saturation.
+        The value is approximately the brightness of the colour,
+        but we use different names for some low-value colours:
+        for example low-value red is brown.</string>
+    <string name="valuevaluehelp">This number shows the value
+        of the colour on a scale from 0 to 255. You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="redlabel">Red</string>
+    <string name="redsliderhelp">Move the thumb on this slider
         to adjust the amount of red in the colour.</string>
     <string name="redvaluehelp">This number shows the actual amount of red
         in the colour on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
-    <string name="setgreensliderhelp">Move the thumb on this slider
+    <string name="greenlabel">Green</string>
+    <string name="greensliderhelp">Move the thumb on this slider
         to adjust the amount of green in the colour.</string>
     <string name="greenvaluehelp">This number shows the actual amount of green
         in the colour on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
-    <string name="setbluesliderhelp">Move the thumb on this slider
+    <string name="bluelabel">Blue</string>
+    <string name="bluesliderhelp">Move the thumb on this slider
         to adjust the amount of blue in the colour.</string>
     <string name="bluevaluehelp">This number shows the actual amount of blue
         in the colour on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
-    <string name="sethuesliderhelp">Move the thumb on this slider
-        to set the hue. This will not modify the value or saturation,
-        which can be set by picking a colour from the map pane.
-        Black, white and grayscale colours have a saturation of zero,
-        so changing their hue will have no effect.</string>
-    <string name="setalphasliderhelp">Move the thumb on this slider
+    <string name="alphalabel">Opacity</string>
+    <string name="alphasliderhelp">Move the thumb on this slider
         to adjust the opacity of the widget background:
         zero is transparent and 255 is fully opaque.</string>
     <string name="alphavaluehelp">This number shows the opacity of the background
@@ -160,13 +185,10 @@
         check this box.</string>
     <string name="clockdemo">This half size demonstration shows what
         the full screen clock will look like
-        (in %1s orientation at the current ambient light level).</string>
+        (in %1s orientation at the current ambient light level):
+        touch it to show the full screen clock.</string>
     <string name="landscape">landscape</string>
     <string name="portrait">portrait</string>
-    <string name="brightnesshelp">This slider adjusts the minimum brightness
-        of the full screen clock at low ambient light level.
-        All the way to the left is a minimum brightness of 1 (if your device supports it)
-        All the way to the right is no brightness reduction.</string>
     <string name="forcevertical">Force vertical time layout</string>
     <string name="forceverticalhelp">If this box is checked, in portrait orientation
         the hours minutes, seconds if present, and AM/PM marker if present,
@@ -176,12 +198,16 @@
     <string name="setclockcolour">Set full screen clock colour</string>
     <string name="setclockcolourhelp">Touch this button to show a colour
         chooser screen for the colour of the full screen clock.</string>
-    <string name="runclock">Test full screen clock</string>
-    <string name="runclockhelp">Touch this button to show the full screen clock.
-        Touching the screen or the back button from there will bring back
-        this screen: this is different from the normal action when the
-        clock has been invoked from the top level screen, which is to
-        return to the home screen.</string>
+    <string name="setdata">Define data displayed"</string>
+    <string name="setdatahelp">Touch this button to show a screen
+        on which you can define what data the full screen clock displays.</string>
+    <string name="setdisplay">Control display</string>
+    <string name="setdisplayhelp">Touch this button to show a screen on which
+        you can control the size of the seconds display
+        and the dimming at low light levels for the full screen clock.</string>
+    <string name="setdimming">Control display</string>
+    <string name="setdimminghelp">Touch this button to show a screen on which you can
+        control the dimming at low light levels for the full screen clock.</string>
     <string name="secondssizelabel">Seconds size</string>
     <string name="sshelpland">Use the slider below to set the size of the seconds
         for the full screen clock:
@@ -195,10 +221,66 @@
         intermediate values from bottom to top show seconds of increasing size;
         all the way to the top shows seconds the same size as the hours and minutes.
     </string>
-    <string name="minbright">Minimum brightness</string>
-    <string name="minbrighthelp">Use the slider below to set the minimum brightness
-    of the full screen clock at low ambient light level:
-    all the way to the left is the lowest nonzero brightness that the screen can do;
-    intermediate values from left to right use increasing brightness levels;
-    all the way to the right uses your set screen brightness with no reduction.</string>
+    <string name="minbrightlabel">Minimum brightness</string>
+    <string name="minbrightsliderhelp">This slider adjusts the minimum brightness
+        of the full screen clock in complete darkness (at zero ambient light level).
+        All the way to the left should be invisible, but this depends on your hardware;
+        intermediate values from left to right use increasing brightness levels,
+        but the brightness will not be increased above your set screen brightness.
+    </string>
+    <string name="minbrightvaluehelp">This number shows the minimum brightness
+        of the full screen clock in complete darkness (at zero ambient light level).
+        You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="thresholdlabel">Lux threshold</string>
+    <string name="thresholdsliderhelp">This slider adjusts the ambient level in lux
+        below which the full screen clock will reduce its brightness.
+        The maximum is 255 lux, which is a fairly brightly lit room:
+        you shouldn\'t want your clock to dim at that light level.</string>
+    <string name ="thresholdvaluehelp">This number shows the ambient level in lux
+        below which the full screen clock will reduce its brightness.
+        You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="currentlux">Current Lux level is %1d</string>
+    <string name="calibrationhelp"> This screen is used to set an internal map
+        which ensures that the brightness of the demonstration full screen clock
+        on the configuration screen matches the brightness of the real
+        full screen clock.
+        Please set a screen brightness using the device\'s settings page,
+        and a window brightness using the window brightness slider on this page
+        Then set the opacity slider so that the white square does not
+        appear to flicker. The buttons and the sliders will still flicker.
+        When the white square does not flicker, press Save. You should do this
+        for several different values of screen and window brightnesses, at least a
+        low and a high value for each. Some intermediate values will improve
+        the map since the device\'s brightness algorithm is non-linear.
+        The black dots in the white square indicate the saved values.
+        Pressing Reset will delete all the saved values so you can start again.
+        Press the device\'s back button when you have finished.
+        If there is no calibration a default map will be used.</string>
+    <string name="help">Help</string>
+    <string name="save">Save</string>
+    <string name="savehelp">Touch this button when the white square does not flicker
+        to save the current brightness value in the brightness map.</string>
+    <string name="reset">Reset</string>
+    <string name="resethelp">Touch this button to reset the brightness map to empty.
+    </string>
+    <string name="globrighthelp">This slider shows the global screen
+        brightness setting, which you can set from the device\'s
+        Settings page. If this app has permission to modify global settings,
+        you can also set it by moving the slider. For some devices,
+        changes in the ambient light level may also modify the global screen
+        brightness setting if adaptive brightness is enabled.</string>
+    <string name="opacityhelp">This slider sets the opacity used for
+        the demo clock in the configuration screen. You should adjust it
+        to a value that minimises the flicker of the large white square
+        and then press the save button.
+        The sliders will still flicker</string>
+    <string name="appbrighthelp">The slider sets the level of window
+        brightness for the full screen clock for which you want to set
+        the opacity of the demo clock in the configuration screen.</string>
 </resources>

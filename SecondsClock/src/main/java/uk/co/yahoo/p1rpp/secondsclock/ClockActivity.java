@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021. Richard P. Parkins, M. A.
+ * Copyright © 2022. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This is the activity which runs the fullscreen clock.
@@ -7,25 +7,11 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.text.format.DateFormat;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-
-import java.util.Calendar;
 
 public class ClockActivity extends Activity_common
     implements View.OnLongClickListener

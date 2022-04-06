@@ -13,13 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,7 +28,6 @@ public class MainActivity extends Activity_common
     implements View.OnClickListener, View.OnLongClickListener
 {
     private static boolean m_configuring;
-    private LinearLayout m_topLayout;
     private String m_widgetIds = "";
 
     // View IDs for buttons, to switch on click or long click:
@@ -54,7 +47,7 @@ public class MainActivity extends Activity_common
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                       | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
         // first try some well-known clock app names
         try {
             intent.setClassName("com.android.deskclock",
@@ -70,13 +63,30 @@ public class MainActivity extends Activity_common
             finish();
             return;
         } catch (Exception ignore) {}
-        // If that didn't work, try a well-known clock action.
-        intent.setAction("android.intent.action.SHOW_TIMERS");
-        intent.removeCategory(Intent.CATEGORY_DEFAULT);
+        intent.removeCategory(Intent.CATEGORY_LAUNCHER);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
         try {
+            intent.setClassName("com.android.deskclock",
+                "com.android.deskclock.DeskClock");
             startActivity(intent);
             finish();
             return;
+        } catch (Exception ignore) {}
+        try {
+            intent.setClassName("com.sec.android.app.clockpackage",
+                "com.sec.android.app.clockpackage.Clockpackage");
+            startActivity(intent);
+            finish();
+            return;
+        } catch (Exception ignore) {}
+        // If that didn't work, try a well-known clock action.
+        intent = new Intent("android.intent.action.SHOW_TIMERS");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                      | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        try {
+            startActivity(intent);
+            finish();
         } catch (SecurityException ignore) {
             // we needed permission.SET_ALARM and we don't have it.
             doToast(R.string.noclockpermission);
@@ -144,6 +154,7 @@ public class MainActivity extends Activity_common
             m_widgetIds = m_prefs.getString("widgetIds", "");
             m_configuring = savedInstanceState.getBoolean("m_configuring");
         }
+        /*
         LayoutInflater inflater =
             (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         @SuppressLint("InflateParams")
@@ -154,7 +165,8 @@ public class MainActivity extends Activity_common
         m_topLayout.setOrientation(LinearLayout.VERTICAL);
         m_topLayout.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         vg.addView(m_topLayout);
-        m_topLayout.setBackgroundColor(0xFF000000);
+        m_topLayout.setBackgroundColor(m_background);
+        */
     }
 
     @Override
@@ -207,11 +219,14 @@ public class MainActivity extends Activity_common
     }
 
     @Override
-    protected void onResume() {
+    protected void resume() {
         m_key = ""; // date preferences not used in this activity
-        super.onResume();
+        super.resume();
         removeAllViews(m_topLayout);
         m_helptext = new TextView(this);
+        LinearLayout lmain = new LinearLayout(this);
+        lmain.setOrientation(LinearLayout.VERTICAL);
+        lmain.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         LinearLayout.LayoutParams centreButton = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -227,21 +242,21 @@ public class MainActivity extends Activity_common
         m_helptext.setText(s + getString(R.string.longpresslabel));
         m_helptext.setId(LONGPRESSHELP);
         m_helptext.setOnLongClickListener(this);
-        m_topLayout.addView(m_helptext);
+        lmain.addView(m_helptext);
         Button b = new Button(this);
         b.setText(R.string.gosysclock);
         b.setId(GO_SYSTEM_CLOCK);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b, centreButton);
+        lmain.addView(b, centreButton);
         b = new Button(this);
         b.setText(R.string.confignewwidget);
         b.setId(CONFIGURE_NEW_WIDGET);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b, centreButton);
+        lmain.addView(b, centreButton);
         if (m_widgetIds.length() > 0) {
             b = new Button(this);
             b.setText(R.string.configoldwwidget);
@@ -249,7 +264,7 @@ public class MainActivity extends Activity_common
             b.setAllCaps(false);
             b.setOnClickListener(this);
             b.setOnLongClickListener(this);
-            m_topLayout.addView(b, centreButton);
+            lmain.addView(b, centreButton);
         }
         b = new Button(this);
         b.setText(R.string.confignightclock);
@@ -257,16 +272,15 @@ public class MainActivity extends Activity_common
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b, centreButton);
+        lmain.addView(b, centreButton);
         b = new Button(this);
         b.setText(R.string.runnightclock);
         b.setId(GO_NIGHT_CLOCK);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
-        m_topLayout.addView(b, centreButton);
-
-        View v = new MySeekBar(this);
+        lmain.addView(b, centreButton);
+        m_topLayout.addView(lmain);
     }
 
     @Override

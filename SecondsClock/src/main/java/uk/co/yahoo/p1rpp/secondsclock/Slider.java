@@ -30,9 +30,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.util.AttributeSet;
-import android.util.FloatProperty;
-import android.util.Log;
-import android.view.KeyEvent;
+import android.util.IntProperty;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -43,7 +41,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
- * MySeekBar is a longclickable SeekBar which can be vertical or horizontal.
+ * Slider is a longclickable SeekBar which can be vertical or horizontal.
  *
  * Because it can be drawn in any of the four cardinal directions, but the style
  * doesn't know about this, we have to distinguish between "as styled" dimensions,
@@ -53,19 +51,19 @@ import androidx.annotation.Nullable;
  * default styles, but if the app sets a custom thumb or track which is changed
  * by 90 degree rotations, it needs to use the correct orientation.
  *
- * The overall size of the Seekbar is the size of the background, if there is one:
+ * The overall size of the Slider is the size of the background, if there is one:
  * the track is drawn inside that area reduced by the padding, but the thumb
  * extends into the padding.
  */
-public class MySeekBar extends View {
+public class Slider extends View {
 
     // direction of increasing value
-    public static final int SEEKBAR_RIGHTWARDS = 0;
-    public static final int SEEKBAR_UPWARDS = 1;
-    public static final int SEEKBAR_LEFTWARDS = 2;
-    public static final int SEEKBAR_DOWNWARDS = 3;
+    public static final int SLIDER_RIGHTWARDS = 0;
+    public static final int SLIDER_UPWARDS = 1;
+    public static final int SLIDER_LEFTWARDS = 2;
+    public static final int SLIDER_DOWNWARDS = 3;
 
-    private int mDirection = SEEKBAR_RIGHTWARDS; // default
+    private int mDirection = SLIDER_RIGHTWARDS; // default
 
     /* These are the padding values in pixels requested by the theme
      * or overridden by the app. Note these are raw values, as from the style,
@@ -87,7 +85,7 @@ public class MySeekBar extends View {
 
     /* These are the minimum and maximum width and height values in pixels
      * as requested by the theme or overridden by the app.
-     * Note these are raw values, as from the style, for a SEEKBAR_RIGHTWARDS,
+     * Note these are raw values, as from the style, for a SLIDER_RIGHTWARDS,
      * and they don't include padding. For the other directions,
      * we need to switch them round before using them in onMeasure().
      * We need to remember these in case the app changes the direction.
@@ -104,47 +102,96 @@ public class MySeekBar extends View {
     private ColorStateList mTrackTintList = null;
 
     // These are the dimensions of the thumb and track as drawn
-    int mThumbHalfWidth;
-    int mThumbHalfHeight;
-    int mTrackHalfWidth;
-    int mTrackHalfHeight;
+    private int mThumbHalfWidth;
+    private int mThumbHalfHeight;
+    private int mTrackHalfWidth;
+    private int mTrackHalfHeight;
 
-    private int mProgress; // current value
-    private int mMin; // minimum value of progress
-    private int mMax; // maximum vakue of progress
-    /** Interpolator used for smooth progress animations. */
-    private static final AccelerateDecelerateInterpolator PROGRESS_ANIM_INTERPOLATOR =
-        new AccelerateDecelerateInterpolator();
+    // These are the canvas translation offsets as drawn
+    private int mOffsetX;
+    private int mOffsetY;
 
-    /** Duration of smooth progress animations. */
-    private static final int PROGRESS_ANIM_DURATION = 80;
-    private ObjectAnimator mLastProgressAnimator; // current progress animator
-    private float mVisualProgress; // current displayed progress
-    private final FloatProperty<MySeekBar> VISUAL_PROGRESS =
-        new FloatProperty<MySeekBar>("thumbPos") {
-            @Override
-            public void setValue(MySeekBar object, float value) {
-                object.setThumbPos(value);
-            }
-            @Override
-            public Float get(MySeekBar object) {
-                return object.mVisualProgress;
-            }
-        };
+    private int mValue; // current value
+    private int mMin; // minimum for mValue, default from theme or 0
+    private int mMax; // maximum for mValue, default from theme or 100
 
-    public interface OnMySeekBarChangeListener {
-        void onProgressChanged(MySeekBar seekBar, int progress);
+    public interface OnValueChangeListener {
+        void onValueChanged(Slider slider, int value);
     }
 
     /* Callback to be called when the value changes.
      * The callback will only be called if the thumb is moved by a touch action
-     * or a keypress: it will not be called as a result of a call to setProgress().
+     * or a keypress: it will not be called as a result of a call to setValue().
      */
-    private OnMySeekBarChangeListener mOnSeekBarChangeListener = null;
+    private OnValueChangeListener mValueChangeListener = null;
+
+    /** Interpolator used for smooth progress animations. */
+    private static final AccelerateDecelerateInterpolator VALUE_ANIM_INTERPOLATOR =
+        new AccelerateDecelerateInterpolator();
+
+    /* Sets the thumb drawable bounds relative to the canvas,
+     * which is positioned inside the padding.
+     */
+    private void setThumbPos(int value) {
+        float scale = (value - mMin) / (float)(mMax - mMin);
+        Drawable thumb = mThumb;
+        if (thumb == null) { return; } // no thumb to position
+        int layoutDirection = getLayoutDirection();
+        final int thumbPosX; // centre of thumb as drawn
+        final int thumbPosY; // centre of thumb as drawn
+        if (mDirection == SLIDER_UPWARDS) {
+            thumbPosX = mTrackHalfWidth;
+            thumbPosY = (int)((1F - scale) * 2 * mTrackHalfHeight + 0.5f);
+            thumb.setBounds(thumbPosX - mThumbHalfWidth,
+                thumbPosY - mThumbHalfHeight,
+                thumbPosX + mThumbHalfWidth,
+                thumbPosY + mThumbHalfHeight);
+        } else if (mDirection == SLIDER_DOWNWARDS) {
+            thumbPosX = mTrackHalfWidth;
+            thumbPosY = (int)(scale * 2 * mTrackHalfWidth + 0.5f);
+            thumb.setBounds(thumbPosX - mThumbHalfWidth,
+                thumbPosY - mThumbHalfHeight,
+                thumbPosX + mThumbHalfWidth,
+                thumbPosY + mThumbHalfHeight);
+        } else if (  (mDirection == SLIDER_LEFTWARDS)
+            ^ (layoutDirection == LAYOUT_DIRECTION_RTL)) // (XOR)
+        { // leftwards after applying layout direction
+            thumbPosX = (int)((1F - scale) * 2 * mTrackHalfWidth + 0.5f);
+            thumbPosY = mTrackHalfHeight;
+            thumb.setBounds(thumbPosX - mThumbHalfWidth,
+                thumbPosY - mThumbHalfHeight,
+                thumbPosX + mThumbHalfWidth,
+                thumbPosY +  mThumbHalfHeight);
+        } else { // rightwards after applying layout direction
+            thumbPosX = (int)(scale * 2 * mTrackHalfWidth + 0.5f);
+            thumbPosY = mTrackHalfHeight;
+            thumb.setBounds(thumbPosX - mThumbHalfWidth,
+                thumbPosY - mThumbHalfHeight,
+                thumbPosX + mThumbHalfWidth,
+                thumbPosY + mThumbHalfHeight);
+        }
+        invalidate();
+    }
+
+    /** Duration of smooth progress animations. */
+    private static final int VALUE_ANIM_DURATION = 80;
+    private ObjectAnimator mLastValueAnimator; // current value animator
+    private final IntProperty<Slider> VISUAL_VALUE =
+        new IntProperty<Slider>("thumbPos") {
+            @Override
+            public void setValue(Slider object, int value) {
+                object.setThumbPos(value);
+                if (mValueChangeListener != null) {
+                    mValueChangeListener.onValueChanged(object, value);
+                }
+            }
+            @Override
+            public Integer get(Slider object) { return mValue; }
+        };
 
     // Set up the callback: a null argument removes any existing callback.
-    public void setOnChangeListener (@Nullable OnMySeekBarChangeListener l) {
-        mOnSeekBarChangeListener = l;
+    public void setOnChangeListener (@Nullable OnValueChangeListener l) {
+        mValueChangeListener = l;
     }
 
     // Amount of motion in pixels that is a real move and not finger shake.
@@ -153,7 +200,7 @@ public class MySeekBar extends View {
     private float mStartX;
     private float mStartY;
     // Initial progress at ACTION_DOWN, used to restore after ACTION_CANCEL.
-    private int mStartProgress;
+    private int mStartValue;
     /* True if we have decided it was a long click,
      * ignore MotionEvents until ACTION_CANCEL or ACTION_DOWN
      */
@@ -185,16 +232,16 @@ public class MySeekBar extends View {
     }
 
     // Constructors
-    public MySeekBar(Context context) { this(context, null); }
-    public MySeekBar(Context context, AttributeSet attrs) {
+    public Slider(Context context) { this(context, null); }
+    public Slider(Context context, AttributeSet attrs) {
         this(context, attrs, context.getResources().getIdentifier(
             "android:attr/seekBarStyle", "", "android"));
     }
-    public MySeekBar(Context context, AttributeSet attrs, int seekStyleAttr) {
+    public Slider(Context context, AttributeSet attrs, int seekStyleAttr) {
         this(context, attrs, seekStyleAttr, 0);
     }
-    public MySeekBar(Context context, AttributeSet attrs,
-                     int seekStyleAttr, int defStyleRes)
+    public Slider(Context context, AttributeSet attrs,
+                  int seekStyleAttr, int defStyleRes)
     {
         super(context, attrs, seekStyleAttr, defStyleRes);
         int progressStyleAttr = context.getResources().getIdentifier(
@@ -272,7 +319,7 @@ public class MySeekBar extends View {
         /* Get the default top padding from the theme.
          * The default is 0 if no value is specified in the theme.
          * It may be overridden by calling setPadding() or setPaddingRelative().
-         * For a vertical seekbar, the actual padding may be larger than this
+         * For a vertical slider, the actual padding may be larger than this
          * value to accommodate the thumb when it is at one end of the track.
          */
         resId = res.getIdentifier(
@@ -284,7 +331,7 @@ public class MySeekBar extends View {
         /* Get the default right padding from the theme.
          * The default is 0 if no value is specified in the theme.
          * It may be overridden by calling setPadding() or setPaddingRelative().
-         * For a horizontal seekbar, the actual padding may be larger than this
+         * For a horizontal slider, the actual padding may be larger than this
          * value to accommodate the thumb when it is at the one end of the track.
          */
         resId = res.getIdentifier(
@@ -296,7 +343,7 @@ public class MySeekBar extends View {
         /* Get the default bottom padding from the theme.
          * The default is 0 if no value is specified in the theme.
          * It may be overridden by calling setPadding() or setPaddingRelative().
-         * For a vertical seekbar, the actual padding may be larger than this
+         * For a vertical slider, the actual padding may be larger than this
          * value to accommodate the thumb when it is at the one end of the track.
          */
         resId = res.getIdentifier(
@@ -393,7 +440,7 @@ public class MySeekBar extends View {
         setLongClickable(true);
     }
 
-    // Get and set the minimum width as from the style for a SEEKBAR_RIGHTWARDS
+    // Get and set the minimum width as from the style for a SLIDER_RIGHTWARDS
     public int getMinWidth() { return mMinWidth; }
     public synchronized void setMinWidth(int w) {
         if (w > mMaxWidth) { mMinWidth = mMaxWidth; }
@@ -401,7 +448,7 @@ public class MySeekBar extends View {
         requestLayout();
     }
 
-    // Get and set the maximum width as from the style for a SEEKBAR_RIGHTWARDS
+    // Get and set the maximum width as from the style for a SLIDER_RIGHTWARDS
     public int getMaxWidth() { return mMaxWidth; }
     public synchronized void setMaxWidth(int w) {
         if (w < mMinWidth) { mMaxWidth = mMinWidth; }
@@ -409,7 +456,7 @@ public class MySeekBar extends View {
         requestLayout();
     }
 
-    // Get and set the minimum height as from the style for a SEEKBAR_RIGHTWARDS
+    // Get and set the minimum height as from the style for a SLIDER_RIGHTWARDS
     public int getMinHeight() { return mMinHeight; }
     public synchronized void setMinHeight(int h) {
         if (h > mMaxHeight) { mMinHeight = mMaxHeight; }
@@ -417,7 +464,7 @@ public class MySeekBar extends View {
         requestLayout();
     }
 
-    // Get and set the maximum height as from the style for a SEEKBAR_RIGHTWARDS
+    // Get and set the maximum height as from the style for a SLIDER_RIGHTWARDS
     public int getMaxHeight() { return mMaxHeight; }
     public synchronized void setMaxHeight(int h) {
         if (h < mMinHeight) { mMaxHeight = mMinHeight; }
@@ -435,14 +482,14 @@ public class MySeekBar extends View {
         w = Math.max(w - 2 * mThumbHalfWidth - 2 * mTrackHalfWidth, 0);
         h = Math.max(h - 2 * mThumbHalfHeight - 2 * mTrackHalfHeight, 0);
         switch (mDirection) {
-            case SEEKBAR_UPWARDS:
-            case SEEKBAR_DOWNWARDS:
+            case SLIDER_UPWARDS:
+            case SLIDER_DOWNWARDS:
                 int temp = w;
                 w = h;
                 h = temp;
                 //FALLTHRU
-            case SEEKBAR_RIGHTWARDS:
-            case SEEKBAR_LEFTWARDS:
+            case SLIDER_RIGHTWARDS:
+            case SLIDER_LEFTWARDS:
                 mMinWidth = w;
                 mMaxWidth = w;
                 mMinHeight = h;
@@ -452,7 +499,7 @@ public class MySeekBar extends View {
         requestLayout();
     }
 
-    // Get and set the minimum value for the progress
+    // Get and set the minimum value
     public int getMin() { return mMin; }
     public synchronized void setMin(int min) {
         if (min > mMax) { mMin = mMax; }
@@ -460,7 +507,7 @@ public class MySeekBar extends View {
         int range = mMax - mMin;
     }
 
-    // Get and set the maximum value for the progress
+    // Get and set the maximum value
     public int getMax() { return mMax; }
     public synchronized void setMax(int max) {
         if (max < mMin) { mMax = mMin; }
@@ -479,7 +526,6 @@ public class MySeekBar extends View {
     private void updateThumbAndTrackPos(int w, int h, boolean paddingChanged) {
         if (!mMeasured) { return; }
         int delta;
-        float scale;
         Drawable thumb = mThumb; // avoid possible data race
         if (thumb != null) {
             mThumbHalfWidth = thumb.getIntrinsicWidth() / 2;
@@ -504,8 +550,8 @@ public class MySeekBar extends View {
          * so we don't have to worry about layout direction.
          */
         switch (mDirection) {
-            case SEEKBAR_RIGHTWARDS: default: // just to stop lint barfing
-            case SEEKBAR_LEFTWARDS:
+            case SLIDER_RIGHTWARDS: default: // just to stop lint barfing
+            case SLIDER_LEFTWARDS:
                 // Ensure room for the thumb to project over the end of the track
                 if (left < mThumbHalfWidth) {
                     left = mThumbHalfWidth;
@@ -543,9 +589,9 @@ public class MySeekBar extends View {
                     }
                 }
                 if (h > 0) {
-                    delta = top + bottom + 2 * mTrackHalfHeight;
+                    delta = top + bottom + Math.max(2 * mTrackHalfHeight, mMinHeight);
                     if (delta > h) { // not enough room for thumb and track
-                        float ratio = ((float) h) / delta;
+                        float ratio = ((float) h) / (top + bottom + 2 * mTrackHalfHeight);
                         top = (int) (top * ratio); // shrink padding
                         bottom = (int) (bottom * ratio); // shrink padding
                         paddingChanged = true;
@@ -556,15 +602,20 @@ public class MySeekBar extends View {
                         if (mThumbHalfHeight > bottom + mTrackHalfHeight) {
                             mThumbHalfHeight = bottom + mTrackHalfHeight; // shrink thumb
                         }
+                    } else if (delta < h) {
+                        int extra = (h - delta) / 2;
+                        top += extra;
+                        bottom += extra;
+                        paddingChanged = true;
                     }
-                    if (w > 0) {
+                    if ((w > 0) && (track != null)) {
                         track.setBounds(0, 0,
                             2 * mTrackHalfWidth, 2 * mTrackHalfHeight);
                     }
                 }
                 break;
-            case SEEKBAR_UPWARDS:
-            case SEEKBAR_DOWNWARDS:
+            case SLIDER_UPWARDS:
+            case SLIDER_DOWNWARDS:
                 // mPad... are the style values, which will get rotated.
                 // Ensure room for the thumb to project over the end of the track
                 if (left < mThumbHalfHeight) {
@@ -603,21 +654,27 @@ public class MySeekBar extends View {
                     }
                 }
                 if (w > 0) {
-                    delta = top + bottom + 2 * mTrackHalfWidth;
+                    // mMinHeight is the minimum width for a rotated slider
+                    delta = top + bottom + Math.max(2 * mTrackHalfWidth, mMinHeight);
                     if (delta > w) { // not enough room for thumb and track
-                        float ratio = ((float) w) / delta;
+                        float ratio = ((float) w) / (top + bottom + 2 * mTrackHalfWidth);
                         top = (int) (top * ratio); // shrink padding
                         bottom = (int) (bottom * ratio); // shrink padding
                         paddingChanged = true;
-                        mTrackHalfWidth = (h - top - bottom) / 2; // shrink track
+                        mTrackHalfWidth = (w - top - bottom) / 2; // shrink track
                         if (mThumbHalfWidth > top + mTrackHalfWidth) {
                             mThumbHalfWidth = top + mTrackHalfWidth; // shrink thumb
                         }
                         if (mThumbHalfWidth > bottom + mTrackHalfWidth) {
                             mThumbHalfWidth = bottom + mTrackHalfWidth; // shrink thumb
                         }
+                    } else if (delta < w) {
+                        int extra = (w - delta) / 2;
+                        top += extra;
+                        bottom += extra;
+                        paddingChanged = true;
                     }
-                    if (h > 0) {
+                    if ((h > 0) && (track != null)) {
                         track.setBounds(0, 0,
                             2 * mTrackHalfWidth, 2 * mTrackHalfHeight);
                     }
@@ -628,29 +685,35 @@ public class MySeekBar extends View {
             int layoutDirection =
                 mPaddingIsRelative ? getLayoutDirection() : LAYOUT_DIRECTION_LTR;
             switch (mDirection) {
-                case SEEKBAR_RIGHTWARDS:
+                case SLIDER_RIGHTWARDS:
                     switch (layoutDirection) {
                         case LAYOUT_DIRECTION_RTL:
                             super.setPadding(right, top, left, bottom);
+                            mOffsetX = right;
                             break;
                         case LAYOUT_DIRECTION_LTR:
                         default:
                             super.setPadding(left, top, right, bottom);
+                            mOffsetX = left;
                             break;
                     }
+                    mOffsetY = h / 2 - mTrackHalfHeight;
                     break;
-                case SEEKBAR_LEFTWARDS:
+                case SLIDER_LEFTWARDS:
                     switch (layoutDirection) {
                         case LAYOUT_DIRECTION_RTL:
                             super.setPadding(left, top, right, bottom);
+                            mOffsetX = left;
                             break;
                         case LAYOUT_DIRECTION_LTR:
                         default:
                             super.setPadding(right, top, left, bottom);
+                            mOffsetX = right;
                             break;
                     }
+                    mOffsetY = h / 2 - mTrackHalfHeight;
                     break;
-                case SEEKBAR_UPWARDS:
+                case SLIDER_UPWARDS:
                     switch (layoutDirection) {
                         case LAYOUT_DIRECTION_RTL:
                             super.setPadding(top, left, bottom, right);
@@ -660,8 +723,10 @@ public class MySeekBar extends View {
                             super.setPadding(top, right, bottom, left);
                             break;
                     }
+                    mOffsetX = w / 2 - mTrackHalfHeight;
+                    mOffsetY = top;
                     break;
-                case SEEKBAR_DOWNWARDS:
+                case SLIDER_DOWNWARDS:
                     switch (layoutDirection) {
                         case LAYOUT_DIRECTION_RTL:
                             super.setPadding(top, right, bottom, left);
@@ -671,10 +736,12 @@ public class MySeekBar extends View {
                             super.setPadding(top, left, bottom, right);
                             break;
                     }
+                    mOffsetX = w / 2 - mTrackHalfHeight;
+                    mOffsetY = top;
                     break;
             }
         }
-        setThumbPos(mProgress / (float)(mMax - mMin));
+        setThumbPos(mValue);
     }
 
     /* Set padding allowing for extra space either side of the track if thumb is
@@ -687,7 +754,7 @@ public class MySeekBar extends View {
         mPadRight = right;
         mPadBottom = bottom;
         /* Ensure that the actual padding is big enough for the thumb
-         * and rotate if not SEEKBAR_RIGHTWARDS.
+         * and rotate if not SLIDER_RIGHTWARDS.
          */
         updateThumbAndTrackPos(getWidth(), getHeight(), true);
     }
@@ -925,50 +992,6 @@ public class MySeekBar extends View {
         }
     }
 
-    /* Sets the thumb drawable bounds relative to the canvas,
-     * which is positioned inside the padding.
-     */
-    private void setThumbPos(float scale) {
-        mVisualProgress = scale;
-        Drawable thumb = mThumb;
-        if (thumb == null) { return; } // no thumb to position
-        int layoutDirection = getLayoutDirection();
-        final int thumbPosX; // centre of thumb as drawn
-        final int thumbPosY; // centre of thumb as drawn
-        if (mDirection == SEEKBAR_UPWARDS) {
-            thumbPosX = mTrackHalfWidth;
-            thumbPosY = (int)((1F - scale) * 2 * mTrackHalfHeight + 0.5f);
-            thumb.setBounds(thumbPosX - mThumbHalfWidth,
-                            thumbPosY - mThumbHalfHeight,
-                            thumbPosX + mThumbHalfWidth,
-                            thumbPosY + mThumbHalfHeight);
-        } else if (mDirection == SEEKBAR_DOWNWARDS) {
-            thumbPosX = mTrackHalfWidth;
-            thumbPosY = (int)(scale * 2 * mTrackHalfWidth + 0.5f);
-            thumb.setBounds(thumbPosX - mThumbHalfWidth,
-                            thumbPosY - mThumbHalfHeight,
-                            thumbPosX + mThumbHalfWidth,
-                            thumbPosY + mThumbHalfHeight);
-        } else if (  (mDirection == SEEKBAR_LEFTWARDS)
-                   ^ (layoutDirection == LAYOUT_DIRECTION_RTL)) // (XOR)
-        { // leftwards after applying layout direction
-            thumbPosX = (int)((1F - scale) * 2 * mTrackHalfWidth + 0.5f);
-            thumbPosY = mTrackHalfHeight;
-            thumb.setBounds(thumbPosX - mThumbHalfWidth,
-                            thumbPosY - mThumbHalfHeight,
-                            thumbPosX + mThumbHalfWidth,
-                            thumbPosY +  mThumbHalfHeight);
-        } else { // rightwards after applying layout direction
-            thumbPosX = (int)(scale * 2 * mTrackHalfWidth + 0.5f);
-            thumbPosY = mTrackHalfHeight;
-            thumb.setBounds(thumbPosX - mThumbHalfWidth,
-                thumbPosY - mThumbHalfHeight,
-                thumbPosX + mThumbHalfWidth,
-                thumbPosY + mThumbHalfHeight);
-        }
-        invalidate();
-    }
-
     @Override
     protected synchronized void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -976,7 +999,7 @@ public class MySeekBar extends View {
         /* getPaddingLeft() and getPaddingTop() return the rotated padding values
          * that we gave to the view, so we don't need to consider direction here.
          */
-        canvas.translate(getPaddingLeft(), getPaddingTop());
+        canvas.translate(mOffsetX, mOffsetY);
         if (mTrack != null) {
             mTrack.draw(canvas);
         }
@@ -988,22 +1011,22 @@ public class MySeekBar extends View {
 
     @Override
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (!mMeasured) {
+         if (!mMeasured) {
             mMeasured = true;
             updateThumbAndTrackPos(0, 0, false);
         }
         int dw = 2 * mTrackHalfWidth;
         int dh = 2 * mTrackHalfHeight;
         switch (mDirection) {
-            case SEEKBAR_RIGHTWARDS:
-            case SEEKBAR_LEFTWARDS:
+            case SLIDER_RIGHTWARDS:
+            case SLIDER_LEFTWARDS:
                 dw = (Math.max(mMinWidth, Math.min(mMaxWidth, dw)));
-                dh = (Math.max(mMinHeight, Math.min(mMaxHeight, dw)));
+                dh = (Math.max(mMinHeight, Math.min(mMaxHeight, dh)));
                 break;
-            case SEEKBAR_UPWARDS:
-            case SEEKBAR_DOWNWARDS:
+            case SLIDER_UPWARDS:
+            case SLIDER_DOWNWARDS:
                 dw = (Math.max(mMinHeight, Math.min(mMaxHeight, dw)));
-                dh = (Math.max(mMinWidth, Math.min(mMaxWidth, dw)));
+                dh = (Math.max(mMinWidth, Math.min(mMaxWidth, dh)));
                 break;
         }
         dw += getPaddingLeft() + getPaddingRight();
@@ -1062,50 +1085,49 @@ public class MySeekBar extends View {
         }
     }
 
-    public void setProgress(int progress, boolean animate) {
-        if (progress < mMin) { progress = mMin; }
-        if (progress > mMax) { progress = mMax; }
-        if (progress == mProgress) { return; } // no change from current
-        int range = mMax - mMin;
-        final float vStart = range > 0 ? (mProgress - mMin) / (float) range : 0;
-        final float vEnd = range > 0 ? (progress - mMin) / (float) range : 0;
-        Log.d("mProgress", String.valueOf(mProgress) + "->" + progress);
-        mProgress = progress;
+    public int getValue() {
+        return mValue;
+    }
 
+    public void setValue(int value, boolean animate) {
+        if (value < mMin) { value = mMin; }
+        if (value > mMax) { value = mMax; }
+        if (value == mValue) { return; } // no change from current
         if (animate) {
             // should be able to re-use by doing
             // animator.setValues(vStart, vEnd);
             final ObjectAnimator animator =
-                ObjectAnimator.ofFloat(this, VISUAL_PROGRESS, vStart, vEnd);
+                ObjectAnimator.ofInt(this, VISUAL_VALUE, value);
             animator.setAutoCancel(true);
-            animator.setDuration(PROGRESS_ANIM_DURATION);
-            animator.setInterpolator(PROGRESS_ANIM_INTERPOLATOR);
+            animator.setDuration(VALUE_ANIM_DURATION);
+            animator.setInterpolator(VALUE_ANIM_INTERPOLATOR);
             animator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mLastProgressAnimator = null;
+                    mLastValueAnimator = null;
                 }
             });
             animator.start();
-            mLastProgressAnimator = animator;
+            mLastValueAnimator = animator;
         } else {
-            if (mLastProgressAnimator != null) {
-                mLastProgressAnimator.cancel();
-                mLastProgressAnimator = null;
+            if (mLastValueAnimator != null) {
+                mLastValueAnimator.cancel();
+                mLastValueAnimator = null;
             }
-            setThumbPos(vEnd);
+            mValue = value;
+            setThumbPos(value);
         }
     }
 
-    public  void setProgress(int progress) {
-        setProgress(progress, false);
+    public void setValue(int value) {
+        setValue(value, false);
     }
 
-    private synchronized void setProgressInternal(int progress, boolean animate) {
-        if (mOnSeekBarChangeListener != null) {
-            mOnSeekBarChangeListener.onProgressChanged(this, progress);
+    private synchronized void setValueInternal(int value, boolean animate) {
+        setValue(value, animate);
+        if ((mValueChangeListener != null) && !animate) {
+            mValueChangeListener.onValueChanged(this, value);
         }
-        setProgress(progress, animate);
     }
 
     private void trackTouchEvent(int x, int y) {
@@ -1114,7 +1136,7 @@ public class MySeekBar extends View {
         final int width = getWidth();
         final int height = getHeight();
         switch (mDirection) {
-            case SEEKBAR_RIGHTWARDS: default:
+            case SLIDER_RIGHTWARDS: default:
                 if (x > width - getPaddingRight()) { scale = 1.0F; }
                 else if (x < getPaddingLeft()) { scale = 0.0F; }
                 else {
@@ -1122,7 +1144,7 @@ public class MySeekBar extends View {
                         (float)(width - getPaddingLeft() - getPaddingRight());
                 }
                 break;
-            case SEEKBAR_UPWARDS:
+            case SLIDER_UPWARDS:
                 if (y < getPaddingTop()) { scale = 1.0F; }
                 else if (y > height - getPaddingBottom()) { scale = 0.0F; }
                 else {
@@ -1130,7 +1152,7 @@ public class MySeekBar extends View {
                         (float)(height - getPaddingTop() - getPaddingBottom());
                 }
                 break;
-            case SEEKBAR_LEFTWARDS:
+            case SLIDER_LEFTWARDS:
                 if (x > width - getPaddingRight()) { scale = 0.0F; }
                 else if (x < getPaddingLeft()) { scale = 1.0F; }
                 else {
@@ -1138,7 +1160,7 @@ public class MySeekBar extends View {
                         (float)(width - getPaddingLeft() - getPaddingRight());
                 }
                 break;
-            case SEEKBAR_DOWNWARDS:
+            case SLIDER_DOWNWARDS:
                 if (y < getPaddingTop()) { scale = 0.0F; }
                 else if (y > height - getPaddingBottom()) { scale = 1.0F; }
                 else {
@@ -1148,7 +1170,7 @@ public class MySeekBar extends View {
                 break;
         }
         setHotspot(x, y);
-        setProgressInternal(
+        setValueInternal(
             Math.round(getMin() + scale * (getMax() - getMin())), true);
     }
 
@@ -1179,8 +1201,8 @@ public class MySeekBar extends View {
                                         Math.round(event.getY()));
                     } else if (mTimerRunning) {
                         switch (mDirection) {
-                            case SEEKBAR_RIGHTWARDS:
-                            case SEEKBAR_LEFTWARDS:
+                            case SLIDER_RIGHTWARDS:
+                            case SLIDER_LEFTWARDS:
                                 if (   (event.getX() - mStartX > mScaledTouchSlop)
                                     || (mStartX - event.getX() > mScaledTouchSlop))
                                 {
@@ -1190,8 +1212,8 @@ public class MySeekBar extends View {
                                                     Math.round(event.getY()));
                                 }
                                 break;
-                            case SEEKBAR_UPWARDS:
-                            case SEEKBAR_DOWNWARDS:
+                            case SLIDER_UPWARDS:
+                            case SLIDER_DOWNWARDS:
                                 if (   (event.getY() - mStartY > mScaledTouchSlop)
                                     || (mStartY - event.getY() > mScaledTouchSlop))
                                 {
@@ -1222,7 +1244,7 @@ public class MySeekBar extends View {
                  */
                 if (actionDone()) {
                     // Was dragging, jump back to where we started without animation
-                    setProgressInternal(mStartProgress, false);
+                    setValueInternal(mStartValue, false);
                 }
                 break;
         }
@@ -1232,6 +1254,6 @@ public class MySeekBar extends View {
 
     @Override
     public CharSequence getAccessibilityClassName() {
-        return MySeekBar.class.getName();
+        return Slider.class.getName();
     }
 }
