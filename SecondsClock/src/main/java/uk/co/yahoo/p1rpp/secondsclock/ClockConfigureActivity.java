@@ -256,6 +256,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         lboxes.addView(cb);
         LinearLayout lControls = new LinearLayout(this);
         lControls.setOrientation(LinearLayout.VERTICAL);
+        m_helptext.setText(R.string.longpresshoriz);
         lControls.addView(m_helptext);
         LinearLayout lButtons = new LinearLayout(this);
         lButtons.setOrientation(LinearLayout.VERTICAL);
@@ -362,6 +363,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         scrollView.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
         LinearLayout lControls = new LinearLayout(this);
         lControls.setOrientation(LinearLayout.VERTICAL);
+        m_helptext.setText(R.string.longpresshoriz);
         lControls.addView(m_helptext);
         LinearLayout lButtons = new LinearLayout(this);
         lButtons.setOrientation(LinearLayout.VERTICAL);
@@ -492,13 +494,16 @@ public class ClockConfigureActivity extends ConfigureActivity
         LinearLayout lButtons = new LinearLayout(this);
         lButtons.setOrientation(LinearLayout.VERTICAL);
         lButtons.setGravity(Gravity.CENTER_HORIZONTAL);
-        lButtons.addView(m_helptext);
-        lButtons.addView(m_data, lpWrapWrap);
-        lButtons.addView(m_display, lpWrapWrap);
-        lButtons.addView(m_okButton, lpWrapWrap);
-        LinearLayout lChooser = makeChooser();
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            LinearLayout lChooser = new LinearLayout(this);
+            lChooser.setOrientation(LinearLayout.VERTICAL);
+            m_helptext.setText(R.string.longpresshoriz);
+            lChooser.addView(m_helptext);
+            lChooser.addView(makeChooser());
             m_display.setId(DISPLAYBUTTON);
+            lButtons.addView(m_data, lpWrapWrap);
+            lButtons.addView(m_display, lpWrapWrap);
+            lButtons.addView(m_okButton, lpWrapWrap);
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(1, 1),
                 GridLayout.spec(0, 1)
@@ -515,15 +520,26 @@ public class ClockConfigureActivity extends ConfigureActivity
             layoutParams.height = m_height;
             gl.addView(scrollView, -1, layoutParams);
         } else { // assume PORTRAIT
-            lChooser.addView(lButtons);
-            scrollView.addView(lChooser);
             m_display.setId(DIMBUTTON);
+            m_helptext.setText(R.string.longpressvert);
+            lButtons.addView(m_helptext, lpWrapWrap);
+            lButtons.addView(m_data, lpWrapWrap);
+            lButtons.addView(m_display, lpWrapWrap);
+            lButtons.addView(m_okButton, lpWrapWrap);
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(
+                GridLayout.spec(0, 1),
+                GridLayout.spec(1, 1)
+            );
+            layoutParams.width = m_width / 2;
+            layoutParams.height = m_height / 2;
+            gl.addView(lButtons, -1, layoutParams);
+            layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(1, 1),
                 GridLayout.spec(0, 2)
             );
             layoutParams.width = m_width;
             layoutParams.height = m_height / 2;
+            scrollView.addView(makeChooser());
             gl.addView(scrollView, -1, layoutParams);
         }
         m_topLayout.addView(gl);
@@ -567,7 +583,6 @@ public class ClockConfigureActivity extends ConfigureActivity
          * orientation we need it before then to assign space to its children.
          */
         m_clockView.setHeight(m_height / 2);
-        m_helptext.setText(R.string.longpresshoriz);
         m_secondsSizer = new Slider(this);
         m_secondsSizer.setMax(255);
         m_secondsSizer.setId(SECONDSSIZER);
