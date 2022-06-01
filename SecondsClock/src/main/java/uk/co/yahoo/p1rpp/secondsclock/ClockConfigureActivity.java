@@ -159,16 +159,21 @@ public class ClockConfigureActivity extends ConfigureActivity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); return;
-            case DATABUTTON: setCurrentView(DATABUTTON); return;
+            case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); break;
+            case DATABUTTON: setCurrentView(DATABUTTON); break;
             case DIMBUTTON:
-            case DISPLAYBUTTON: setCurrentView(DISPLAYBUTTON); return;
+            case DISPLAYBUTTON: setCurrentView(DISPLAYBUTTON); break;
             case DEMOCLOCK:
                 Intent intent = new Intent(m_activity, ClockActivity.class);
                 startActivity(intent);
-                return;
+                break;
+            case DONEBUTTON:
+                if (m_currentView == DATABUTTON) {
+                    finish();
+                } else {
+                    setCurrentView(DATABUTTON);
+                }
         }
-        super.onClick(v);
     }
 
     protected void updateFromCheckBox() {
@@ -466,6 +471,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             // remaining controls in bottom half
             lControls.addView(lDimming);
             lControls.addView(m_CurrentLux);
+            scrollView.addView(lControls);
             layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(1, 1, 1f),
                 GridLayout.spec(0, 2, 1f)
@@ -486,6 +492,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         LinearLayout lButtons = new LinearLayout(this);
         lButtons.setOrientation(LinearLayout.VERTICAL);
         lButtons.setGravity(Gravity.CENTER_HORIZONTAL);
+        lButtons.addView(m_helptext);
         lButtons.addView(m_data, lpWrapWrap);
         lButtons.addView(m_display, lpWrapWrap);
         lButtons.addView(m_okButton, lpWrapWrap);
@@ -560,6 +567,7 @@ public class ClockConfigureActivity extends ConfigureActivity
          * orientation we need it before then to assign space to its children.
          */
         m_clockView.setHeight(m_height / 2);
+        m_helptext.setText(R.string.longpresshoriz);
         m_secondsSizer = new Slider(this);
         m_secondsSizer.setMax(255);
         m_secondsSizer.setId(SECONDSSIZER);

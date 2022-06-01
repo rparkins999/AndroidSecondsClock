@@ -238,13 +238,6 @@ abstract class ConfigureActivity extends Activity_common
 
     public abstract void onValueChanged(Slider slider, int value);
 
-    public void onClick(View v) {
-        if (v.getId() == DONEBUTTON) {
-            setCurrentView(CONFIGURE);
-            finish();
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

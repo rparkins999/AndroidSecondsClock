@@ -193,17 +193,15 @@ public class WidgetConfigureActivity extends ConfigureActivity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); break;
+            case SETBACKGROUNDCOLOUR: setCurrentView(SETBACKGROUNDCOLOUR); break;
             case DONEBUTTON:
                 if (m_currentView == CONFIGURE) {
                     finish();
                 } else {
                     setCurrentView(CONFIGURE);
                 }
-                return;
-            case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); return;
-            case SETBACKGROUNDCOLOUR: setCurrentView(SETBACKGROUNDCOLOUR); return;
         }
-        super.onClick(v);
     }
 
     private int widgetId;
