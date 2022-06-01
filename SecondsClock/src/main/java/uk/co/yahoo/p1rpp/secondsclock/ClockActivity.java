@@ -32,13 +32,14 @@ public class ClockActivity extends Activity_common
         m_topLayout = findViewById(R.id.genericlayout);
         m_topLayout.setBackgroundColor(0xFF000000);
         m_clockView = new ClockView(this);
-        m_topLayout.addView(m_clockView);
     }
 
     @Override
     protected void onResume() {
         m_key = "C";
         super.onResume();
+        m_topLayout.removeAllViews();
+        m_topLayout.addView(m_clockView);
         m_clockView.setHeight(getResources().getDisplayMetrics().heightPixels);
     }
 
@@ -51,5 +52,11 @@ public class ClockActivity extends Activity_common
             finish();
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        m_topLayout.removeAllViews();
     }
 }

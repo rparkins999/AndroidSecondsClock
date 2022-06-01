@@ -104,7 +104,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         float threshold = m_prefs.getInt("Cthreshold", 0);
         // This is the minimum brightness when the lux is zero.
         int minbright= m_prefs.getInt("Cbrightness", 255);
-        // This is a smoothed ambueint light level to avoid hunting
+        // This is a smoothed ambient light level to avoid hunting
         m_smoothedLightLevel = (7F * m_smoothedLightLevel + m_lightLevel) / 8F;
         ContentResolver cr = m_owner.getContentResolver();
         int globright = Settings.System.getInt(
