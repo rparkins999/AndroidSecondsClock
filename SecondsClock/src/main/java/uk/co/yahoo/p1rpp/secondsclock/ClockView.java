@@ -49,7 +49,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
      * invisible, so for requested brightness values less than this threshold
      * we set the window brightness to zero and reduce the opacity.
      */
-    private static final int ZEROBRIGHT = 25;
+    private static final int ZEROBRIGHT = 16;
 
     public String m_dateFormat = " ";
     public String m_hoursFormat = " ";
@@ -94,142 +94,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_yearView.setTextColor(colour);
     }
 
-    /* When the clock view is used as a democlock in the configuration screen,
-     * with a particular lux threshold setting, a particular minimum
-     * brightness setting, a particular actual lux level, and a particular
-     * global brightness setting, we want to display it as bright as it will
-     * appear on the real full screen clock. This is tricky because
-     * on the real full screen clock we do it by setting the application screen
-     * brightness, but we can't do that in the configuration screen because
-     * that would change the brightness of the controls as well. So we do it
-     * by adjusting the opacity of the democlock so that the apparent
-     * brightness of the democlock is the same as what the brightness of the
-     * full screen clock would be.
-     * Unfortunately the relationship between opacity and brightness is horribly
-     * non-linear and also dependent on internal resources set by the device
-     * manufacturer and not readable by a user app (so much for open source!).
-     * Also zero screen brightness isn't invisible as zero opacity is,
-     * so I reduce the opacity as well for low values of brightness:
-     * this makes it even more nonlinear.
-     * To try and get it right we use a map which gives the required opacity
-     * from the global brightness setting and the application screen brightness
-     * that we have calculated from the lux threshold setting,
-     * the current actual lux level, the minimum brightness level setting,
-     * and the current global brightness. The global brightness setting
-     * appears both in the calculation and the map because we don't set
-     * the application screen brightness to be more than that.
-     * This map can be set in a calibration screen using flicker photometry:
-     * default values are used if the user doesn't set the map.
-     * We can't store a map in the SharedPreferences directly, so we store it as
-     * a StringSet where each string contains three comma-separated values,
-     * the global brightness setting, the application screen brightness,
-     * and the required opacity for those values. We interpolate between the
-     * closest entries in the map.
-     * If the you don't bother to calibrate, it will still work,
-     * but it will be harder to set the minimum brightness
-     * to get the behaviour that you want.
-     */
-    private int getOpacity(int globright, int appbright) {
-        /* These describe the map entry with the highest global brightness which
-         * is less than or equal to globright and the highest application
-         * screen brightness which is less than or equal to appbright.
-         */
-        int globlolo = 0;
-        int applolo = 0;
-        int oplolo = 0;
-        /* These describe the map entry with the highest global brightness which
-         * is less than or equal to globright and the lowest application screen
-         * brightness which is greater than or equal to appbright.
-         */
-        int globlohi = 0;
-        int applohi = 255;
-        int oplohi = 255;
-        /* These describe the map entry with the lowest global brightness which
-         * is greater than or equal to globright and the highest application
-         * screen brightness which is less than or equal to appbright.
-         */
-        int globhilo = 255;
-        int apphilo = 0;
-        int ophilo = 0;
-        /* These describe the map entry with the lowest global brightness which
-         * is greater than or equal to globright and the lowest application
-         * screen brightness which is greater than or equal to appbright.
-         */
-        int globhihi = 255;
-        int apphihi = 255;
-        int ophihi = 255;
-        // Go through the map to see if we can find anything closer than
-        // the default values set above.
-        Set<String> as = m_prefs.getStringSet("brightmap", null);
-        if (as != null) {
-            for (String s : as) { // iterate over the map
-                try {
-                    String[] t = s.split(",");
-                    if (t.length == 3) { // ignore invalid map entry
-                        int glob = Integer.parseInt(t[0]);
-                        int app = Integer.parseInt(t[1]);
-                        int op = Integer.parseInt(t[2]);
-                        if (   (glob <= globright)
-                            && (glob >= globlolo)
-                            && (app <= appbright)
-                            && (app >= applolo))
-                        {
-                            globlolo = glob;
-                            applolo = app;
-                            oplolo = op;
-                            continue;
-                        }
-                        if (   (glob <= globright)
-                            && (glob >= globlohi)
-                            && (app >= appbright)
-                            && (app <= applohi))
-                        {
-                            globlohi = glob;
-                            applohi = app;
-                            oplohi = op;
-                            continue;
-                        }
-                        if (   (glob >= globright)
-                            && (glob <= globhilo)
-                            && (app <= appbright)
-                            && (app >= apphilo))
-                        {
-                            globhilo = glob;
-                            apphilo = app;
-                            ophilo = op;
-                            continue;
-                        }
-                        if (   (glob >= globright)
-                            && (glob <= globhihi)
-                            && (app >= appbright)
-                            && (app <= apphihi))
-                        {
-                            globhihi = glob;
-                            apphihi = app;
-                            ophihi = op;
-                        }
-                    }
-                } catch (NumberFormatException ignore) {}  // ignore invalid
-            }
-        }
-        // first interpolate along application screen brightness
-        int globlo =
-            (globlolo * (applohi - appbright) + globlohi * (appbright - applolo))
-            / (applohi - applolo);
-        int oplo =
-            (oplolo * (applohi - appbright) + oplohi * (appbright - applolo))
-            / (applohi - applolo);
-        int globhi =
-            (globhilo * (apphihi - appbright) + globhihi * (appbright - apphilo))
-            / (apphihi - apphilo);
-        int ophi =
-            (ophilo * (apphihi - appbright) + ophihi * (appbright - apphilo))
-            / (apphihi - apphilo);
-        // now interpolate along global brightness
-        return (oplo * (globhi - globright) + ophi * (globright - globlo))
-                / (globhi - globlo);
-    }
-
     /* This adjusts the colour and brightness of the clock display.
      * It can be called from our configuration screen
      * or from onSensorChanged when the ambient light level changes.
@@ -255,37 +119,25 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 (m_smoothedLightLevel / threshold) * (globright - minbright);
         }
         int alpha;
-        if (m_owner instanceof ClockConfigureActivity) {
-            ((ClockConfigureActivity) m_owner).m_CurrentLux.setText(
-                m_owner.getString(R.string.currentlux, (int)m_lightLevel));
-            // This is the demo: fake brightness change by adjusting opacity
-            alpha = getOpacity(globright, (int)brightness);
-            m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
-            setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
-        } else if (m_owner instanceof Calibrate) {
-            // This is the calibrator, just update the current lux
-            ((Calibrate) m_owner).m_CurrentLux.setText(
-                m_owner.getString(R.string.currentlux, (int)m_lightLevel));
-        } else {
-            // This is the real full screen clock,
-            // adjust the real screen brightness
-            Window w = m_owner.getWindow();
-            WindowManager.LayoutParams lp = w.getAttributes();
-            if (brightness >= globright)
-            {
-                lp.screenBrightness = -1.0F;
+        // This is the real full screen clock,
+        // adjust the real screen brightness
+        Window w = m_owner.getWindow();
+        WindowManager.LayoutParams lp = w.getAttributes();
+        if (brightness >= globright)
+        {
+            lp.screenBrightness = -1.0F;
+            alpha = 255;
+        } else if (brightness >= ZEROBRIGHT) {
+            lp.screenBrightness =
+                (brightness - ZEROBRIGHT) / (255F - ZEROBRIGHT);
                 alpha = 255;
-            } else {
-                lp.screenBrightness = brightness / 255F;
-                if (brightness >= 16) {
-                    alpha = 255;
-                } else {
-                    alpha = (int)(255 * brightness / 16);
-                }
-            }
-            setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
-            w.setAttributes(lp);
+        } else {
+            lp.screenBrightness = 0.0F;
+            alpha = 255 * (ZEROBRIGHT - (int)brightness) / ZEROBRIGHT;
         }
+        m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
+        setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
+        w.setAttributes(lp);
     }
 
     // This gets the current ambient light level in lux and limits it to MAXLIGHT,

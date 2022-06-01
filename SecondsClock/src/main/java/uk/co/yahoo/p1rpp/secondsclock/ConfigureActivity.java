@@ -13,6 +13,7 @@ import static android.text.InputType.TYPE_CLASS_NUMBER;
 
 import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -31,7 +32,6 @@ abstract class ConfigureActivity extends Activity_common
     implements View.OnLongClickListener, CompoundButton.OnCheckedChangeListener,
     Slider.OnValueChangeListener, View.OnClickListener
 {
-    protected static final int CONFIGURE = 0; // m_currentView default value
 
     // base list of View IDs
     protected static final int LONGPRESSHELP = VIEWIDBASE;
@@ -229,7 +229,7 @@ abstract class ConfigureActivity extends Activity_common
     }
 
     // Adjust colour of track and slider to ensure contrast with background
-    protected  void fixTintList(@NonNull Slider slider, int value) {
+    protected void fixTintList(@NonNull Slider slider, int value) {
         ColorStateList cl = ColorStateList.valueOf(
             value < 128 ? 0xFFFFFFFF : 0xFF000000);
         slider.setTrackTintList(cl);
@@ -253,90 +253,178 @@ abstract class ConfigureActivity extends Activity_common
     }
 
     protected LinearLayout makeChooser() {
-        LinearLayout ll = new LinearLayout(this);
-        ll.setOrientation(LinearLayout.VERTICAL);
-        ll.addView(centredLabel(R.string.huelabel, HUESLIDER));
         LinearLayout lhue = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lhue.setLayoutParams(lpMatchWrap);
         LinearLayout lshue = new LinearLayout(this);
         lshue.setOrientation(LinearLayout.VERTICAL);
         lshue.setLayoutParams(lpMMWeight);
         lshue.setGravity(Gravity.CENTER_VERTICAL);
         lshue.addView(hueSlider);
-        lhue.addView(lshue);
         LinearLayout lvhue = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lvhue.setLayoutParams(lpWrapWrap);
         lvhue.addView(hueSpacer);
-        lhue.addView(lvhue);
-        ll.addView(lhue);
-        ll.addView(centredLabel(R.string.saturationlabel, SATURATIONSLIDER));
         LinearLayout lsat = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lsat.setLayoutParams(lpMatchWrap);
         LinearLayout lssat = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lssat.setOrientation(LinearLayout.VERTICAL);
         lssat.setLayoutParams(lpMMWeight);
         lssat.setGravity(Gravity.CENTER_VERTICAL);
         lssat.addView(saturationSlider);
-        lsat.addView(lssat);
         LinearLayout lvsat = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lvsat.setLayoutParams(lpWrapWrap);
         lvsat.addView(saturationValue);
-        lsat.addView(lvsat);
-        ll.addView(lsat);
-        ll.addView(centredLabel(R.string.valuelabel, VALUESLIDER));
         LinearLayout lval = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lval.setLayoutParams(lpMatchWrap);
         LinearLayout lsval = new LinearLayout(this);
         lsval.setOrientation(LinearLayout.VERTICAL);
         lsval.setLayoutParams(lpMMWeight);
         lsval.setGravity(Gravity.CENTER_VERTICAL);
         lsval.addView(valueSlider);
-        lval.addView(lsval);
         LinearLayout lvval = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lvval.setLayoutParams(lpWrapWrap);
         lvval.addView(valueValue);
-        lval.addView(lvval);
-        ll.addView(lval);
-        ll.addView(centredLabel(R.string.redlabel, REDSLIDER));
         LinearLayout lred = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lred.setLayoutParams(lpMatchWrap);
         LinearLayout lsred = new LinearLayout(this);
         lsred.setOrientation(LinearLayout.VERTICAL);
         lsred.setLayoutParams(lpMMWeight);
         lsred.setGravity(Gravity.CENTER_VERTICAL);
         lsred.addView(redSlider);
-        lred.addView(lsred);
         LinearLayout lvred = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lvred.setLayoutParams(lpWrapWrap);
         lvred.addView(redValue);
-        lred.addView(lvred);
-        ll.addView(lred);
-        ll.addView(centredLabel(R.string.greenlabel, GREENSLIDER));
         LinearLayout lgrn = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lgrn.setLayoutParams(lpMatchWrap);
         LinearLayout lsgrn = new LinearLayout(this);
         lsgrn.setOrientation(LinearLayout.VERTICAL);
         lsgrn.setLayoutParams(lpMMWeight);
         lsgrn.setGravity(Gravity.CENTER_VERTICAL);
         lsgrn.addView(greenSlider);
-        lgrn.addView(lsgrn);
         LinearLayout lvgrn = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lvgrn.setLayoutParams(lpWrapWrap);
         lvgrn.addView(greenValue);
-        lgrn.addView(lvgrn);
-        ll.addView(lgrn);
-        ll.addView(centredLabel(R.string.bluelabel, BLUESLIDER));
         LinearLayout lblu = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lblu.setLayoutParams(lpMatchWrap);
         LinearLayout lsblu = new LinearLayout(this);
         lsblu.setOrientation(LinearLayout.VERTICAL);
         lsblu.setLayoutParams(lpMMWeight);
         lsblu.setGravity(Gravity.CENTER_VERTICAL);
         lsblu.addView(blueSlider);
-        lblu.addView(lsblu);
         LinearLayout lvblu = new LinearLayout(this);
+        // default orientation is HORIZONTAL
         lvblu.setLayoutParams(lpWrapWrap);
         lvblu.addView(blueValue);
-        lblu.addView(lvblu);
-        ll.addView(lblu);
+        LinearLayout ll = new LinearLayout(this);
+        ll.setOrientation(LinearLayout.VERTICAL);
+        if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            LinearLayout lthue = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            lthue.setLayoutParams(lpWrapMatch);
+            lthue.setGravity(Gravity.CENTER_VERTICAL);
+            TextView tv = textLabel(R.string.huelabel, HUESLIDER);
+            tv.setWidth(m_width / 10);
+            lthue.addView(tv);
+            lhue.addView(lthue);
+            lhue.addView(lshue);
+            lhue.addView(lvhue);
+            ll.addView(lhue);
+            LinearLayout ltsat = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            ltsat.setLayoutParams(lpWrapMatch);
+            ltsat.setGravity(Gravity.CENTER_VERTICAL);
+            tv = textLabel(R.string.saturationlabel, SATURATIONSLIDER);
+            tv.setWidth(m_width / 10);
+            ltsat.addView(tv);
+            lsat.addView(ltsat);
+            lsat.addView(lssat);
+            lsat.addView(lvsat);
+            ll.addView(lsat);
+            LinearLayout ltval = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            ltval.setLayoutParams(lpWrapMatch);
+            ltval.setGravity(Gravity.CENTER_VERTICAL);
+            tv = textLabel(R.string.valuelabel, VALUESLIDER);
+            tv.setWidth(m_width / 10);
+            ltval.addView(tv);
+            lval.addView(ltval);
+            lval.addView(lsval);
+            lval.addView(lvval);
+            ll.addView(lval);
+            LinearLayout ltred = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            ltred.setLayoutParams(lpWrapMatch);
+            ltred.setGravity(Gravity.CENTER_VERTICAL);
+            tv = textLabel(R.string.redlabel, REDSLIDER);
+            tv.setWidth(m_width / 10);
+            ltred.addView(tv);
+            lred.addView(ltred);
+            lred.addView(lsred);
+            lred.addView(lvred);
+            ll.addView(lred);
+            LinearLayout ltgrn = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            ltgrn.setLayoutParams(lpWrapMatch);
+            ltgrn.setGravity(Gravity.CENTER_VERTICAL);
+            tv = textLabel(R.string.greenlabel, GREENSLIDER);
+            tv.setWidth(m_width / 10);
+            ltgrn.addView(tv);
+            lgrn.addView(ltgrn);
+            lgrn.addView(lsgrn);
+            lgrn.addView(lvgrn);
+            ll.addView(lgrn);
+            LinearLayout ltblu = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            ltblu.setLayoutParams(lpWrapMatch);
+            ltblu.setGravity(Gravity.CENTER_VERTICAL);
+            tv = textLabel(R.string.bluelabel, BLUESLIDER);
+            tv.setWidth(m_width / 10);
+            ltblu.addView(tv);
+            lblu.addView(ltblu);
+            lblu.addView(lsblu);
+            lblu.addView(lvblu);
+            ll.addView(lblu);
+        } else {
+            ll.addView(centredLabel(R.string.huelabel, HUESLIDER));
+            lhue.addView(lshue);
+            lhue.addView(lvhue);
+            ll.addView(lhue);
+            ll.addView(centredLabel(R.string.saturationlabel, SATURATIONSLIDER));
+            lsat.addView(lssat);
+            lsat.addView(lvsat);
+            ll.addView(lsat);
+            ll.addView(centredLabel(R.string.valuelabel, VALUESLIDER));
+            lval.addView(lsval);
+            lval.addView(lvval);
+            ll.addView(lval);
+            ll.addView(centredLabel(R.string.redlabel, REDSLIDER));
+            lred.addView(lsred);
+            lred.addView(lvred);
+            ll.addView(lred);
+            ll.addView(centredLabel(R.string.greenlabel, GREENSLIDER));
+            lgrn.addView(lsgrn);
+            lgrn.addView(lvgrn);
+            ll.addView(lgrn);
+            ll.addView(centredLabel(R.string.bluelabel, BLUESLIDER));
+            lblu.addView(lsblu);
+            lblu.addView(lvblu);
+            ll.addView(lblu);
+        }
         return ll;
     }
 
-    int safeParseInt(String s) {
+    protected int safeParseInt(String s) {
         if ((s == null) || s.isEmpty()) { return 0; }
         return Integer.parseInt(s);
     }
@@ -346,17 +434,18 @@ abstract class ConfigureActivity extends Activity_common
         super.resume();
         m_helptext = new TextView(this);
         m_helptext.setId(LONGPRESSHELP);
-        m_helptext.setText(R.string.longpresslabel);
         m_helptext.setOnLongClickListener(this);
         showShortWeekDayCheckBox = new CheckBox(this);
         showShortWeekDayCheckBox.setId(SHORTWEEKDAY);
         showShortWeekDayCheckBox.setChecked(showWeekDay == 1);
-        showShortWeekDayCheckBox.setText(getString(R.string.show_short_weekday, m_CorW));
+        showShortWeekDayCheckBox.setText(
+            getString(R.string.show_short_weekday, m_CorW));
         showShortWeekDayCheckBox.setOnCheckedChangeListener(this);
         showShortWeekDayCheckBox.setOnLongClickListener(this);
         showLongWeekDayCheckBox = new CheckBox(this);
         showLongWeekDayCheckBox.setId(LONGWEEKDAY);
-        showLongWeekDayCheckBox.setText(getString(R.string.show_long_weekday, m_CorW));
+        showLongWeekDayCheckBox.setText(
+            getString(R.string.show_long_weekday, m_CorW));
         showLongWeekDayCheckBox.setChecked(showWeekDay == 2);
         showLongWeekDayCheckBox.setOnCheckedChangeListener(this);
         showLongWeekDayCheckBox.setOnLongClickListener(this);
@@ -364,25 +453,29 @@ abstract class ConfigureActivity extends Activity_common
         showShortDateCheckBox.setId(SHORTDATE);
         showShortDateCheckBox.setChecked(showShortDate != 0);
         showShortDateCheckBox.setOnCheckedChangeListener(this);
-        showShortDateCheckBox.setText(getString(R.string.show_short_date, m_CorW));
+        showShortDateCheckBox.setText(
+            getString(R.string.show_short_date, m_CorW));
         showShortDateCheckBox.setOnLongClickListener(this);
         showMonthDayCheckBox = new CheckBox(this);
         showMonthDayCheckBox.setId(MONTHDAY);
         showMonthDayCheckBox.setChecked(showMonthDay != 0);
         showMonthDayCheckBox.setOnCheckedChangeListener(this);
-        showMonthDayCheckBox.setText(getString(R.string.show_month_day, m_CorW));
+        showMonthDayCheckBox.setText(
+            getString(R.string.show_month_day, m_CorW));
         showMonthDayCheckBox.setOnLongClickListener(this);
         showShortMonthCheckBox = new CheckBox(this);
         showShortMonthCheckBox.setId(SHORTMONTH);
         showShortMonthCheckBox.setChecked(showMonth == 1);
         showShortMonthCheckBox.setOnCheckedChangeListener(this);
-        showShortMonthCheckBox.setText(getString(R.string.show_short_month, m_CorW));
+        showShortMonthCheckBox.setText(
+            getString(R.string.show_short_month, m_CorW));
         showShortMonthCheckBox.setOnLongClickListener(this);
         showLongMonthCheckBox = new CheckBox(this);
         showLongMonthCheckBox.setId(LONGMONTH);
         showLongMonthCheckBox.setChecked(showMonth == 2);
         showLongMonthCheckBox.setOnCheckedChangeListener(this);
-        showLongMonthCheckBox.setText(getString(R.string.show_long_month, m_CorW));
+        showLongMonthCheckBox.setText(
+            getString(R.string.show_long_month, m_CorW));
         showLongMonthCheckBox.setOnLongClickListener(this);
         showYearCheckBox = new CheckBox(this);
         showYearCheckBox.setId(SHOWYEAR);
@@ -420,7 +513,8 @@ abstract class ConfigureActivity extends Activity_common
         saturationValue.setOnLongClickListener(this);
         saturationValue.setInputType(TYPE_CLASS_NUMBER);
         // The 1.3 is a fudge factor = I don't know why it is needed.
-        m_numberWidth = (int)(saturationValue.getPaint().measureText("000") * 1.3);
+        m_numberWidth =
+            (int)(saturationValue.getPaint().measureText("000") * 1.3);
         saturationValue.setWidth(m_numberWidth);
         valueSlider = new Slider(this);
         valueSlider.setId(VALUESLIDER);
@@ -502,20 +596,42 @@ abstract class ConfigureActivity extends Activity_common
             ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
-    // set the value fields for saturation and value
-    protected void setSatVal(int sat, int value) {
-        fixTintList(saturationSlider, value);
+    // set the thumb and track tints for saturation and value
+    private void setTints(int saturation, int value) {
+        fixTintList(saturationSlider, 255- saturation);
         fixTintList(valueSlider, value);
-        if (!recursive) {
-            recursive = true;
-            saturationValue.setText(String.valueOf(sat));
-            valueValue.setText(String.valueOf(value));
-            recursive = false;
+    }
+
+    // set the backgrounds for the saturation and value sliders
+    private void setBackgrounds(int r, int g, int b) {
+        int most = r;
+        if (most < g) { most = g; }
+        if (most < b) { most = b; }
+        int x;
+        if (most == 0) {
+            x = 0;
+        } else {
+            x = (  (  (((r * 255) / most) << 8)
+                        + ((g * 255) / most)) << 8)
+                     + ((b * 255) / most);
         }
+        valueSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xFF000000, x | 0xFF000000}));
+        int least = r;
+        if (least > g) { least = g; }
+        if (least > b) { least = b; }
+        int msat = 255 - most;
+        x = ((((r + msat) << 8) + g + msat) << 8) + b + msat;
+        int y = ((((r - least) << 8) + g - least) << 8) + b - least;
+        saturationSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {x | 0xFF000000, y | 0xFF000000}));
     }
 
     // set the sliders and value fields for red, green, and blue
-    protected int setColour(int r, int g, int b) {
+    private int setColour(int r, int g, int b) {
+        setBackgrounds(r, g, b);
         redSlider.setValue(r);
         greenSlider.setValue(g);
         blueSlider.setValue(b);
@@ -529,100 +645,168 @@ abstract class ConfigureActivity extends Activity_common
         return (((r << 8) + g) << 8) + b;
     }
 
-    // called to update red, green, and blue if hue, saturation or value has changed
-    protected int hsvChanged() {
+    // called to update red, green, and blue if hue has changed
+    protected int hueChanged() {
         int r;
         int g;
         int b;
         int hue = hueSlider.getValue();
-        if (hue < 256) {
-            r = 255;
-            g = hue;
-            b = 0;
-        } else if (hue < 511) {
-            r = 510 - hue;
-            g = 255;
-            b = 0;
-        } else if (hue < 766) {
-            r = 0;
-            g = 255;
-            b = hue - 510;
-        } else if (hue < 1021) {
-            r = 0;
-            g = 1020 - hue;
-            b = 255;
-        } else if (hue < 1275) {
-            r = hue - 1020;
-            g = 0;
-            b = 255;
-        } else {
-            r = 255;
-            g = 0;
-            b = 1530 - hue;
-        }
         int saturation = saturationSlider.getValue();
-        int msat = 255 - saturation;
-        r = (r * saturation) / 255 + msat;
-        g = (g * saturation) / 255 + msat;
-        b = (b * saturation) / 255 + msat;
         int value = valueSlider.getValue();
-        r = r * value / 255;
-        g = g * value / 255;
-        b = b * value / 255;
-        setSatVal(saturation, value); // set the value fields
+        int chroma = saturation * value / 255;
+        int white = value - chroma;
+        if (hue < 255) {
+            r = chroma + white;
+            g = chroma * hue / 255 + white;
+            b = white;
+        } else if (hue < 511) {
+            r = chroma * (510 - hue) / 255 + white;
+            g = chroma + white;
+            b = white;
+        } else if (hue < 766) {
+            r = white;
+            g = chroma + white;
+            b = chroma * (hue - 510) / 255 + white;
+        } else if (hue < 1021) {
+            r = white;
+            g = chroma * (1020 - hue) / 255 + white;
+            b = chroma + white;
+        } else if (hue < 1275) {
+            r = chroma * (hue - 1020) / 255 + white;
+            g = white;
+            b = chroma + white;
+        } else {
+            r = chroma + white;
+            g = white;
+            b = chroma * (1530 - hue) / 255 + white;
+        }
+        return setColour(r, g, b);
+    }
+
+    // called to update red, green, and blue if saturation has changed
+    protected int saturationChanged() {
+        int r = redSlider.getValue();
+        int g = greenSlider.getValue();
+        int b = blueSlider.getValue();
+        int saturation = saturationSlider.getValue();
+        int value = valueSlider.getValue();
+        if (saturation + value < 255) {
+            value = 255 - saturation;
+            valueSlider.setValue(value);
+        }
+        int most = r;
+        if (most < g) { most = g; }
+        if (most < b) { most = b; }
+        int least = r;
+        if (least > g) { least = g; }
+        if (least > b) { least = b; }
+        int delta = 255 - saturation - least;
+        if (delta > 255 - most) { delta = 255 - most; }
+        r = r + delta;
+        g = g + delta;
+        b = b + delta;
+        setTints(saturation, value); // set the value fields
+        if (!recursive) {
+            recursive = true;
+            saturationValue.setText(String.valueOf(saturation));
+            valueValue.setText(String.valueOf(value));
+            recursive = false;
+        }
         return setColour(r, g, b); // set sliders and value fields
     }
 
-    // called to update hue, saturation, and value if red, green, or blue has changed
-    protected void rgbChanged(int r, int g, int b) {
-        int hue = 0;
-        if (r >= g) {
-            if (g >= b) {
-                if (r > b) {
-                    // r >= g >= b, not both ==
-                    hue = (g - b) * 255 / (r - b);
-                } // else r == g == b, hue is indeterminate, 0 will do
-            } else if (r >= b) {
-                // r >= b > g
-                hue = 1530 - (b - g) * 255 / (r - g);
-            } else {
-                // b > r >= g
-                hue = 1020 + (r - g) * 255 / (b - g);
-            }
-        } else if (r >= b) {
-            // g > r >= b
-            hue = 510 - (r - b) * 255 / (g - b);
-        } else if (g >= b) {
-            // g >= b > r
-            hue = 510 + (b - r) * 255 / (g - r);
-        } else {
-            // b > g > r
-            hue = 1020 - (g - r) * 255 / (b - r);
+    // called when saturation text value has changed
+    @SuppressLint("SetTextI18n")
+    protected int fixSaturation(String s) {
+        int saturation = safeParseInt(s);
+        if (saturation > 255) {
+            saturationValue.setText("255"); // makes recursive call
+            return 255;
         }
-        hueSlider.setValue(hue);
-        int colour = (((r << 8) + g) << 8) + b;
-        int value = r;
-        if (value < g) { value = g; }
-        if (value < b) { value = b; }
-        valueSlider.setValue(value);
-        valueSlider.setBackground(new GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {
-                0xFF000000, colour | 0xFF000000}));
-        int saturation;
-        if (value == 0) { saturation = 0; }
-        else {
-            int least = r;
-            if (least > g) { least = g; }
-            if (least > b) { least = b; }
-            saturation = (255 * least) / value;
+        int value = valueSlider.getValue();
+        if (saturation + value < 255) {
+            value = 255 - saturation;
+            valueValue.setText(String.valueOf(value));
         }
         saturationSlider.setValue(saturation);
-        saturationSlider.setBackground(new GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {
-                (value * 0x010101) | 0xFF000000, colour | 0xFF000000}));
-        setSatVal(saturation, value);
+        return saturationChanged();
+    }
+
+    // called to update red, green, and blue if value has changed
+    protected int valueChanged() {
+        int r = redSlider.getValue();
+        int g = greenSlider.getValue();
+        int b = blueSlider.getValue();
+        int saturation = saturationSlider.getValue();
+        int value = valueSlider.getValue();
+        if (saturation + value < 255) {
+            saturation = 255 - value;
+            saturationSlider.setValue(saturation);
+        }
+        int most = r;
+        if (most < g) { most = g; }
+        if (most < b) { most = b; }
+        if (most == 0) {
+            r = value;
+            g = value;
+            b = value;
+        } else {
+            r = r * value / most;
+            g = g * value / most;
+            b = b * value / most;
+        }
+        setTints(saturation, value);
+        if (!recursive) {
+            recursive = true;
+            valueValue.setText(String.valueOf(value));
+            saturationValue.setText(String.valueOf(saturation));
+            recursive = false;
+        }
+        return setColour(r, g, b); // set sliders and value fields
+    }
+
+    // called when value text value has changed
+    @SuppressLint("SetTextI18n")
+    protected int fixValue(String s) {
+        int value = safeParseInt(s.toString());
+        if (value > 255) {
+            valueValue.setText("255"); // makes recursive call
+            return 255;
+        }
+        int saturation = saturationSlider.getValue();
+        if (saturation + value < 255) {
+            saturation = 255 - value;
+            saturationValue.setText(String.valueOf(saturation));
+        } else
+        valueSlider.setValue(value);
+        return valueChanged();
+    }
+
+    // called to update hue, saturation, and value
+    // if red, green, or blue has changed
+    private void rgbChanged(int r, int g, int b) {
+        // This calculation is copied from Wikipedia, with acknowlegement
+        int value = r;
+        if (g > value) { value = g; }
+        if (b > value) { value = b; }
+        int least = r;
+        if (g < least) { least = g; }
+        if (b < least) { least = b; }
+        int chroma = value - least;
+        int hue;
+        if (chroma == 0) { hue = 0; }
+        else if (value == r) {
+             hue = 255 * (g - b) / chroma + ((g > b)  ? 0 : 1530);
+        } else if (value == g) { hue = 510 + 255 * (b - r) / chroma; }
+        else { hue = 1020 + 255 * (r - g) / chroma; }
+        hueSlider.setValue(hue);
+        int saturation = value == 0 ? 0 : 255 * chroma / value;
+        saturationSlider.setValue(saturation);
+        saturationValue.setText(String.valueOf(saturation));
+        valueSlider.setValue(value);
+        valueValue.setText(String.valueOf(value));
+        setBackgrounds(r, g, b);
+        setTints(saturation, value);
     }
 
     // Called to set colour from preferences
@@ -634,7 +818,8 @@ abstract class ConfigureActivity extends Activity_common
         rgbChanged(r, g, b); // set hue, saturation, and value
     }
 
-    // Called when red, green, or blue has changed, slider and value already updated
+    // Called when red, green, or blue has changed,
+    // slider and value already updated
     protected void rgbChanged() {
         int r = redSlider.getValue();
         int g = greenSlider.getValue();
@@ -644,46 +829,49 @@ abstract class ConfigureActivity extends Activity_common
 
     @SuppressLint("ApplySharedPref")
     protected int redSliderChanged(int r, int colour, String key) {
-        if (!recursive) {
-            recursive = true;
-            redValue.setText(String.valueOf(r));
-            recursive = false;
-        }
-        colour = (r << 16) + (colour & 0xFF00FFFF);
+        if (r > 255) { r = 255; } else if (r < 0) { r = 0; }
+        colour = (r << 16) | (colour & 0xFF00FFFF);
         int g = (colour >> 8) & 0xFF;
         int b = colour & 0xFF;
         m_prefs.edit().putInt(key, colour).commit();
-        rgbChanged(r, g, b); // set hue, saturation, and value
+        if (!recursive) {
+            recursive = true;
+            redValue.setText(String.valueOf(r));
+            rgbChanged(r, g, b); // set hue, saturation, and value
+            recursive = false;
+        }
         return colour;
     }
 
     @SuppressLint("ApplySharedPref")
     protected int greenSliderChanged(int g, int colour, String key) {
+        if (g > 255) { g = 255; } else if (g < 0) { g = 0; }
+        int r = (colour >> 16) & 0xFF;
+        colour = (g << 8) | (colour & 0xFFFF00FF);
+        int b = colour & 0xFF;
+        m_prefs.edit().putInt(key, colour).commit();
         if (!recursive) {
             recursive = true;
             greenValue.setText(String.valueOf(g));
+            rgbChanged(r, g, b); // set hue, saturation, and value
             recursive = false;
         }
-        int r = (colour >> 16) & 0xFF;
-        colour = (g << 8) + (colour & 0xFFFF00FF);
-        int b = colour & 0xFF;
-        m_prefs.edit().putInt(key, colour).commit();
-        rgbChanged(r, g, b); // set hue, saturation, and value
         return colour;
     }
 
     @SuppressLint("ApplySharedPref")
     protected int blueSliderChanged(int b, int colour, String key) {
+        if (b > 255) { b = 255; } else if (b < 0) { b = 0; }
+        int r = (colour >> 16) & 0xFF;
+        int g = (colour >> 8) & 0xFF;
+        colour = b | (colour & 0xFFFFFF00);
+        m_prefs.edit().putInt(key, colour).commit();
         if (!recursive) {
             recursive = true;
             blueValue.setText(String.valueOf(b));
+            rgbChanged(r, g, b); // set hue, saturation, and value
             recursive = false;
         }
-        int r = (colour >> 16) & 0xFF;
-        int g = (colour >> 8) & 0xFF;
-        colour = b + (colour & 0xFFFFFF00);
-        m_prefs.edit().putInt(key, colour).commit();
-        rgbChanged(r, g, b); // set hue, saturation, and value
         return colour;
     }
 

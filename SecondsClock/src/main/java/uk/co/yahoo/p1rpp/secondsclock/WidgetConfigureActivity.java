@@ -107,8 +107,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         alphaSlider.setThumbTintList(cl);
     }
 
-    private void updatehsv() {
-        int colour = hsvChanged();
+    @SuppressLint({"ApplySharedPref", "SetTextI18n"})
+    private void updatehsv(int colour) {
         if (m_currentView == SETBACKGROUNDCOLOUR) {
             m_bgcolour = colour | (m_bgcolour & 0xFF000000);
             m_prefs.edit().putInt(m_key + "bgcolour", colour).commit();
@@ -127,13 +127,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
     public void onValueChanged(Slider slider, int value) {
         switch(slider.getId()) {
             case HUESLIDER:
-                updatehsv();
+                updatehsv(hueChanged());
                 break;
             case SATURATIONSLIDER:
-                updatehsv();
+                updatehsv(saturationChanged());
                 break;
             case VALUESLIDER:
-                updatehsv();
+                updatehsv(valueChanged());
                 fixTintList(slider, value);
                 break;
             case REDSLIDER:
@@ -193,7 +193,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case DONEBUTTON: setCurrentView(CONFIGURE); return;
+            case DONEBUTTON:
+                if (m_currentView == CONFIGURE) {
+                    finish();
+                } else {
+                    setCurrentView(CONFIGURE);
+                }
+                return;
             case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); return;
             case SETBACKGROUNDCOLOUR: setCurrentView(SETBACKGROUNDCOLOUR); return;
         }
@@ -243,48 +249,56 @@ public class WidgetConfigureActivity extends ConfigureActivity
         l1.setBackgroundColor(0xFF000000);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout l2 = new LinearLayout(this);
+            l2.setOrientation(LinearLayout.VERTICAL);
+            m_helptext.setText(R.string.longpressvert);
+            m_helptext.setGravity(Gravity.CENTER_HORIZONTAL);
+            l2.addView(m_helptext);
+            l2.setGravity(Gravity.CENTER_VERTICAL);
+            l1.addView(l2);
             demoboxbox.setLayoutParams(lpWrapMatch);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_VERTICAL);
-            l1.addView(demoboxbox);
-            LinearLayout l2 = new LinearLayout(this);
-            l2.setOrientation(LinearLayout.VERTICAL);
-            l2.addView(m_helptext);
+            l2.addView(demoboxbox);
+            l2.addView(m_okButton, lpWrapWrap);
             LinearLayout l3 = new LinearLayout(this);
-            l3.setOrientation(LinearLayout.HORIZONTAL);
-            l3.addView(showTimeCheckBox);
-            l3.addView(showSecondsCheckBox);
-            l2.addView(l3);
+            l3.setOrientation(LinearLayout.VERTICAL);
             LinearLayout l4 = new LinearLayout(this);
-            l4.setOrientation(LinearLayout.HORIZONTAL);
-            l4.addView(showShortWeekDayCheckBox);
-            l4.addView(showLongWeekDayCheckBox);
-            l2.addView(l4);
+            // default orientation is HORIZONTAL
+            l4.addView(showTimeCheckBox);
+            l4.addView(showSecondsCheckBox);
+            l3.addView(l4);
             LinearLayout l5 = new LinearLayout(this);
-            l5.setOrientation(LinearLayout.HORIZONTAL);
-            l5.addView(showShortDateCheckBox);
-            l5.addView(showMonthDayCheckBox);
-            l2.addView(l5);
+            // default orientation is HORIZONTAL
+            l5.addView(showShortWeekDayCheckBox);
+            l5.addView(showLongWeekDayCheckBox);
+            l3.addView(l5);
             LinearLayout l6 = new LinearLayout(this);
-            l6.setOrientation(LinearLayout.HORIZONTAL);
-            l6.addView(showShortMonthCheckBox);
-            l6.addView(showLongMonthCheckBox);
-            l2.addView(l6);
-            l2.addView(showYearCheckBox);
+            // default orientation is HORIZONTAL
+            l6.addView(showShortDateCheckBox);
+            l6.addView(showMonthDayCheckBox);
+            l3.addView(l6);
             LinearLayout l7 = new LinearLayout(this);
-            l7.setOrientation(LinearLayout.HORIZONTAL);
-            l7.addView(bgButton);
-            l7.addView(fgButton);
-            l2.addView(l7);
-            l1.addView(l2);
+            // default orientation is HORIZONTAL
+            l7.addView(showShortMonthCheckBox);
+            l7.addView(showLongMonthCheckBox);
+            l3.addView(l7);
+            l3.addView(showYearCheckBox);
+            LinearLayout l8 = new LinearLayout(this);
+            // default orientation is HORIZONTAL
+            l8.addView(bgButton);
+            l8.addView(fgButton);
+            l3.addView(l8);
+            l1.addView(l3);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setLayoutParams(lpMatchWrap);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l1.addView(demoboxbox);
+            m_helptext.setText(R.string.longpresshoriz);
+            m_helptext.setGravity(Gravity.NO_GRAVITY);
             l1.addView(m_helptext);
-            m_helptext.setGravity(Gravity.START);
             l1.addView(showTimeCheckBox);
             showTimeCheckBox.setGravity(Gravity.START);
             l1.addView(showSecondsCheckBox);
@@ -309,6 +323,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l2.setGravity(Gravity.CENTER_HORIZONTAL);
             l2.addView(bgButton, lpWrapWrap);
             l2.addView(fgButton, lpWrapWrap);
+            l2.addView(m_okButton, lpWrapWrap);
             l1.addView(l2);
         }
         m_topLayout.addView(l1);
@@ -321,61 +336,75 @@ public class WidgetConfigureActivity extends ConfigureActivity
         LinearLayout l1 = new LinearLayout(this);
         l1.setBackgroundColor(0xFF000000);
         demobox.addView(demo);
+        demoboxbox.setLayoutParams(lpMatchWrap);
+        demoboxbox.setOrientation(LinearLayout.VERTICAL);
+        demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
         demoboxbox.addView(demobox);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
-            l2.setOrientation(LinearLayout.VERTICAL);
-            l2.setLayoutParams(lpMatchMatch);
-            l2.setPadding(pad, 0, pad, 0);
-            demoboxbox.setLayoutParams(lpMatchWrap);
-            demoboxbox.setOrientation(LinearLayout.VERTICAL);
-            demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
-            l2.addView(demoboxbox);
-            l2.addView(m_helptext);
-            ScrollView l3 = new ScrollView(this);
-            l3.setScrollbarFadingEnabled(false);
-            LinearLayout l4 = new LinearLayout(this);
-            l4.setOrientation(LinearLayout.VERTICAL);
-            l4.addView(lc);
-            if (m_currentView == SETBACKGROUNDCOLOUR) {
-                l4.addView(centredLabel(R.string.alphalabel, ALPHASLIDER));
-                LinearLayout l14 = new LinearLayout(this);
-                // default orientation is HORIZONTAL
-                l14.setLayoutParams(lpMatchWrap);
-                LinearLayout l15 = new LinearLayout(this);
-                l15.setLayoutParams(lpMMWeight);
-                l15.setOrientation(LinearLayout.VERTICAL);
-                l15.setGravity(Gravity.CENTER_VERTICAL);
-                LinearLayout l16 = new LinearLayout(this);
-                l16.setBackgroundResource(R.drawable.background);
-                l16.setOrientation(LinearLayout.VERTICAL);
-                l16.setLayoutParams(lpMatchWrap);
-                l16.addView(alphaSlider);
-                l15.addView(l16);
-                l14.addView(l15);
-                LinearLayout l17 = new LinearLayout(this);
-                l17.setLayoutParams(lpWrapWrap);
-                l17.addView(alphaValue);
-                l14.addView(l17);
-                l4.addView(l14);
-            }
-            LinearLayout l18 = new LinearLayout(this);
-            l18.setLayoutParams(lpMatchWrap);
-            l18.setOrientation(LinearLayout.VERTICAL);
-            l18.setGravity(Gravity.CENTER_HORIZONTAL);
-            l18.addView(m_okButton, lpWrapWrap);
-            l4.addView(l18);
-            l3.addView(l4);
+            // default orientation is HORIZONTAL
+            l2.setLayoutParams(lpWrapMatch);
+            l2.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout l3 = new LinearLayout(this);
+            l3.setLayoutParams(lpWrapWrap);
+            l3.setOrientation(LinearLayout.VERTICAL);
+            l3.setGravity(Gravity.CENTER_HORIZONTAL);
+            m_helptext.setText(R.string.longpressvert);
+            m_helptext.setGravity(Gravity.CENTER_HORIZONTAL);
+            l3.addView(m_helptext);
+            l3.addView(demoboxbox);
+            l3.addView(m_okButton, lpWrapWrap);
             l2.addView(l3);
             l1.addView(l2);
+            LinearLayout l4 = new LinearLayout(this);
+            l4.setOrientation(LinearLayout.VERTICAL);
+            l4.setLayoutParams(lpMatchMatch);
+            l4.setPadding(pad, 0, pad, 0);
+            ScrollView l5 = new ScrollView(this);
+            l5.setScrollbarFadingEnabled(false);
+            LinearLayout l6 = new LinearLayout(this);
+            l6.setOrientation(LinearLayout.VERTICAL);
+            l6.addView(lc);
+            if (m_currentView == SETBACKGROUNDCOLOUR) {
+                LinearLayout l7 = new LinearLayout(this);
+                // default orientation is HORIZONTAL
+                l7.setLayoutParams(lpMatchWrap);
+                LinearLayout l8 = new LinearLayout(this);
+                // default orientation is HORIZONTAL
+                l8.setLayoutParams(lpWrapMatch);
+                l8.setGravity(Gravity.CENTER_VERTICAL);
+                TextView tv = textLabel(R.string.alphalabel, ALPHASLIDER);
+                tv.setWidth(m_width / 10);
+                l8.addView(tv);
+                l7.addView(l8);
+                LinearLayout l9 = new LinearLayout(this);
+                l9.setLayoutParams(lpMMWeight);
+                l9.setOrientation(LinearLayout.VERTICAL);
+                l9.setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout l10 = new LinearLayout(this);
+                l10.setBackgroundResource(R.drawable.background);
+                l10.setOrientation(LinearLayout.VERTICAL);
+                l10.setLayoutParams(lpMatchWrap);
+                l10.addView(alphaSlider);
+                l9.addView(l10);
+                l7.addView(l9);
+                LinearLayout l11 = new LinearLayout(this);
+                // default orientation is HORIZONTAL
+                l11.setLayoutParams(lpWrapWrap);
+                l11.addView(alphaValue);
+                l7.addView(l11);
+                l6.addView(l7);
+            }
+            l5.addView(l6);
+            l4.addView(l5);
+            l1.addView(l4);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
             l1.setPadding(pad, 0, pad, 0);
-            demoboxbox.setLayoutParams(lpMatchWrap);
-            demoboxbox.setOrientation(LinearLayout.VERTICAL);
-            demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
             l1.addView(demoboxbox);
+            m_helptext.setText(R.string.longpresshoriz);
+            m_helptext.setGravity(Gravity.START);
             l1.addView(m_helptext);
             ScrollView l2 = new ScrollView(this);
             l2.setScrollbarFadingEnabled(false);
@@ -386,33 +415,34 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l3.addView(lc);
             if (m_currentView == SETBACKGROUNDCOLOUR) {
                 l3.addView(centredLabel(R.string.alphalabel, ALPHASLIDER));
-                LinearLayout l14 = new LinearLayout(this);
+                LinearLayout l4 = new LinearLayout(this);
                 // default orientation is HORIZONTAL
-                l14.setLayoutParams(lpMatchWrap);
-                l14.setPadding(0, pad, 0, pad);
-                LinearLayout l15 = new LinearLayout(this);
-                l15.setLayoutParams(lpMMWeight);
-                l15.setOrientation(LinearLayout.VERTICAL);
-                l15.setGravity(Gravity.CENTER_VERTICAL);
-                LinearLayout l16 = new LinearLayout(this);
-                l16.setBackgroundResource(R.drawable.background);
-                l16.setOrientation(LinearLayout.VERTICAL);
-                l16.setLayoutParams(lpMatchWrap);
-                l16.addView(alphaSlider);
-                l15.addView(l16);
-                l14.addView(l15);
-                LinearLayout l17 = new LinearLayout(this);
-                l17.setLayoutParams(lpWrapWrap);
-                l17.addView(alphaValue);
-                l14.addView(l17);
-                l3.addView(l14);
+                l4.setLayoutParams(lpMatchWrap);
+                l4.setPadding(0, pad, 0, pad);
+                LinearLayout l5 = new LinearLayout(this);
+                l5.setLayoutParams(lpMMWeight);
+                l5.setOrientation(LinearLayout.VERTICAL);
+                l5.setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout l6 = new LinearLayout(this);
+                l6.setBackgroundResource(R.drawable.background);
+                l6.setOrientation(LinearLayout.VERTICAL);
+                l6.setLayoutParams(lpMatchWrap);
+                l6.addView(alphaSlider);
+                l5.addView(l6);
+                l4.addView(l5);
+                LinearLayout l7 = new LinearLayout(this);
+                // default orientation is HORIZONTAL
+                l7.setLayoutParams(lpWrapWrap);
+                l7.addView(alphaValue);
+                l4.addView(l7);
+                l3.addView(l4);
             }
-            LinearLayout l17 = new LinearLayout(this);
-            l17.setLayoutParams(lpMatchWrap);
-            l17.setOrientation(LinearLayout.VERTICAL);
-            l17.setGravity(Gravity.CENTER_HORIZONTAL);
-            l17.addView(m_okButton, lpWrapWrap);
-            l3.addView(l17);
+            LinearLayout l11 = new LinearLayout(this);
+            l11.setLayoutParams(lpMatchWrap);
+            l11.setOrientation(LinearLayout.VERTICAL);
+            l11.setGravity(Gravity.CENTER_HORIZONTAL);
+            l11.addView(m_okButton, lpWrapWrap);
+            l3.addView(l11);
             l2.addView(l3);
             l1.addView(l2);
         }
@@ -469,7 +499,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         Intent intent = getIntent();
         if (intent.hasExtra("widgetID")) {
             widgetId = intent.getIntExtra("widgetID", 0);
-            m_key = "W" +  widgetId;
+            m_key = "W" + widgetId;
         } else {
             widgetId = -1;
             m_key = "W";
@@ -499,6 +529,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         showTimeCheckBox.setChecked(showTime != 0);
         showTimeCheckBox.setOnCheckedChangeListener(
             new CompoundButton.OnCheckedChangeListener() {
+                @SuppressLint({"ApplySharedPref"})
                 @Override
                 public void onCheckedChanged(
                     CompoundButton buttonView, boolean isChecked) {
@@ -528,6 +559,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         showSecondsCheckBox.setChecked(showTime == 2);
         showSecondsCheckBox.setOnCheckedChangeListener(
             new CompoundButton.OnCheckedChangeListener() {
+                @SuppressLint({"ApplySharedPref"})
                 @Override
                 public void onCheckedChanged(
                     CompoundButton buttonView, boolean isChecked) {
@@ -564,28 +596,32 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void onTextChanged(
                 CharSequence s, int start, int before, int count)
             {}
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
-                    int val = safeParseInt(s.toString());
-                    saturationSlider.setValue(val);
-                    int colour = hsvChanged();
+                    int colour = fixSaturation(s.toString());
                     if (m_currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = colour | (m_bgcolour & 0xFF000000);
-                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
+                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour)
+                               .commit();
                         demo.setBackgroundColor(m_bgcolour);
                         setAlphaSliderBackground();
                     } else {
                         m_fgcolour = colour | (m_fgcolour & 0xFF000000);
-                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
+                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
+                               .commit();
                         demo.setTextColor(m_fgcolour);
                         setAlphaSliderTint();
                     }
                     updateWidget();
+                    saturationValue.setSelection(
+                        saturationValue.getText().length());
                 }
             }
         });
         valueValue.addTextChangedListener(new TextWatcher() {
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void beforeTextChanged(
                 CharSequence s, int start, int count, int after)
@@ -594,25 +630,26 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void onTextChanged(
                 CharSequence s, int start, int before, int count)
             {}
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
-                    int val = safeParseInt(s.toString());
-                    valueSlider.setValue(val);
-                    fixTintList(valueSlider, val);
-                    int colour = hsvChanged();
+                    int colour = fixValue(s.toString());
                     if (m_currentView == SETBACKGROUNDCOLOUR) {
                         m_bgcolour = colour | (m_bgcolour & 0xFF000000);
-                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
+                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour)
+                               .commit();
                         demo.setBackgroundColor(m_bgcolour);
                         setAlphaSliderBackground();
                     } else {
                         m_fgcolour = colour | (m_fgcolour & 0xFF000000);
-                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
+                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
+                               .commit();
                         demo.setTextColor(m_fgcolour);
                         setAlphaSliderTint();
                     }
                     updateWidget();
+                    valueValue.setSelection(valueValue.getText().length());
                 }
             }
         });
@@ -625,28 +662,32 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void onTextChanged(
                 CharSequence s, int start, int before, int count)
             {}
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
                     int val = safeParseInt(s.toString());
                     if (val > 255) {
                         redValue.setText("255");
-                        val = 255;
+                        return;
                     }
                     redSlider.setValue(val);
                     if (m_currentView == SETBACKGROUNDCOLOUR) {
-                        m_bgcolour = (val << 16) + (m_bgcolour & 0xFF00FFFF);
-                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
+                        m_bgcolour = (val << 16) | (m_bgcolour & 0xFF00FFFF);
+                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour)
+                               .commit();
                         demo.setBackgroundColor(m_bgcolour);
                         setAlphaSliderBackground();
                     } else {
-                        m_fgcolour = (val << 16) + (m_fgcolour & 0xFF00FFFF);
-                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
+                        m_fgcolour = (val << 16) | (m_fgcolour & 0xFF00FFFF);
+                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
+                               .commit();
                         demo.setTextColor(m_fgcolour);
                         setAlphaSliderTint();
                     }
                     rgbChanged();
                     updateWidget();
+                    redValue.setSelection(redValue.getText().length());
                 }
             }
         });
@@ -659,28 +700,32 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void onTextChanged(
                 CharSequence s, int start, int before, int count)
             {}
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
                     int val = safeParseInt(s.toString());
                     if (val > 255) {
                         greenValue.setText("255");
-                        val = 255;
+                        return;
                     }
                     greenSlider.setValue(val);
                     if (m_currentView == SETBACKGROUNDCOLOUR) {
-                        m_bgcolour = (val << 8) + (m_bgcolour & 0xFFFF00FF);
-                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
+                        m_bgcolour = (val << 8) | (m_bgcolour & 0xFFFF00FF);
+                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour)
+                               .commit();
                         demo.setBackgroundColor(m_bgcolour);
                         setAlphaSliderBackground();
                     } else {
-                        m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
-                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
+                        m_fgcolour = (val << 8) | (m_fgcolour & 0xFFFF00FF);
+                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
+                               .commit();
                         demo.setTextColor(m_fgcolour);
                         setAlphaSliderTint();
                     }
                     rgbChanged();
                     updateWidget();
+                    greenValue.setSelection(greenValue.getText().length());
                 }
             }
         });
@@ -693,28 +738,32 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void onTextChanged(
                 CharSequence s, int start, int before, int count)
             {}
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
                     int val = safeParseInt(s.toString());
                     if (val > 255) {
                         blueValue.setText("255");
-                        val = 255;
+                        return;
                     }
                     blueSlider.setValue(val);
                     if (m_currentView == SETBACKGROUNDCOLOUR) {
-                        m_bgcolour = val + (m_bgcolour & 0xFFFFFF00);
-                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
+                        m_bgcolour = val | (m_bgcolour & 0xFFFFFF00);
+                        m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour)
+                               .commit();
                         demo.setBackgroundColor(m_bgcolour);
                         setAlphaSliderBackground();
                     } else {
-                        m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
-                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
+                        m_fgcolour = val | (m_fgcolour & 0xFFFFFF00);
+                        m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
+                               .commit();
                         demo.setTextColor(m_fgcolour);
                         setAlphaSliderTint();
                     }
                     rgbChanged();
                     updateWidget();
+                    blueValue.setSelection(blueValue.getText().length());
                 }
             }
         });
@@ -739,19 +788,24 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void onTextChanged(
                 CharSequence s, int start, int before, int count)
             {}
+            @SuppressLint({"ApplySharedPref"})
             @Override
             public void afterTextChanged(Editable s) {
-                int val = safeParseInt(s.toString());
-                if (val > 255) {
-                    alphaValue.setText("255");
-                    val = 255;
+                if (!recursive) {
+                    int val = safeParseInt(s.toString());
+                    if (val > 255) {
+                        alphaValue.setText("255");
+                        return;
+                    }
+                    alphaSlider.setValue(val);
+                    m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
+                    m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour)
+                           .commit();
+                    demo.setBackgroundColor(m_bgcolour);
+                    setAlphaSliderBackground();
+                    updateWidget();
+                    alphaValue.setSelection(alphaValue.getText().length());
                 }
-                alphaSlider.setValue(val);
-                m_bgcolour = (val << 24) + (m_bgcolour & 0xFFFFFF);
-                m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
-                demo.setBackgroundColor(m_bgcolour);
-                setAlphaSliderBackground();
-                updateWidget();
             }
         });
         updateDemo();

@@ -9,15 +9,12 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,6 +38,7 @@ public class MainActivity extends Activity_common
     private static final int CONFIGURE_NIGHT_CLOCK = CONFIGURE_EXISTING_WIDGET + 1;
     private static final int GO_NIGHT_CLOCK = CONFIGURE_NIGHT_CLOCK + 1;
     private static final int CHOOSE_ACTION = GO_NIGHT_CLOCK + 1;
+    private static final int GO_EXIT = CHOOSE_ACTION + 1;
 
     // Use best efforts to find the system clock app.
     private void goSystemClock() {
@@ -98,6 +96,7 @@ public class MainActivity extends Activity_common
         // so that the user can do something else.
     }
 
+    @SuppressLint("ApplySharedPref")
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -105,20 +104,26 @@ public class MainActivity extends Activity_common
                 goSystemClock();
                 break;
             case CONFIGURE_NEW_WIDGET:
+                m_prefs.edit().putInt("Wview", CONFIGURE).commit();
                 startActivity(new Intent(
                     this, WidgetConfigureActivity.class));
                 break;
             case CONFIGURE_EXISTING_WIDGET:
+                m_prefs.edit().putInt("Wview", CONFIGURE).commit();
                 m_configuring = true;
                 doToast(R.string.actionoldwidget);
                 break;
             case CONFIGURE_NIGHT_CLOCK:
+                m_prefs.edit().putInt("Cview", CONFIGURE).commit();
                 startActivity(new Intent(
                     this, ClockConfigureActivity.class));
                 break;
             case GO_NIGHT_CLOCK:
                 startActivity(new Intent(
                     this, ClockActivity.class));
+                finish();
+                break;
+            case GO_EXIT:
                 finish();
                 break;
             default: v.performClick();
@@ -140,6 +145,8 @@ public class MainActivity extends Activity_common
                 doToast(R.string.helpnightclock); return true;
             case GO_NIGHT_CLOCK:
                 doToast(R.string.helprunclock); return true;
+            case GO_EXIT:
+                doToast(R.string.exithelp); return true;
             default:
                 return false;
         }
@@ -179,6 +186,7 @@ public class MainActivity extends Activity_common
             if (m_configuring) {
                 // We told the user to pick a widget, now configure it
                 m_configuring = false;
+                m_prefs.edit().putInt("Wview", CONFIGURE).commit();
                 startActivity(
                     new Intent(this, WidgetConfigureActivity.class)
                     .putExtra("widgetID", widgetID));
@@ -191,11 +199,13 @@ public class MainActivity extends Activity_common
                         goSystemClock();
                         break;
                     case CONFIGURE_NEW_WIDGET:
+                        m_prefs.edit().putInt("Wview", CONFIGURE).commit();
                         startActivity(new Intent(
                             this, WidgetConfigureActivity.class));
                         finish();
                         break;
                     case CONFIGURE_EXISTING_WIDGET:
+                        m_prefs.edit().putInt("Wview", CONFIGURE).commit();
                         startActivity(new Intent(
                             this, WidgetConfigureActivity.class)
                             .putExtra("widgetID", widgetID));
@@ -239,7 +249,7 @@ public class MainActivity extends Activity_common
             s = getString(R.string.app_name) + " " + pi.versionName
                 + " built " + getString(R.string.build_time) + "\n";
         } catch (PackageManager.NameNotFoundException ignore) {}
-        m_helptext.setText(s + getString(R.string.longpresslabel));
+        m_helptext.setText(s + getString(R.string.longpresshoriz));
         m_helptext.setId(LONGPRESSHELP);
         m_helptext.setOnLongClickListener(this);
         lmain.addView(m_helptext);
@@ -276,6 +286,13 @@ public class MainActivity extends Activity_common
         b = new Button(this);
         b.setText(R.string.runnightclock);
         b.setId(GO_NIGHT_CLOCK);
+        b.setAllCaps(false);
+        b.setOnClickListener(this);
+        b.setOnLongClickListener(this);
+        lmain.addView(b, centreButton);
+        b = new Button(this);
+        b.setText(R.string.exit);
+        b.setId(GO_EXIT);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);

@@ -33,12 +33,9 @@
     <string name="runnightclock">Run full screen clock</string>
     <string name="helprunclock">Touch this button to run
         the full screen clock.</string>
-    <string name="calibrate">Calibrate</string>
-    <string name="calibratehelp">Touch this button to open the calibration page,
-        which enables you to set the (nonlinear) relationship between the
-        brightness of the demo clock on the full screen clock configuration
-        page and the brightness of the real full screen clock.
-    </string>
+    <string name="exit">Exit</string>
+    <string name="exithelp">Touch this button to exit the app.
+    Home screen widgets will continue to run.</string>
     <string name="appwidget_text">Clock</string>
     <string name="app_widget_description">1x1 seconds clock</string>
     <string name="demohelp">This shows what the widget looks like.
@@ -49,17 +46,20 @@
         the widget will rearrange its layout to use a larger font size.
         The background pattern shows the effect of the widget background
         in case it is not transparent.</string>
-    <string name="longpresslabel">Long press here for help information.</string>
+    <string name="longpresshoriz">Long press here for help information</string>
+    <string name="longpressvert">Long\npress\nhere\nfor help\ninformation</string>
     <string name="mainactivityhelp">This screen allows you to choose what to do next.
         Long press on any of the buttons for a longer description of what it does.
         This could have been a menu, but that would make you do an unnecessary
         extra click.</string>
     <string name="widgetconfighelp">This screen allows you to configure a widget.
-        If you came here from a particular widget, it reconfigures that: if you came here
-        from the top level screen, it sets the the configuration for new widgets.
+        If you came here from a particular widget, it reconfigures that:
+        if you came here from the top level screen,
+        it sets the the configuration for new widgets.
         You can make multiple widgets with different configurations.
         Long press on anything for a longer description of what it does.</string>
-    <string name="clockconfighelp">This screen allows you to configure the full screen clock.
+    <string name="clockconfighelp">This screen allows you to configure
+        the full screen clock.
         Long press on anything for a longer description of what it does.</string>
     <string name="show_time">Show time in widget</string>
     <string name="showtimehelp">If this box is checked, the widget will
@@ -96,7 +96,8 @@
         display the (Gregorian) year.</string>
     <string name="set_bg_colour">Set widget background colour</string>
     <string name="setbgcolourhelp">Touch this button to show a colour
-        chooser screen for the background colour and opacity of the widget.</string>
+        chooser screen for the background colour and opacity of the widget.
+    </string>
     <string name="set_fg_colour">Set %1s text colour</string>
     <string name="setfgcolourhelp">Touch this button to show a colour
         chooser screen for the text colour of the %1s.</string>
@@ -170,9 +171,6 @@
     <string name="done">Done</string>
     <string name="donehelp">Touch this button or the back button to
         return to the main configuration screen.</string>
-    <string name="secondssizerhelp">This slider adjusts the size of the seconds.
-        All the way to the left is no seconds at all.
-        All the way to the right is the same size as the hours and minutes.</string>
     <string name="nosecondshelp">Touch this end of the slider for a clock
         with no seconds shown.</string>
     <string name="smallsecondshelp">Touch in the middle of the slider for a clock
@@ -201,30 +199,31 @@
     <string name="setdata">Define data displayed"</string>
     <string name="setdatahelp">Touch this button to show a screen
         on which you can define what data the full screen clock displays.</string>
-    <string name="setdisplay">Control display</string>
+    <string name="setdisplay">Control dimming</string>
     <string name="setdisplayhelp">Touch this button to show a screen on which
         you can control the size of the seconds display
         and the dimming at low light levels for the full screen clock.</string>
-    <string name="setdimming">Control display</string>
+    <string name="setdimming">Control dimming</string>
     <string name="setdimminghelp">Touch this button to show a screen on which you can
         control the dimming at low light levels for the full screen clock.</string>
     <string name="secondssizelabel">Seconds size</string>
-    <string name="sshelpland">Use the slider below to set the size of the seconds
-        for the full screen clock:
+    <string name="sshelpland">This slider adjusts the size
+        of the seconds for the full screen clock:
         all the way to the left shows no seconds at all;
         intermediate values from left to right show seconds of increasing size;
-        all the way to the right shows seconds the same size as the hours and minutes.
-    </string>
-    <string name="sshelpport">Use the slider below to set the size of the seconds
+        all the way to the right shows seconds the same size as
+        the hours and minutes.</string>
+    <string name="sshelpport">This slider adjusts the size of the seconds
         for the full screen clock:
         all the way to the bottom shows no seconds at all;
         intermediate values from bottom to top show seconds of increasing size;
         all the way to the top shows seconds the same size as the hours and minutes.
     </string>
     <string name="minbrightlabel">Minimum brightness</string>
-    <string name="minbrightsliderhelp">This slider adjusts the minimum brightness
-        of the full screen clock in complete darkness (at zero ambient light level).
-        All the way to the left should be invisible, but this depends on your hardware;
+    <string name="minbrightsliderhelp">This slider adjusts the minimum
+        brightness of the full screen clock in complete darkness
+        (at zero ambient light level). All the way to the left should be
+        invisible, but this depends on your hardware;
         intermediate values from left to right use increasing brightness levels,
         but the brightness will not be increased above your set screen brightness.
     </string>
@@ -246,41 +245,4 @@
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
     <string name="currentlux">Current Lux level is %1d</string>
-    <string name="calibrationhelp"> This screen is used to set an internal map
-        which ensures that the brightness of the demonstration full screen clock
-        on the configuration screen matches the brightness of the real
-        full screen clock.
-        Please set a screen brightness using the device\'s settings page,
-        and a window brightness using the window brightness slider on this page
-        Then set the opacity slider so that the white square does not
-        appear to flicker. The buttons and the sliders will still flicker.
-        When the white square does not flicker, press Save. You should do this
-        for several different values of screen and window brightnesses, at least a
-        low and a high value for each. Some intermediate values will improve
-        the map since the device\'s brightness algorithm is non-linear.
-        The black dots in the white square indicate the saved values.
-        Pressing Reset will delete all the saved values so you can start again.
-        Press the device\'s back button when you have finished.
-        If there is no calibration a default map will be used.</string>
-    <string name="help">Help</string>
-    <string name="save">Save</string>
-    <string name="savehelp">Touch this button when the white square does not flicker
-        to save the current brightness value in the brightness map.</string>
-    <string name="reset">Reset</string>
-    <string name="resethelp">Touch this button to reset the brightness map to empty.
-    </string>
-    <string name="globrighthelp">This slider shows the global screen
-        brightness setting, which you can set from the device\'s
-        Settings page. If this app has permission to modify global settings,
-        you can also set it by moving the slider. For some devices,
-        changes in the ambient light level may also modify the global screen
-        brightness setting if adaptive brightness is enabled.</string>
-    <string name="opacityhelp">This slider sets the opacity used for
-        the demo clock in the configuration screen. You should adjust it
-        to a value that minimises the flicker of the large white square
-        and then press the save button.
-        The sliders will still flicker</string>
-    <string name="appbrighthelp">The slider sets the level of window
-        brightness for the full screen clock for which you want to set
-        the opacity of the demo clock in the configuration screen.</string>
 </resources>

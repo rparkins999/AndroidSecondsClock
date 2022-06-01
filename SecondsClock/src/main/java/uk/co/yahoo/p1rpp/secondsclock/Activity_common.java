@@ -26,6 +26,7 @@ import androidx.annotation.Nullable;
 
 public abstract class Activity_common extends Activity implements View.OnLongClickListener {
 
+    protected static final int CONFIGURE = 0; // m_currentView default value
     protected static final int VIEWIDBASE = 1729;
 
     protected TextView m_helptext;

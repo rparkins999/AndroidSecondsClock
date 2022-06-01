@@ -27,6 +27,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.util.AttributeSet;
@@ -181,6 +182,7 @@ public class Slider extends View {
             @Override
             public void setValue(Slider object, int value) {
                 object.setThumbPos(value);
+                mValue = value;
                 if (mValueChangeListener != null) {
                     mValueChangeListener.onValueChanged(object, value);
                 }
@@ -264,7 +266,8 @@ public class Slider extends View {
         a.recycle();
         /* Get the default thumb ColorStateList from the theme.
          * It can be null, in which case the default foreground colour is used.
-         * It can be overridden by setThumbTintList() and read by getThumbTintList().
+         * It can be overridden by setThumbTintList()
+         * and read by getThumbTintList().
          */
         resId = res.getIdentifier(
             "android:attr/thumbTint", "", "android");
@@ -418,8 +421,9 @@ public class Slider extends View {
         if (thumb != null) {
             mThumb = thumb.mutate();
             if (mThumbTintList == null) {
-                mThumb.setTintList(ColorStateList.valueOf(0xFFFFFFFF));
-            } else { mThumb.setTintList(mThumbTintList); }
+                mThumbTintList = ColorStateList.valueOf(0xFFFFFFFF);
+            }
+            mThumb.setTintList(mThumbTintList);
         }
         if (track != null) {
             mTrack = track.mutate();
@@ -723,7 +727,7 @@ public class Slider extends View {
                             super.setPadding(top, right, bottom, left);
                             break;
                     }
-                    mOffsetX = w / 2 - mTrackHalfHeight;
+                    mOffsetX = w / 2 - mTrackHalfWidth;
                     mOffsetY = top;
                     break;
                 case SLIDER_DOWNWARDS:
@@ -736,7 +740,7 @@ public class Slider extends View {
                             super.setPadding(top, left, bottom, right);
                             break;
                     }
-                    mOffsetX = w / 2 - mTrackHalfHeight;
+                    mOffsetX = w / 2 - mTrackHalfWidth;
                     mOffsetY = top;
                     break;
             }
@@ -992,6 +996,8 @@ public class Slider extends View {
         }
     }
 
+    public Rect r1;
+    public Rect r2;
     @Override
     protected synchronized void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -999,7 +1005,9 @@ public class Slider extends View {
         /* getPaddingLeft() and getPaddingTop() return the rotated padding values
          * that we gave to the view, so we don't need to consider direction here.
          */
+        r1 = canvas.getClipBounds();
         canvas.translate(mOffsetX, mOffsetY);
+        r2 = canvas.getClipBounds();
         if (mTrack != null) {
             mTrack.draw(canvas);
         }

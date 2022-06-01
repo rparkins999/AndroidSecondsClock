@@ -4,8 +4,7 @@
    Released under GPL V3 or later
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.co.yahoo.p1rpp.secondsclock">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
