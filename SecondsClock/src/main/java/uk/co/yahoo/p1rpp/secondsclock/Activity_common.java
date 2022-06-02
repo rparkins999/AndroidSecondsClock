@@ -27,7 +27,21 @@ import androidx.annotation.Nullable;
 public abstract class Activity_common extends Activity implements View.OnLongClickListener {
 
     protected static final int CONFIGURE = 0; // m_currentView default value
-    protected static final int VIEWIDBASE = 1729;
+
+    // View IDs for buttons, to switch on click or long click:
+    // also used as widget touch preference values, except that
+    // CONFIGURE_NEW_WIDGET isn't a widget touch preference, and
+    // CHOOSE_ACTION isn't a button, as we're already doing it if we get here.
+    protected static final int LONGPRESSHELP = 9091;
+    protected static final int GO_SYSTEM_CLOCK = LONGPRESSHELP + 1;
+    protected static final int CONFIGURE_NEW_WIDGET = GO_SYSTEM_CLOCK + 1;
+    protected static final int CONFIGURE_EXISTING_WIDGET =
+        CONFIGURE_NEW_WIDGET + 1;
+    protected static final int CONFIGURE_NIGHT_CLOCK =
+        CONFIGURE_EXISTING_WIDGET + 1;
+    protected static final int GO_NIGHT_CLOCK = CONFIGURE_NIGHT_CLOCK + 1;
+    protected static final int CHOOSE_ACTION = GO_NIGHT_CLOCK + 1;
+    protected static final int GO_EXIT = CHOOSE_ACTION + 1;
 
     protected TextView m_helptext;
     protected String m_key = null;

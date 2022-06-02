@@ -6,17 +6,17 @@
   -->
 
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="set_bg_colour">Set widget background colour</string>
+    <string name="setbgcolour">Set widget background colour</string>
     <string name="setbgcolourhelp">Touch this button to show a colour
         chooser screen for the background colour and opacity of the widget.</string>
-    <string name="set_fg_colour">Set %1s text colour</string>
+    <string name="setfgcolour">Set %1s text colour</string>
     <string name="setfgcolourhelp">Touch this button to show a colour
         chooser screen for the text colour of the %1s.</string>
     <string name="bgcolourhelp">This screen provides sliders
         to set the hue, saturation, value, red, green, blue, and opacity values
         of the colour of the widget\'s background. You can also type in values
         for any of these except the hue.</string>
-    <string name="textcolourhelp">This screen provides sliders
+    <string name="fgcolourhelp">This screen provides sliders
         to set the hue, saturation, value, red, green, and blue values
         of the colour of the %1s\'s text. You can also type in values
         for any of these except the hue.</string>

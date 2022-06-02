@@ -40,10 +40,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
         switch (v.getId()) {
             case LONGPRESSHELP:
                 switch(m_currentView) {
+                    case CONFIGURE: doToast(R.string.widgetconfighelp); return true;
                     case SETBACKGROUNDCOLOUR: doToast(R.string.bgcolourhelp); return true;
                     case SETTEXTCOLOUR:
-                        doToast(R.string.textcolourhelp, m_CorW); return true;
-                    case CONFIGURE: doToast(R.string.widgetconfighelp); return true;
+                        doToast(R.string.fgcolourhelp, m_CorW); return true;
+                    case CHOOSE_ACTION: doToast(R.string.actionhelp); return true;
                 }
                 break;
             case HUESLIDER: doToast(R.string.huesliderhelp); return true;
@@ -68,6 +69,24 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case DONEBUTTON: doToast(R.string.donehelp); return true;
             case SETTEXTCOLOUR: doToast(R.string.setfgcolourhelp); return true;
             case SETBACKGROUNDCOLOUR: doToast(R.string.setbgcolourhelp); return true;
+            case GO_SYSTEM_CLOCK:
+                doToast(R.string.touchrunnightclock);
+                return true;
+            case CONFIGURE_EXISTING_WIDGET:
+                doToast(R.string.helpconfigwidget);
+                return true;
+            case CONFIGURE_NIGHT_CLOCK:
+                doToast(R.string.touchconfignightclock);
+                return true;
+            case GO_NIGHT_CLOCK:
+                doToast(R.string.touchrunnightclock);
+                return true;
+            case CHOOSE_ACTION:
+                if (m_currentView == CHOOSE_ACTION) {
+                    doToast(R.string.touchchooseaction); return true;
+                } else {
+                    doToast(R.string.setactionhelp); return true;
+                }
         }
         return super.onLongClick(v);
     }
@@ -190,11 +209,36 @@ public class WidgetConfigureActivity extends ConfigureActivity
         updateWidget();
     }
 
+    @SuppressLint("ApplySharedPref")
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); break;
             case SETBACKGROUNDCOLOUR: setCurrentView(SETBACKGROUNDCOLOUR); break;
+            case GO_SYSTEM_CLOCK:
+                m_prefs.edit().putInt(
+                    m_key + "touchaction", GO_SYSTEM_CLOCK).commit();
+                break;
+            case CONFIGURE_EXISTING_WIDGET:
+                m_prefs.edit().putInt(
+                    m_key + "touchaction", CONFIGURE_EXISTING_WIDGET).commit();
+                break;
+            case CONFIGURE_NIGHT_CLOCK:
+                m_prefs.edit().putInt(
+                    m_key + "touchaction", CONFIGURE_NIGHT_CLOCK).commit();
+                break;
+            case GO_NIGHT_CLOCK:
+                m_prefs.edit().putInt(
+                    m_key + "touchaction", GO_NIGHT_CLOCK).commit();
+                break;
+            case CHOOSE_ACTION:
+                if (m_currentView != CHOOSE_ACTION) {
+                    setCurrentView(CHOOSE_ACTION);
+                } else {
+                    m_prefs.edit().putInt(
+                        m_key + "touchaction", CHOOSE_ACTION).commit();
+                }
+                break;
             case DONEBUTTON:
                 if (m_currentView == CONFIGURE) {
                     finish();
@@ -219,6 +263,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private CheckBox showSecondsCheckBox;
     private Button bgButton;
     private Button fgButton;
+    private Button sysClockButton;
+    private Button configThisButton;
+    private Button configNightClockButton;
+    private Button runNightClockButton;
+    private Button chooseButton;
 
     void updateDemo() {
         Formatter f = new Formatter();
@@ -286,6 +335,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             // default orientation is HORIZONTAL
             l8.addView(bgButton);
             l8.addView(fgButton);
+            l8.addView(chooseButton);
             l3.addView(l8);
             l1.addView(l3);
         } else { // assume Portrait
@@ -321,6 +371,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l2.setGravity(Gravity.CENTER_HORIZONTAL);
             l2.addView(bgButton, lpWrapWrap);
             l2.addView(fgButton, lpWrapWrap);
+            l2.addView(chooseButton, lpWrapWrap);
             l2.addView(m_okButton, lpWrapWrap);
             l1.addView(l2);
         }
@@ -467,7 +518,50 @@ public class WidgetConfigureActivity extends ConfigureActivity
         }
     }
 
-    @Override
+    protected void doActionLayout() {
+        removeAllViews(m_topLayout);
+        demobox.addView(demo);
+        demoboxbox.addView(demobox);
+        LinearLayout lbuttons = new LinearLayout(this);
+        lbuttons.setOrientation(LinearLayout.VERTICAL);
+        lbuttons.setGravity(Gravity.CENTER_HORIZONTAL);
+        lbuttons.addView(centredLabel(R.string.actionpage, LONGPRESSHELP));
+        lbuttons.addView(sysClockButton, lpWrapWrap);
+        lbuttons.addView(configThisButton, lpWrapWrap);
+        lbuttons.addView(configNightClockButton, lpWrapWrap);
+        lbuttons.addView(runNightClockButton, lpWrapWrap);
+        LinearLayout l1 = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        l1.setBackgroundColor(0xFF000000);
+        if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            LinearLayout l2 = new LinearLayout(this);
+            l2.setOrientation(LinearLayout.VERTICAL);
+            l2.setGravity(Gravity.CENTER_HORIZONTAL);
+            m_helptext.setText(R.string.longpressvert);
+            l2.addView(m_helptext);
+            demoboxbox.setLayoutParams(lpWrapMatch);
+            demoboxbox.setOrientation(LinearLayout.VERTICAL);
+            demoboxbox.setGravity(Gravity.CENTER_VERTICAL);
+            l2.addView(demoboxbox);
+            l2.addView(m_okButton, lpWrapWrap);
+            l1.addView(l2);
+            l1.addView(lbuttons);
+        } else {
+            l1.setOrientation(LinearLayout.VERTICAL);
+            demoboxbox.setLayoutParams(lpMatchWrap);
+            demoboxbox.setOrientation(LinearLayout.VERTICAL);
+            demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
+            l1.addView(demoboxbox);
+            m_helptext.setText(R.string.longpresshoriz);
+            m_helptext.setGravity(Gravity.NO_GRAVITY);
+            l1.addView(m_helptext);
+            lbuttons.addView(m_okButton, lpWrapWrap);
+            l1.addView(lbuttons);
+        }
+        m_topLayout.addView(l1);
+    }
+
+        @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         m_CorW = "widget";
@@ -484,10 +578,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
     protected void setCurrentView(int viewnum) {
         m_currentView = viewnum;
         m_prefs.edit().putInt("Wview", m_currentView).commit();
-        if (m_currentView != CONFIGURE) {
-            doChooserLayout();
-        } else {
-            doMainLayout();
+        switch(m_currentView) {
+            case CONFIGURE: doMainLayout(); break;
+            case SETTEXTCOLOUR:
+            case SETBACKGROUNDCOLOUR: doChooserLayout(); break;
+            case CHOOSE_ACTION: doActionLayout(); break;
         }
     }
 
@@ -574,16 +669,46 @@ public class WidgetConfigureActivity extends ConfigureActivity
         showSecondsCheckBox.setOnLongClickListener(this);
         bgButton = new Button(this);
         bgButton.setId(SETBACKGROUNDCOLOUR);
-        bgButton.setText(R.string.set_bg_colour);
+        bgButton.setText(R.string.setbgcolour);
         bgButton.setAllCaps(false);
         bgButton.setOnClickListener(this);
         bgButton.setOnLongClickListener(this);
         fgButton = new Button(this);
         fgButton.setId(SETTEXTCOLOUR);
         fgButton.setAllCaps(false);
-        fgButton.setText(getString(R.string.set_fg_colour, "widget"));
+        fgButton.setText(getString(R.string.setfgcolour, "widget"));
         fgButton.setOnClickListener(this);
         fgButton.setOnLongClickListener(this);
+        sysClockButton = new Button(this);
+        sysClockButton.setId(GO_SYSTEM_CLOCK);
+        sysClockButton.setAllCaps(false);
+        sysClockButton.setText(getString(R.string.gosysclock));
+        sysClockButton.setOnClickListener(this);
+        sysClockButton.setOnLongClickListener(this);
+        configThisButton = new Button(this);
+        configThisButton.setId(CONFIGURE_EXISTING_WIDGET);
+        configThisButton.setAllCaps(false);
+        configThisButton.setText(getString(R.string.configwidget));
+        configThisButton.setOnClickListener(this);
+        configThisButton.setOnLongClickListener(this);
+        configNightClockButton = new Button(this);
+        configNightClockButton.setId(CONFIGURE_NIGHT_CLOCK);
+        configNightClockButton.setAllCaps(false);
+        configNightClockButton.setText(getString(R.string.confignightclock));
+        configNightClockButton.setOnClickListener(this);
+        configNightClockButton.setOnLongClickListener(this);
+        runNightClockButton = new Button(this);
+        runNightClockButton.setId(GO_NIGHT_CLOCK);
+        runNightClockButton.setAllCaps(false);
+        runNightClockButton.setText(getString(R.string.runnightclock));
+        runNightClockButton.setOnClickListener(this);
+        runNightClockButton.setOnLongClickListener(this);
+        chooseButton = new Button(this);
+        chooseButton.setId(CHOOSE_ACTION);
+        chooseButton.setAllCaps(false);
+        chooseButton.setText(getString(R.string.chooseaction));
+        chooseButton.setOnClickListener(this);
+        chooseButton.setOnLongClickListener(this);
 
         saturationValue.addTextChangedListener(new TextWatcher() {
             @Override

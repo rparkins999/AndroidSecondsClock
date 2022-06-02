@@ -6,17 +6,17 @@
   -->
 
 <resources>
-    <string name="set_bg_colour">Set widget background color</string>
+    <string name="setbgcolour">Set widget background color</string>
     <string name="setbgcolourhelp">Touch this button to show a color
         chooser screen for the background color and opacity of the widget.</string>
-    <string name="set_fg_colour">Set %1s text color</string>
+    <string name="setfgcolour">Set %1s text color</string>
     <string name="setfgcolourhelp">Touch this button to show a color
         chooser screen for the text color of the %1s.</string>
     <string name="bgcolourhelp">This screen provides sliders
         to set the hue, saturation, value, red, green, blue, and opacity values
         of the color of the widget\'s background. You can also type in values
         for any of these except the hue.</string>
-    <string name="textcolourhelp">This screen provides sliders
+    <string name="fgcolourhelp">This screen provides sliders
         to set the hue, saturation, value, red, green, and blue components of the color
         of the %1s\'s text. You can also type in values
         for any of these except the hue.</string>

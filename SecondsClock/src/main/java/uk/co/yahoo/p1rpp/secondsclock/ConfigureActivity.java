@@ -34,8 +34,7 @@ abstract class ConfigureActivity extends Activity_common
 {
 
     // base list of View IDs
-    protected static final int LONGPRESSHELP = VIEWIDBASE;
-    protected static final int SHOWTIME = LONGPRESSHELP + 1;
+    protected static final int SHOWTIME = GO_EXIT + 1;
     protected static final int SHOWSECONDS = SHOWTIME + 1;
     protected static final int SHORTWEEKDAY = SHOWSECONDS + 1;
     protected static final int LONGWEEKDAY = SHORTWEEKDAY + 1;
@@ -115,7 +114,7 @@ abstract class ConfigureActivity extends Activity_common
             case SHOWYEAR:
                 doToast(R.string.showyearhelp, m_CorW); return true;
             case SETTEXTCOLOUR:
-                doToast(R.string.textcolourhelp, m_CorW); return true;
+                doToast(R.string.fgcolourhelp, m_CorW); return true;
             case HUESLIDER:
                 doToast(R.string.huesliderhelp); return true;
             case SATURATIONSLIDER:

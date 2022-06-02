@@ -51,7 +51,7 @@
             android:label="@string/app_label"
             android:screenOrientation="fullSensor">
             <intent-filter>
-                <action android:name="uk.co.yahoo.p1rpp.MainActivity" />
+                <action android:name="uk.co.yahoo.p1rpp.secondsclock.MainActivity" />
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>

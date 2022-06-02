@@ -47,25 +47,27 @@ public class SecondsClockWidget extends AppWidgetProvider {
         int showYear;
         int bgcolour;
         int fgcolour;
+        int touchaction;
         String key = "W" + appWidgetId;
         SharedPreferences prefs = context.getSharedPreferences(
             "SecondsClock", Context.MODE_PRIVATE);
         String widgetIds = prefs.getString("widgetIds", "");
-        String thisWidget = "," + String.valueOf(appWidgetId);
+        String thisWidget = "[" + String.valueOf(appWidgetId) + "]";
         if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
-            // Get the preference for this widget.
+            // Get the preferences for this widget.
             showTime =
-                prefs.getInt(key +"showTime", 2); // include seconds
+                prefs.getInt(key +" showTime", 2); // include seconds
             showWeekDay =
-                prefs.getInt(key +"showWeekDay", 2); // long format
-            showShortDate = prefs.getInt(key +"showShortDate", 0);
+                prefs.getInt(key + " showWeekDay", 2); // long format
+            showShortDate = prefs.getInt(key +" showShortDate", 0);
             showMonthDay =
-                prefs.getInt(key +"showMonthDay", 1);
+                prefs.getInt(key + "showMonthDay", 1);
             showMonth =
-                prefs.getInt(key +"showMonth", 2); // long format
-            showYear = prefs.getInt(key +"showYear", 1);
-            bgcolour = prefs.getInt(key +"bgcolour", 0x00000000);
-            fgcolour = prefs.getInt(key +"fgcolour",0xFFFFFFFF);
+                prefs.getInt(key + "showMonth", 2); // long format
+            showYear = prefs.getInt(key + "showYear", 1);
+            bgcolour = prefs.getInt(key + "bgcolour", 0x00000000);
+            fgcolour = prefs.getInt(key + "fgcolour",0xFFFFFFFF);
+            touchaction = prefs.getInt(key + "touchaction", 0);
         } else {
             // New widget, add to list and set its preferences
             // to the new widget defaults.
@@ -75,22 +77,24 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 prefs.getInt("WshowWeekDay", 2); // long format
             showShortDate = prefs.getInt("WshowShortDate", 0);
             showMonthDay =
-                prefs.getInt("WshowMonthDay", 1); // long format
+                prefs.getInt("WshowMonthDay", 1);
             showMonth = prefs.getInt("WshowMonth", 2); // long format
             showYear = prefs.getInt("WshowYear", 1);
             bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
             fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
+            touchaction = prefs.getInt("Wtouchaction", 0);
             widgetIds += thisWidget;
             prefs.edit()
                  .putString("widgetIds", widgetIds)
-                 .putInt(key +"showTime", showTime)
-                 .putInt(key +"showWeekDay", showWeekDay)
-                 .putInt(key +"showShortDate", showShortDate)
+                 .putInt(key + "showTime", showTime)
+                 .putInt(key + "showWeekDay", showWeekDay)
+                 .putInt(key + "showShortDate", showShortDate)
                  .putInt(key + "showMonthDay", showMonthDay)
-                 .putInt(key +"showMonth", showMonth)
-                 .putInt(key +"showYear", showYear)
-                 .putInt(key +"bgcolour", bgcolour)
-                 .putInt(key +"fgcolour",fgcolour)
+                 .putInt(key + "showMonth", showMonth)
+                 .putInt(key + "showYear", showYear)
+                 .putInt(key + "bgcolour", bgcolour)
+                 .putInt(key + "fgcolour", fgcolour)
+                 .putInt(key + "touchaction", touchaction)
                  .commit();
         }
 
@@ -135,10 +139,11 @@ public class SecondsClockWidget extends AppWidgetProvider {
         // but only when the widget is visible.
 
         // Make a click on the widget go to the switch in MainActivity.
-        Intent ai = new Intent("uk.co.yahoo.p1rpp.MainActivity");
+        Intent ai = new Intent(context,
+            uk.co.yahoo.p1rpp.secondsclock.MainActivity.class);
         ai.putExtra("widgetID", appWidgetId);
         PendingIntent pi = PendingIntent.getActivity(
-            context, 0, ai, PendingIntent.FLAG_IMMUTABLE);
+            context, appWidgetId, ai, PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.appwidget_textclock, pi);
 
         // Instruct the widget manager to update the widget
@@ -163,6 +168,22 @@ public class SecondsClockWidget extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
+    }
+
+    @SuppressLint("ApplySharedPref")
+    @Override
+    public void onDeleted(Context context, int[] appWidgetIds) {
+        super.onDeleted(context, appWidgetIds);
+        SharedPreferences prefs = context.getSharedPreferences(
+            "SecondsClock", Context.MODE_PRIVATE);
+        String widgetIds = prefs.getString("widgetIds", "");
+        for (int i: appWidgetIds) {
+            String thisWidget = "[" + String.valueOf(i) + "]";
+            if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
+                widgetIds = widgetIds.replace(thisWidget, "");
+            }
+        }
+        prefs.edit() .putString("widgetIds", widgetIds).commit();
     }
 
     @Override

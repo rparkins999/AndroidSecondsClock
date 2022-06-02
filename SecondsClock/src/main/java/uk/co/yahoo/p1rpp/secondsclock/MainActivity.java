@@ -12,34 +12,15 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
-
 public class MainActivity extends Activity_common
     implements View.OnClickListener, View.OnLongClickListener
 {
-    private static boolean m_configuring;
-    private String m_widgetIds = "";
-
-    // View IDs for buttons, to switch on click or long click:
-    // also used as widget touch preference values, except that
-    // CONFIGURE_NEW_WIDGET isn't a widget touch preference, and
-    // CHOOSE_ACTION isn't a button, as we're already doing it if we get here.
-    private static final int LONGPRESSHELP = 9091;
-    private static final int GO_SYSTEM_CLOCK = LONGPRESSHELP + 1;
-    private static final int CONFIGURE_NEW_WIDGET = GO_SYSTEM_CLOCK + 1;
-    private static final int CONFIGURE_EXISTING_WIDGET = CONFIGURE_NEW_WIDGET + 1;
-    private static final int CONFIGURE_NIGHT_CLOCK = CONFIGURE_EXISTING_WIDGET + 1;
-    private static final int GO_NIGHT_CLOCK = CONFIGURE_NIGHT_CLOCK + 1;
-    private static final int CHOOSE_ACTION = GO_NIGHT_CLOCK + 1;
-    private static final int GO_EXIT = CHOOSE_ACTION + 1;
-
     // Use best efforts to find the system clock app.
     private void goSystemClock() {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -109,9 +90,10 @@ public class MainActivity extends Activity_common
                     this, WidgetConfigureActivity.class));
                 break;
             case CONFIGURE_EXISTING_WIDGET:
-                m_prefs.edit().putInt("Wview", CONFIGURE).commit();
-                m_configuring = true;
+                m_prefs.edit().putInt("Wview", CONFIGURE)
+                    .putInt("Wconfiguring", 1).commit();
                 doToast(R.string.actionoldwidget);
+                finish();
                 break;
             case CONFIGURE_NIGHT_CLOCK:
                 m_prefs.edit().putInt("Cview", CONFIGURE).commit();
@@ -136,15 +118,15 @@ public class MainActivity extends Activity_common
             case LONGPRESSHELP:
                 doToast(R.string.mainactivityhelp); return true;
             case GO_SYSTEM_CLOCK:
-                doToast(R.string.helpsysclock); return true;
+                doToast(R.string.helpgosysclock); return true;
             case CONFIGURE_NEW_WIDGET:
-                doToast(R.string.helpnewwidget); return true;
+                doToast(R.string.helpconfignewwidget); return true;
             case CONFIGURE_EXISTING_WIDGET:
                 doToast(R.string.helpoldwidget); return true;
             case CONFIGURE_NIGHT_CLOCK:
-                doToast(R.string.helpnightclock); return true;
+                doToast(R.string.helpconfignightclock); return true;
             case GO_NIGHT_CLOCK:
-                doToast(R.string.helprunclock); return true;
+                doToast(R.string.helprunnightclock); return true;
             case GO_EXIT:
                 doToast(R.string.exithelp); return true;
             default:
@@ -152,30 +134,7 @@ public class MainActivity extends Activity_common
         }
     }
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (savedInstanceState == null) {
-            m_configuring = false;
-        } else {
-            m_widgetIds = m_prefs.getString("widgetIds", "");
-            m_configuring = savedInstanceState.getBoolean("m_configuring");
-        }
-        /*
-        LayoutInflater inflater =
-            (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        @SuppressLint("InflateParams")
-        ViewGroup vg =
-            (ViewGroup)inflater.inflate(R.layout.generic_layout, null);
-        setContentView(vg);
-        m_topLayout = new LinearLayout(this);
-        m_topLayout.setOrientation(LinearLayout.VERTICAL);
-        m_topLayout.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-        vg.addView(m_topLayout);
-        m_topLayout.setBackgroundColor(m_background);
-        */
-    }
-
+    @SuppressLint("ApplySharedPref")
     @Override
     protected void onStart() {
         super.onStart();
@@ -183,10 +142,10 @@ public class MainActivity extends Activity_common
         if (intent.hasExtra("widgetID")) {
             // We got here because the user touched one of our widgets.
             int widgetID = intent.getIntExtra("widgetID", 0);
-            if (m_configuring) {
+            if (m_prefs.getInt("Wconfiguring", 0) != 0) {
                 // We told the user to pick a widget, now configure it
-                m_configuring = false;
-                m_prefs.edit().putInt("Wview", CONFIGURE).commit();
+                m_prefs.edit().putInt("Wview", CONFIGURE)
+                    .putInt("Wconfiguring", 0).commit();
                 startActivity(
                     new Intent(this, WidgetConfigureActivity.class)
                     .putExtra("widgetID", widgetID));
@@ -224,10 +183,13 @@ public class MainActivity extends Activity_common
                     default:
                 }
             }
+        } else {
+            m_prefs.edit().putInt("Wconfiguring", 0).commit();
         }
         // CHOOSE_ACTION or we got launched: onResume will set up our screen.
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void resume() {
         m_key = ""; // date preferences not used in this activity
@@ -267,6 +229,7 @@ public class MainActivity extends Activity_common
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
         lmain.addView(b, centreButton);
+        String m_widgetIds = m_prefs.getString("widgetIds", "");
         if (m_widgetIds.length() > 0) {
             b = new Button(this);
             b.setText(R.string.configoldwwidget);
@@ -298,12 +261,5 @@ public class MainActivity extends Activity_common
         b.setOnLongClickListener(this);
         lmain.addView(b, centreButton);
         m_topLayout.addView(lmain);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        // We haven't changed m_widgetIds, but this is a new bundle.
-        outState.putBoolean("m_configuring", m_configuring);
     }
 }
