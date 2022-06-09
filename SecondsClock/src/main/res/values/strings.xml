@@ -15,7 +15,7 @@
     <string name="gosysclock">Go to system clock app</string>
     <string name="helpgosysclock">Touch this button to go to the device\'s
         default clock app.</string>
-    <string name="helptouchsysclock">Touch this button to make a touch on the
+    <string name="helptouchsysclock">Check this box to make a touch on the
         widget go to the device\'s default clock app.</string>
     <string name="confignewwidget">Configure new widget</string>
     <string name="helpconfignewwidget">Touch this button to set the configuration
@@ -32,20 +32,22 @@
         move to the appropriate page, and touch the widget that you want
         to configure.</string>
     <string name="configwidget">Configure this widget</string>
-    <string name="helpconfigwidget">Touch this button to make a touch on the
+    <string name="helpconfigthis">Touch this button to configure the
+        the widegt that you touched.</string>
+    <string name="helpconfigwidget">Check this box to make a touch on the
         widget go to the configuration page to reconfigure it.</string>
     <string name="confignightclock">Configure full screen clock</string>
     <string name="helpconfignightclock">Touch this button to configure the
         full screen clock.</string>
-    <string name="touchconfignightclock">Touch this button to make a touch on the
+    <string name="touchconfignightclock">Check this box to make a touch on the
         widget go to the configuration page for the full screen clock.</string>
     <string name="runnightclock">Run full screen clock</string>
     <string name="helprunnightclock">Touch this button to run
         the full screen clock.</string>
-    <string name="touchrunnightclock">Touch this button to make a touch on the
+    <string name="touchrunnightclock">Check this box to make a touch on the
         widget run the full screen clock.</string>
     <string name="chooseaction">Choose action when touched</string>
-    <string name="touchchooseaction">Touch this button to make a touch on the
+    <string name="touchchooseaction">Check this box to make a touch on the
         widget go to the top level menu for the app to choose what to
         do next.</string>
     <string name="exit">Exit</string>
@@ -132,13 +134,13 @@
         for a longer description of what it makes the widget do.</string>
     <string name="actionpage">ACTION WHEN\nWIDGET TOUCHED</string>
     <string name="huelabel">Hue</string>
-    <string name="huesliderhelp">Move the thumb on this slider
-        to set the hue. This will not modify the value or saturation.
+    <string name="huesliderhelp">Move the thumb on this slider to set the hue
+        of the %1s. This will not modify the value or saturation.
         Black, white and grayscale colours have a saturation of zero,
         so changing their hue will have no effect.</string>
     <string name="saturationlabel">Saturation</string>
-    <string name="saturationsliderhelp">Move the thumb on this slider
-        to set the saturation. This will not modify the hue or the value.
+    <string name="saturationsliderhelp">Move the thumb on this slider to set the
+        saturation of the %1s. This will not modify the hue or the value.
         Decreasing the saturation increases the amount of white in the colour:
         pale pink is unsaturated, while pure red is saturated.</string>
     <string name="saturationvaluehelp">This number shows the saturation
@@ -147,8 +149,8 @@
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
     <string name="valuelabel">Value</string>
-    <string name="valuesliderhelp">Move the thumb on this slider
-        to set the value. This will not modify the hue or the saturation.
+    <string name="valuesliderhelp">Move the thumb on this slider to set the
+        value of the %1s. This will not modify the hue or the saturation.
         The value is approximately the brightness of the colour,
         but we use different names for some low-value colours:
         for example low-value red is brown.</string>
@@ -159,7 +161,7 @@
         a long tap on the number will display this message.</string>
     <string name="redlabel">Red</string>
     <string name="redsliderhelp">Move the thumb on this slider
-        to adjust the amount of red in the colour.</string>
+        to adjust the amount of red in the colour of the %1s.</string>
     <string name="redvaluehelp">This number shows the actual amount of red
         in the colour on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
@@ -167,7 +169,7 @@
         a long tap on the number will display this message.</string>
     <string name="greenlabel">Green</string>
     <string name="greensliderhelp">Move the thumb on this slider
-        to adjust the amount of green in the colour.</string>
+        to adjust the amount of green in the colour of the %1s.</string>
     <string name="greenvaluehelp">This number shows the actual amount of green
         in the colour on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
@@ -175,7 +177,7 @@
         a long tap on the number will display this message.</string>
     <string name="bluelabel">Blue</string>
     <string name="bluesliderhelp">Move the thumb on this slider
-        to adjust the amount of blue in the colour.</string>
+        to adjust the amount of blue in the colour of the %1s.</string>
     <string name="bluevaluehelp">This number shows the actual amount of blue
         in the colour on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;

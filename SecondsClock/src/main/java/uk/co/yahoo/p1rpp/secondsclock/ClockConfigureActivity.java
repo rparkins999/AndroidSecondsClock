@@ -487,6 +487,7 @@ public class ClockConfigureActivity extends ConfigureActivity
 
     @SuppressLint("SetTextI18n")
     protected void doChooserLayout() {
+        m_ColourType = "full screen clock";
         GridLayout gl = doCLockView();
         ScrollView scrollView = new ScrollView(this);
         scrollView.setScrollbarFadingEnabled(false);

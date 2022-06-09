@@ -20,6 +20,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -35,6 +36,26 @@ public class WidgetConfigureActivity extends ConfigureActivity
 {
     private static final int SETBACKGROUNDCOLOUR = SETTEXTCOLOUR + 1;
 
+    private int widgetId;
+    private int maxHeight = 121;
+    private int minWidth = 93;
+    private int m_bgcolour;
+    private TextClock demo;
+    private int m_fgcolour;
+    private int showTime;
+    private LinearLayout demobox;
+    private LinearLayout demoboxbox;
+    private CheckBox showTimeCheckBox;
+    private CheckBox showSecondsCheckBox;
+    private Button bgButton;
+    private Button fgButton;
+    private Button chooseButton;
+    private CheckBox sysClockCheckBox;
+    private CheckBox configThisCheckBox;
+    private CheckBox configNightClockCheckBox;
+    private CheckBox runNightClockCheckBox;
+    private CheckBox chooseCheckBox;
+
     @Override
     public boolean onLongClick(View v) {
         switch (v.getId()) {
@@ -47,17 +68,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     case CHOOSE_ACTION: doToast(R.string.actionhelp); return true;
                 }
                 break;
-            case HUESLIDER: doToast(R.string.huesliderhelp); return true;
-            case SATURATIONSLIDER: doToast(R.string.saturationsliderhelp); return true;
-            case SATURATIONVALUE: doToast(R.string.saturationvaluehelp); return true;
-            case VALUESLIDER: doToast(R.string.valuesliderhelp); return true;
-            case VALUEVALUE: doToast(R.string.valuevaluehelp); return true;
-            case REDSLIDER: doToast(R.string.redsliderhelp); return true;
-            case REDVALUE: doToast(R.string.redvaluehelp); return true;
-            case GREENSLIDER: doToast(R.string.greensliderhelp); return true;
-            case GREENVALUE: doToast(R.string.greenvaluehelp); return true;
-            case BLUESLIDER: doToast(R.string.bluesliderhelp); return true;
-            case BLUEVALUE: doToast(R.string.bluevaluehelp); return true;
             case ALPHASLIDER: doToast(R.string.alphasliderhelp); return true;
             case ALPHAVALUE: doToast(R.string.alphavaluehelp); return true;
             case WIDGETDEMO:
@@ -89,6 +99,56 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 }
         }
         return super.onLongClick(v);
+    }
+    @SuppressLint("ApplySharedPref")
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (isChecked) {
+            switch (buttonView.getId()) {
+                case GO_SYSTEM_CLOCK:
+                    configThisCheckBox.setChecked(false);
+                    configNightClockCheckBox.setChecked(false);
+                    runNightClockCheckBox.setChecked(false);
+                    chooseCheckBox.setChecked(false);
+                    m_prefs.edit().putInt(
+                        m_key + "touchaction", GO_SYSTEM_CLOCK).commit();
+                    break;
+                case CONFIGURE_EXISTING_WIDGET:
+                    sysClockCheckBox.setChecked(false);
+                    configNightClockCheckBox.setChecked(false);
+                    runNightClockCheckBox.setChecked(false);
+                    chooseCheckBox.setChecked(false);
+                    m_prefs.edit().putInt(m_key + "touchaction",
+                        CONFIGURE_EXISTING_WIDGET).commit();
+                    break;
+                case CONFIGURE_NIGHT_CLOCK:
+                    sysClockCheckBox.setChecked(false);
+                    configThisCheckBox.setChecked(false);
+                    runNightClockCheckBox.setChecked(false);
+                    chooseCheckBox.setChecked(false);
+                    m_prefs.edit().putInt(
+                        m_key + "touchaction", CONFIGURE_NIGHT_CLOCK).commit();
+                    break;
+                case GO_NIGHT_CLOCK:
+                    sysClockCheckBox.setChecked(false);
+                    configThisCheckBox.setChecked(false);
+                    configNightClockCheckBox.setChecked(false);
+                    chooseCheckBox.setChecked(false);
+                    m_prefs.edit().putInt(
+                        m_key + "touchaction", GO_NIGHT_CLOCK).commit();
+                    break;
+                case CHOOSE_ACTION:
+                    sysClockCheckBox.setChecked(false);
+                    configThisCheckBox.setChecked(false);
+                    configNightClockCheckBox.setChecked(false);
+                    runNightClockCheckBox.setChecked(false);
+                    m_prefs.edit().putInt(
+                        m_key + "touchaction", CHOOSE_ACTION).commit();
+                    break;
+                default:
+                    super.onCheckedChanged(buttonView, isChecked);
+            }
+        }
     }
 
     private void updateWidget() {
@@ -215,30 +275,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         switch (v.getId()) {
             case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); break;
             case SETBACKGROUNDCOLOUR: setCurrentView(SETBACKGROUNDCOLOUR); break;
-            case GO_SYSTEM_CLOCK:
-                m_prefs.edit().putInt(
-                    m_key + "touchaction", GO_SYSTEM_CLOCK).commit();
-                break;
-            case CONFIGURE_EXISTING_WIDGET:
-                m_prefs.edit().putInt(
-                    m_key + "touchaction", CONFIGURE_EXISTING_WIDGET).commit();
-                break;
-            case CONFIGURE_NIGHT_CLOCK:
-                m_prefs.edit().putInt(
-                    m_key + "touchaction", CONFIGURE_NIGHT_CLOCK).commit();
-                break;
-            case GO_NIGHT_CLOCK:
-                m_prefs.edit().putInt(
-                    m_key + "touchaction", GO_NIGHT_CLOCK).commit();
-                break;
-            case CHOOSE_ACTION:
-                if (m_currentView != CHOOSE_ACTION) {
-                    setCurrentView(CHOOSE_ACTION);
-                } else {
-                    m_prefs.edit().putInt(
-                        m_key + "touchaction", CHOOSE_ACTION).commit();
-                }
-                break;
+            case CHOOSE_ACTION: setCurrentView(CHOOSE_ACTION); break;
             case DONEBUTTON:
                 if (m_currentView == CONFIGURE) {
                     finish();
@@ -247,27 +284,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 }
         }
     }
-
-    private int widgetId;
-    private AppWidgetManager appWidgetManager;
-    private ComponentName secondsClockWidget;
-    private int maxHeight = 121;
-    private int minWidth = 93;
-    private int m_bgcolour;
-    private TextClock demo;
-    private int m_fgcolour;
-    private int showTime;
-    private LinearLayout demobox;
-    private LinearLayout demoboxbox;
-    private CheckBox showTimeCheckBox;
-    private CheckBox showSecondsCheckBox;
-    private Button bgButton;
-    private Button fgButton;
-    private Button sysClockButton;
-    private Button configThisButton;
-    private Button configNightClockButton;
-    private Button runNightClockButton;
-    private Button chooseButton;
 
     void updateDemo() {
         Formatter f = new Formatter();
@@ -283,15 +299,19 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setFormat12Hour(f.time12 + f.rest);
         demo.setFormat24Hour(f.time24 + f.rest);
         demo.setLines(f.lines);
-        demo.setAutoSizeTextTypeWithDefaults(
-            TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+        demo.setAutoSizeTextTypeUniformWithConfiguration(
+            10, 3000,
+            3, TypedValue.COMPLEX_UNIT_PX);
     }
 
     @SuppressLint("SetTextI18n")
     private void doMainLayout() {
         removeAllViews(m_topLayout);
+        m_ColourType = "";
         demobox.addView(demo);
         demoboxbox.addView(demobox);
+        ScrollView lscroll = new ScrollView(this);
+        lscroll.setScrollbarFadingEnabled(false);
         LinearLayout l1 = new LinearLayout(this);
         l1.setBackgroundColor(0xFF000000);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -301,43 +321,43 @@ public class WidgetConfigureActivity extends ConfigureActivity
             m_helptext.setText(R.string.longpressvert);
             m_helptext.setGravity(Gravity.CENTER_HORIZONTAL);
             l2.addView(m_helptext);
-            l2.setGravity(Gravity.CENTER_VERTICAL);
-            l1.addView(l2);
+            l2.setGravity(Gravity.CENTER_HORIZONTAL);
             demoboxbox.setLayoutParams(lpWrapMatch);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_VERTICAL);
             l2.addView(demoboxbox);
             l2.addView(m_okButton, lpWrapWrap);
+            l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
             LinearLayout l4 = new LinearLayout(this);
             // default orientation is HORIZONTAL
             l4.addView(showTimeCheckBox);
             l4.addView(showSecondsCheckBox);
-            l3.addView(l4);
+            l3.addView(l4, lpWrapWrap);
             LinearLayout l5 = new LinearLayout(this);
             // default orientation is HORIZONTAL
             l5.addView(showShortWeekDayCheckBox);
             l5.addView(showLongWeekDayCheckBox);
-            l3.addView(l5);
+            l3.addView(l5, lpWrapWrap);
             LinearLayout l6 = new LinearLayout(this);
             // default orientation is HORIZONTAL
             l6.addView(showShortDateCheckBox);
             l6.addView(showMonthDayCheckBox);
-            l3.addView(l6);
+            l3.addView(l6, lpWrapWrap);
             LinearLayout l7 = new LinearLayout(this);
             // default orientation is HORIZONTAL
             l7.addView(showShortMonthCheckBox);
             l7.addView(showLongMonthCheckBox);
-            l3.addView(l7);
+            l3.addView(l7, lpWrapWrap);
             l3.addView(showYearCheckBox);
             LinearLayout l8 = new LinearLayout(this);
             // default orientation is HORIZONTAL
             l8.addView(bgButton);
             l8.addView(fgButton);
-            l8.addView(chooseButton);
             l3.addView(l8);
-            l1.addView(l3);
+            l3.addView(chooseButton, lpWrapWrap);
+            l1.addView(l3, lpWrapWrap);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setLayoutParams(lpMatchWrap);
@@ -375,7 +395,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l2.addView(m_okButton, lpWrapWrap);
             l1.addView(l2);
         }
-        m_topLayout.addView(l1);
+        lscroll.addView(l1);
+        m_topLayout.addView(lscroll);
     }
 
     protected void doChooserLayout() {
@@ -498,6 +519,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         m_topLayout.addView(l1);
         switch (m_currentView) {
             case SETBACKGROUNDCOLOUR:
+                m_ColourType = "widget background";
                 demo.setBackgroundColor(m_bgcolour);
                 int val = (m_bgcolour >> 24) & 0xFF;
                 if (!recursive) {
@@ -511,6 +533,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 rgbChanged(m_bgcolour);
                 break;
             case SETTEXTCOLOUR:
+                m_ColourType = "widget text";
                 demo.setTextColor(m_fgcolour);
                 rgbChanged(m_fgcolour);
                 break;
@@ -524,12 +547,12 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demoboxbox.addView(demobox);
         LinearLayout lbuttons = new LinearLayout(this);
         lbuttons.setOrientation(LinearLayout.VERTICAL);
-        lbuttons.setGravity(Gravity.CENTER_HORIZONTAL);
         lbuttons.addView(centredLabel(R.string.actionpage, LONGPRESSHELP));
-        lbuttons.addView(sysClockButton, lpWrapWrap);
-        lbuttons.addView(configThisButton, lpWrapWrap);
-        lbuttons.addView(configNightClockButton, lpWrapWrap);
-        lbuttons.addView(runNightClockButton, lpWrapWrap);
+        lbuttons.addView(sysClockCheckBox, lpWrapWrap);
+        lbuttons.addView(configThisCheckBox, lpWrapWrap);
+        lbuttons.addView(configNightClockCheckBox, lpWrapWrap);
+        lbuttons.addView(runNightClockCheckBox, lpWrapWrap);
+        lbuttons.addView(chooseCheckBox, lpWrapWrap);
         LinearLayout l1 = new LinearLayout(this);
         // default orientation is HORIZONTAL
         l1.setBackgroundColor(0xFF000000);
@@ -589,18 +612,45 @@ public class WidgetConfigureActivity extends ConfigureActivity
     @Override
     @SuppressLint({"ApplySharedPref", "RtlHardcoded", "SetTextI18n"})
     protected void resume() {
-        Intent intent = getIntent();
+        Intent intent;
+        int[] widgetIds
+            = appWidgetManager.getAppWidgetIds(secondsClockWidget);
+        if (widgetIds.length > 0) {
+            // update widgets in case orientation has changed
+            intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+            intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
+                "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+            sendBroadcast(intent);
+        }
+        intent = getIntent();
         if (intent.hasExtra("widgetID")) {
             widgetId = intent.getIntExtra("widgetID", 0);
             m_key = "W" + widgetId;
+            Bundle newOptions =
+                appWidgetManager.getAppWidgetOptions(widgetId);
+            maxHeight = newOptions.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxHeight);
+            minWidth = newOptions.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
         } else {
             widgetId = -1;
             m_key = "W";
+            widgetIds =
+               appWidgetManager.getAppWidgetIds(secondsClockWidget);
+            if (widgetIds.length > 0) {
+                Bundle newOptions =
+                    appWidgetManager.getAppWidgetOptions(widgetIds[0]);
+                maxHeight = newOptions.getInt(
+                    AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxHeight);
+                minWidth = newOptions.getInt(
+                    AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
+            } else {
+                maxHeight = m_height / 24;
+                minWidth = m_width / 18;
+            }
         }
         super.resume();
-        appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
-        secondsClockWidget = new ComponentName(
-            getApplicationContext(), SecondsClockWidget.class);
         m_currentView = m_prefs.getInt("Wview", CONFIGURE);
         m_bgcolour = m_prefs.getInt(m_key + "bgcolour", 0x00000000);
         m_fgcolour = m_prefs.getInt(m_key + "fgcolour",0xFFFFFFFF);
@@ -679,36 +729,43 @@ public class WidgetConfigureActivity extends ConfigureActivity
         fgButton.setText(getString(R.string.setfgcolour, "widget"));
         fgButton.setOnClickListener(this);
         fgButton.setOnLongClickListener(this);
-        sysClockButton = new Button(this);
-        sysClockButton.setId(GO_SYSTEM_CLOCK);
-        sysClockButton.setAllCaps(false);
-        sysClockButton.setText(getString(R.string.gosysclock));
-        sysClockButton.setOnClickListener(this);
-        sysClockButton.setOnLongClickListener(this);
-        configThisButton = new Button(this);
-        configThisButton.setId(CONFIGURE_EXISTING_WIDGET);
-        configThisButton.setAllCaps(false);
-        configThisButton.setText(getString(R.string.configwidget));
-        configThisButton.setOnClickListener(this);
-        configThisButton.setOnLongClickListener(this);
-        configNightClockButton = new Button(this);
-        configNightClockButton.setId(CONFIGURE_NIGHT_CLOCK);
-        configNightClockButton.setAllCaps(false);
-        configNightClockButton.setText(getString(R.string.confignightclock));
-        configNightClockButton.setOnClickListener(this);
-        configNightClockButton.setOnLongClickListener(this);
-        runNightClockButton = new Button(this);
-        runNightClockButton.setId(GO_NIGHT_CLOCK);
-        runNightClockButton.setAllCaps(false);
-        runNightClockButton.setText(getString(R.string.runnightclock));
-        runNightClockButton.setOnClickListener(this);
-        runNightClockButton.setOnLongClickListener(this);
         chooseButton = new Button(this);
         chooseButton.setId(CHOOSE_ACTION);
         chooseButton.setAllCaps(false);
-        chooseButton.setText(getString(R.string.chooseaction));
+        chooseButton.setText(R.string.chooseaction);
         chooseButton.setOnClickListener(this);
         chooseButton.setOnLongClickListener(this);
+        int action = m_prefs.getInt(m_key + "touchaction", CHOOSE_ACTION);
+        sysClockCheckBox = new CheckBox(this);
+        sysClockCheckBox.setId(GO_SYSTEM_CLOCK);
+        sysClockCheckBox.setText(getString(R.string.gosysclock));
+        sysClockCheckBox.setChecked(action == GO_SYSTEM_CLOCK);
+        sysClockCheckBox.setOnCheckedChangeListener(this);
+        sysClockCheckBox.setOnLongClickListener(this);
+        configThisCheckBox = new CheckBox(this);
+        configThisCheckBox.setId(CONFIGURE_EXISTING_WIDGET);
+        configThisCheckBox.setText(getString(R.string.configwidget));
+        configThisCheckBox.setChecked(action == CONFIGURE_EXISTING_WIDGET);
+        configThisCheckBox.setOnCheckedChangeListener(this);
+        configThisCheckBox.setOnLongClickListener(this);
+        configNightClockCheckBox = new CheckBox(this);
+        configNightClockCheckBox.setId(CONFIGURE_NIGHT_CLOCK);
+        configNightClockCheckBox.setText(getString(R.string.confignightclock));
+        configNightClockCheckBox.setChecked(action == CONFIGURE_NIGHT_CLOCK);
+        configNightClockCheckBox.setOnCheckedChangeListener(this);
+        configNightClockCheckBox.setOnLongClickListener(this);
+        runNightClockCheckBox = new CheckBox(this);
+        runNightClockCheckBox.setId(GO_NIGHT_CLOCK);
+        runNightClockCheckBox.setText(getString(R.string.runnightclock));
+        runNightClockCheckBox.setChecked(action == GO_NIGHT_CLOCK);
+        runNightClockCheckBox.setOnCheckedChangeListener(this);
+        runNightClockCheckBox.setOnLongClickListener(this);
+        chooseCheckBox = new CheckBox(this);
+        chooseCheckBox.setId(CHOOSE_ACTION);
+        chooseCheckBox.setText(getString(R.string.chooseaction));
+        chooseCheckBox.setChecked(action == CHOOSE_ACTION);
+        chooseCheckBox.setOnCheckedChangeListener(this);
+        chooseCheckBox.setOnLongClickListener(this);
 
         saturationValue.addTextChangedListener(new TextWatcher() {
             @Override

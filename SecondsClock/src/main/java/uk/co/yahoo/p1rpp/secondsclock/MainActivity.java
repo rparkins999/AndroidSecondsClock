@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021. Richard P. Parkins, M. A.
+ * Copyright © 2022. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This is the top level activity, launched when you touch tha app's icon.
@@ -9,6 +9,7 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.annotation.SuppressLint;
+import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -16,11 +17,15 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity_common
     implements View.OnClickListener, View.OnLongClickListener
 {
+    private int widgetID;
+    private static final int CONFIGURE_THIS_WIDGET = GO_EXIT + 1;
+
     // Use best efforts to find the system clock app.
     private void goSystemClock() {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -89,6 +94,13 @@ public class MainActivity extends Activity_common
                 startActivity(new Intent(
                     this, WidgetConfigureActivity.class));
                 break;
+            case CONFIGURE_THIS_WIDGET:
+                m_prefs.edit().putInt("Wview", CONFIGURE).commit();
+                startActivity(
+                    new Intent(this, WidgetConfigureActivity.class)
+                        .putExtra("widgetID", widgetID));
+                finish();
+                break;
             case CONFIGURE_EXISTING_WIDGET:
                 m_prefs.edit().putInt("Wview", CONFIGURE)
                     .putInt("Wconfiguring", 1).commit();
@@ -121,6 +133,8 @@ public class MainActivity extends Activity_common
                 doToast(R.string.helpgosysclock); return true;
             case CONFIGURE_NEW_WIDGET:
                 doToast(R.string.helpconfignewwidget); return true;
+            case CONFIGURE_THIS_WIDGET:
+                doToast(R.string.helpconfigthis); return true;
             case CONFIGURE_EXISTING_WIDGET:
                 doToast(R.string.helpoldwidget); return true;
             case CONFIGURE_NIGHT_CLOCK:
@@ -141,7 +155,7 @@ public class MainActivity extends Activity_common
         Intent intent = getIntent();
         if (intent.hasExtra("widgetID")) {
             // We got here because the user touched one of our widgets.
-            int widgetID = intent.getIntExtra("widgetID", 0);
+            widgetID = intent.getIntExtra("widgetID", -1);
             if (m_prefs.getInt("Wconfiguring", 0) != 0) {
                 // We told the user to pick a widget, now configure it
                 m_prefs.edit().putInt("Wview", CONFIGURE)
@@ -185,6 +199,17 @@ public class MainActivity extends Activity_common
             }
         } else {
             m_prefs.edit().putInt("Wconfiguring", 0).commit();
+            widgetID = -1;
+            // Update our widgets in case we've been reinstalled
+            int[] widgetIds
+                = appWidgetManager.getAppWidgetIds(secondsClockWidget);
+            if (widgetIds.length > 0) {
+                intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
+                    "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+                sendBroadcast(intent);
+            }
         }
         // CHOOSE_ACTION or we got launched: onResume will set up our screen.
     }
@@ -196,6 +221,8 @@ public class MainActivity extends Activity_common
         super.resume();
         removeAllViews(m_topLayout);
         m_helptext = new TextView(this);
+        ScrollView lscroll = new ScrollView(this);
+        lscroll.setScrollbarFadingEnabled(false);
         LinearLayout lmain = new LinearLayout(this);
         lmain.setOrientation(LinearLayout.VERTICAL);
         lmain.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
@@ -229,6 +256,15 @@ public class MainActivity extends Activity_common
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
         lmain.addView(b, centreButton);
+        if (widgetID != -1) {
+            b = new Button(this);
+            b.setText(R.string.configwidget);
+            b.setId(CONFIGURE_THIS_WIDGET);
+            b.setAllCaps(false);
+            b.setOnClickListener(this);
+            b.setOnLongClickListener(this);
+            lmain.addView(b, centreButton);
+        }
         String m_widgetIds = m_prefs.getString("widgetIds", "");
         if (m_widgetIds.length() > 0) {
             b = new Button(this);
@@ -260,6 +296,7 @@ public class MainActivity extends Activity_common
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
         lmain.addView(b, centreButton);
-        m_topLayout.addView(lmain);
+        lscroll.addView(lmain);
+        m_topLayout.addView(lscroll);
     }
 }

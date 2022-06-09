@@ -1,6 +1,7 @@
 /*
  * Copyright © 2022. Richard P. Parkins, M. A.
- * Much of the code is copied from ProgressBar.java, AbsSeekBar.java, and SeekBar.java,
+ * Much of the code is copied from ProgressBar.java, AbsSeekBar.java,
+ * and SeekBar.java,
  * which are Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

@@ -8,6 +8,8 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.app.Activity;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -43,6 +45,8 @@ public abstract class Activity_common extends Activity implements View.OnLongCli
     protected static final int CHOOSE_ACTION = GO_NIGHT_CLOCK + 1;
     protected static final int GO_EXIT = CHOOSE_ACTION + 1;
 
+    protected AppWidgetManager appWidgetManager;
+    protected ComponentName secondsClockWidget;
     protected TextView m_helptext;
     protected String m_key = null;
     protected FrameLayout m_topLayout;
@@ -113,6 +117,14 @@ public abstract class Activity_common extends Activity implements View.OnLongCli
     }
 
     protected void getDatePrefs() {
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
+        secondsClockWidget = new ComponentName(
+            getApplicationContext(), SecondsClockWidget.class);
     }
 
     // This is the real resume after we've found our dimensions

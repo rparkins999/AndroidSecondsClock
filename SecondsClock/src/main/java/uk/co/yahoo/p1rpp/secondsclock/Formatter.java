@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021. Richard P. Parkins, M. A.
+ * Copyright © 2022. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This class implements the format control for SecondsClockWidget.

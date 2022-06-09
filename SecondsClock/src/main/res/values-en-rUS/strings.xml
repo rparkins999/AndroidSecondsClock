@@ -20,12 +20,12 @@
         to set the hue, saturation, value, red, green, and blue components of the color
         of the %1s\'s text. You can also type in values
         for any of these except the hue.</string>
-    <string name="huesliderhelp">Move the thumb on this slider
-        to set the hue. This will not modify the value or saturation.
+    <string name="huesliderhelp">Move the thumb on this slider to set the hue
+        of the %1s. This will not modify the value or saturation.
         Black, white and grayscale colors have a saturation of zero,
         so changing their hue will have no effect.</string>
-    <string name="saturationsliderhelp">Move the thumb on this slider
-        to set the saturation. This will not modify the hue or the value.
+    <string name="saturationsliderhelp">Move the thumb on this slider to set the
+        saturation of the %1s. This will not modify the hue or the value.
         Decreasing the saturation increases the amount of white in the color:
         pale pink is unsaturated, while pure red is saturated.</string>
     <string name="saturationvaluehelp">This number shows the saturation
@@ -33,8 +33,8 @@
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
-    <string name="valuesliderhelp">Move the thumb on this slider
-        to set the value. This will not modify the hue or the saturation.
+    <string name="valuesliderhelp">Move the thumb on this slider to set the
+        value of the %1s. This will not modify the hue or the saturation.
         The value is approximately the brightness of the color,
         but we use different names for some low-value colors:
         for example low-value red is brown.</string>
@@ -44,21 +44,21 @@
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
     <string name="redsliderhelp">Move the thumb on this slider
-        to adjust the amount of red in the color.</string>
+        to adjust the amount of red in the color of the %1s.</string>
     <string name="redvaluehelp">This number shows the actual amount of red
         in the color on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
     <string name="greensliderhelp">Move the thumb on this slider
-        to adjust the amount of green in the color.</string>
+        to adjust the amount of green in the color of the %1s.</string>
     <string name="greenvaluehelp">This number shows the actual amount of green
         in the color on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
     <string name="bluesliderhelp">Move the thumb on this slider
-        to adjust the amount of blue in the color.</string>
+        to adjust the amount of blue in the color of the %1s.</string>
     <string name="bluevaluehelp">This number shows the actual amount of blue
         in the color on a scale from 0 to 255. You can edit the number.
         A single tap on the number will put the edit cursor where you tap;

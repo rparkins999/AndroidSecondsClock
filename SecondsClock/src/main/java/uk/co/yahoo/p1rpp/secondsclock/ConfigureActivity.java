@@ -64,6 +64,7 @@ abstract class ConfigureActivity extends Activity_common
 
     // common variables for widget and clock configue activities
     protected String m_CorW; // "clock" or "widget"
+    protected String m_ColourType; // string for chooser help
     protected int m_currentView;
     protected int m_numberWidth;
     protected boolean recursive = false;
@@ -116,25 +117,27 @@ abstract class ConfigureActivity extends Activity_common
             case SETTEXTCOLOUR:
                 doToast(R.string.fgcolourhelp, m_CorW); return true;
             case HUESLIDER:
-                doToast(R.string.huesliderhelp); return true;
+                doToast(R.string.huesliderhelp, m_ColourType); return true;
             case SATURATIONSLIDER:
-                doToast(R.string.saturationsliderhelp); return true;
+                doToast(R.string.saturationsliderhelp, m_ColourType);
+                return true;
             case SATURATIONVALUE:
-                doToast(R.string.saturationvaluehelp); return true;
+                doToast(R.string.saturationvaluehelp);
+                return true;
             case VALUESLIDER:
-                doToast(R.string.valuesliderhelp); return true;
+                doToast(R.string.valuesliderhelp, m_ColourType); return true;
             case VALUEVALUE:
                 doToast(R.string.valuevaluehelp); return true;
             case REDSLIDER:
-                doToast(R.string.redsliderhelp); return true;
+                doToast(R.string.redsliderhelp, m_ColourType); return true;
             case REDVALUE:
                 doToast(R.string.redvaluehelp); return true;
             case GREENSLIDER:
-                doToast(R.string.greensliderhelp); return true;
+                doToast(R.string.greensliderhelp, m_ColourType); return true;
             case GREENVALUE:
                 doToast(R.string.greenvaluehelp); return true;
             case BLUESLIDER:
-                doToast(R.string.bluesliderhelp); return true;
+                doToast(R.string.bluesliderhelp, m_ColourType); return true;
             case BLUEVALUE:
                 doToast(R.string.bluevaluehelp); return true;
             case DONEBUTTON:
@@ -871,10 +874,6 @@ abstract class ConfigureActivity extends Activity_common
 
     @Override
     public void onBackPressed() {
-        if (m_currentView == CONFIGURE) {
-            super.onBackPressed();
-        } else {
-            setCurrentView(CONFIGURE);
-        }
+        onClick(m_okButton);
     }
 }

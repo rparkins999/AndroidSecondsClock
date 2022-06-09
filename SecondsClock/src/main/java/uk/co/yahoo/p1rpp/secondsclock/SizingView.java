@@ -3,7 +3,7 @@
  * Released under GPL V3 or later
  *
  * This implements a dummy view which simply gets its size,
- * makes itself invisible to avoid wasting time drawing it,,
+ * makes itself invisible to avoid wasting time drawing it,
  * and posts a Runnable which calls setWidthAndHeight in its creator.
  * This has to be called every time an Activity gets resumed,
  * because the screen orientation may have changed.
