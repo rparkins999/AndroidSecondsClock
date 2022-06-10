@@ -16,7 +16,7 @@ Each widget (there can be more than one), and the night clock, can be configured
     2. the month name in short or long locale-appropriate format,
     3. the (Gregorian) year number
 
-Displaying the seconds in a widget will increase battery drain because the widget has to update itself every second, but it doesn't update when the widget isn't visible. The night clock is intended to be run with the device connected to a charger.
+Displaying the seconds in a widget will increase battery drain because the widget has to update itself every second, but it doesn't update when the widget isn't visible. The night clock is intended to be run with the device connected to a charger and will keep the screen on if it is.
 
 The time, day of the week, and long date, will all fit into a 1x1 widget with a fairly small text size. If the widget is given more space or either the widget or the night clock is configured to display less information, it will reformat itself so as to make effective use of the available space and use a larger text size if possible.
 

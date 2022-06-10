@@ -103,41 +103,52 @@ class ClockView extends LinearLayout implements SensorEventListener {
         // above which we display at the user's set brightness.
         float threshold = m_prefs.getInt("Cthreshold", 0);
         // This is the minimum brightness when the lux is zero.
-        int minbright= m_prefs.getInt("Cbrightness", 255);
+        // The range is 0..100 becasue useful values are small.
+        int minbright= m_prefs.getInt("Cbrightness", 100);
         // This is a smoothed ambient light level to avoid hunting
         m_smoothedLightLevel = (7F * m_smoothedLightLevel + m_lightLevel) / 8F;
         ContentResolver cr = m_owner.getContentResolver();
         int globright = Settings.System.getInt(
             cr, Settings.System.SCREEN_BRIGHTNESS, 255);
         float brightness;
+        int alpha;
+        Window w = m_owner.getWindow();
+        WindowManager.LayoutParams lp = w.getAttributes();
         if (   (m_smoothedLightLevel >= threshold)
-            || (minbright >= globright))
-        {
-            brightness = globright;
+            || (minbright >= globright)) {
+            lp.screenBrightness = -1.0F;
+            alpha = 255;
+           /* brightness = globright; // needed for debugging only */
         } else {
             brightness = minbright +
                 (m_smoothedLightLevel / threshold) * (globright - minbright);
-        }
-        int alpha;
-        // This is the real full screen clock,
-        // adjust the real screen brightness
-        Window w = m_owner.getWindow();
-        WindowManager.LayoutParams lp = w.getAttributes();
-        if (brightness >= globright)
-        {
-            lp.screenBrightness = -1.0F;
-            alpha = 255;
-        } else if (brightness >= ZEROBRIGHT) {
-            lp.screenBrightness =
-                (brightness - ZEROBRIGHT) / (255F - ZEROBRIGHT);
+            if (brightness >= ZEROBRIGHT) {
+                lp.screenBrightness =
+                    (brightness - ZEROBRIGHT) / (255F - ZEROBRIGHT);
                 alpha = 255;
-        } else {
-            lp.screenBrightness = 0.0F;
-            alpha = 255 * (ZEROBRIGHT - (int)brightness) / ZEROBRIGHT;
+            } else {
+                lp.screenBrightness = 0.0F;
+                float temp = (brightness - minbright) * (255 - minbright);
+                alpha = minbright + (int)(temp / (ZEROBRIGHT - minbright));
+            }
         }
         m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
         setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
         w.setAttributes(lp);
+
+        /*debugging
+        if (m_owner instanceof ClockConfigureActivity) {
+            ((ClockConfigureActivity) m_owner).showSmoothedLux(
+                m_smoothedLightLevel);
+            ((ClockConfigureActivity) m_owner).showSystemBrightness(
+                globright);
+            ((ClockConfigureActivity) m_owner).showCalculatedBrightness(
+                brightness);
+            ((ClockConfigureActivity) m_owner).showWindowBrightness(
+                lp.screenBrightness);
+            ((ClockConfigureActivity) m_owner).showAlpha(
+                alpha);
+        }//*/
     }
 
     // This gets the current ambient light level in lux and limits it to MAXLIGHT,
@@ -547,6 +558,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         updateLayout();
     }
 
+    // This arranges for the seconds to tick only if they are
+    // being shown and a ClockView is visible.
     @Override
     public void onVisibilityAggregated(boolean isVisible) {
         super.onVisibilityAggregated(isVisible);

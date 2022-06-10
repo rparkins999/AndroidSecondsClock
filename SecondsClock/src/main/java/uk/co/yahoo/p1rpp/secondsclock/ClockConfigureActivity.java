@@ -64,6 +64,29 @@ public class ClockConfigureActivity extends ConfigureActivity
     private Button m_data;
     private Button m_display;
 
+    /* debugging
+    private TextView m_smoothedLux;
+    public void showSmoothedLux(float value) {
+        m_smoothedLux.setText("Smoothed Light Level = " + (int)value);
+    }
+    private TextView m_systemBrightness;
+    public void showSystemBrightness(int value) {
+        m_systemBrightness.setText("System Brightness = " + value);
+    }
+    private TextView m_calculatedBrightness;
+    public void showCalculatedBrightness(float value) {
+        m_calculatedBrightness.setText("Calculated Brightness is " + value);
+    }
+    private TextView m_windowBrightness;
+    public void showWindowBrightness(float value) {
+        m_windowBrightness.setText("Window Brightness set to " + value);
+    }
+    private TextView m_alpha;
+    public void showAlpha(int value) {
+        m_alpha.setText("Alpha set to " + value);
+    }
+    //*/
+
     @Override
     public boolean onLongClick(View v) {
         switch (v.getId()) {
@@ -273,9 +296,9 @@ public class ClockConfigureActivity extends ConfigureActivity
             );
             layoutParams.width = m_width / 2;
             gl.addView(lButtons, -1, layoutParams);
-            // remaining controls in right half
             lControls.addView(lboxes);
             scrollView.addView(lControls);
+            // remaining controls in right half
             layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(0, 2, 1f),
                 GridLayout.spec(1, 1, 1f)
@@ -403,6 +426,15 @@ public class ClockConfigureActivity extends ConfigureActivity
         lThreshold3.addView(m_thresholdValue);
         lThreshold1.addView(lThreshold3);
         lDimming.addView(lThreshold1);
+
+        /* debugging
+        lDimming.addView(m_smoothedLux);
+        lDimming.addView(m_systemBrightness);
+        lDimming.addView(m_calculatedBrightness);
+        lDimming.addView(m_windowBrightness);
+        lDimming.addView(m_alpha);
+        //*/
+
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             // Buttons in bottom left
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(
@@ -553,6 +585,15 @@ public class ClockConfigureActivity extends ConfigureActivity
         super.onCreate(savedInstanceState);
         m_CorW = "clock";
         m_CurrentLux = new TextView(this);
+
+        /* debugging
+        m_smoothedLux = new TextView(this);
+        m_systemBrightness = new TextView(this);
+        m_calculatedBrightness = new TextView(this);
+        m_windowBrightness = new TextView(this);
+        m_alpha = new TextView(this);
+        //*/
+
         m_clockView = new ClockView(this);
         m_clockView.setId(DEMOCLOCK);
         m_clockView.setOnClickListener(this);
@@ -592,7 +633,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_secondsSizer.setValue(m_prefs.getInt("CsecondsSize", 255));
         int value = m_prefs.getInt("Cbrightness", 255);
         m_brightnessSlider = new Slider(this);
-        m_brightnessSlider.setMax(255);
+        m_brightnessSlider.setMax(100);
         m_brightnessSlider.setId(BRIGHTSLIDER);
         fixTintList(m_brightnessSlider, value);
         m_brightnessSlider.setOnChangeListener(this);
@@ -624,8 +665,8 @@ public class ClockConfigureActivity extends ConfigureActivity
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
                     int value = safeParseInt(s.toString());
-                    if (value > 255) {
-                        m_brightnessValue.setText("255");
+                    if (value > 100) {
+                        m_brightnessValue.setText("100");
                         return;
                     }
                     m_brightnessSlider.setValue(value);
