@@ -1,6 +1,6 @@
 This app provides a seconds clock for Android.
 
-This is version 2.0.
+This is version 2.1.
 
 It can be used to create home screen widgets and as a full screen night clock.
 
