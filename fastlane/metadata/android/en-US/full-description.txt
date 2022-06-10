@@ -1,0 +1,8 @@
+<i>SecondsClock</i> enables you to show a clock with seconds as a home screen widget or as a full screen night clock with dimming in low light.
+
+<br><b>Features:</b>
+
+* No Ads.
+* No requests for donations or in-app purchases.
+* Fully configurable.
+* Adjusts text size to make use of available space.

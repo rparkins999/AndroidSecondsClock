@@ -1,0 +1,1 @@
+Clock with seconds as widget or fullscreen
