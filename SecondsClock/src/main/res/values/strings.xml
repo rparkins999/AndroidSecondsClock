@@ -245,15 +245,23 @@
     </string>
     <string name="minbrightlabel">Minimum brightness</string>
     <string name="minbrightsliderhelp">This slider adjusts the minimum
-        brightness of the full screen clock in complete darkness
-        (at zero ambient light level). All the way to the left should be
-        invisible, but this depends on your hardware;
-        intermediate values from left to right use increasing brightness levels,
-        but the brightness will not be increased above your set screen brightness.
+        brightness of the full screen clock. See the README.md file for
+        an explanation of how this works.
     </string>
     <string name="minbrightvaluehelp">This number shows the minimum brightness
-        of the full screen clock in complete darkness (at zero ambient light level).
-        You can edit the number.
+        of the full screen clock. See the README.md file for
+        an explanation of how this works. You can edit the number.
+        A single tap on the number will put the edit cursor where you tap;
+        a double tap on the number will select the whole of it;
+        a long tap on the number will display this message.</string>
+    <string name="minalphalabel">Minimum opacity</string>
+    <string name="minalphasliderhelp">This slider adjusts the minimum
+        opacity of the full screen clock. See the README.md file for
+        an explanation of how this works.
+    </string>
+    <string name="minalphavaluehelp">This number shows the minimum opacity
+        of the full screen clock. See the README.md file for
+        an explanation of how this works.
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>

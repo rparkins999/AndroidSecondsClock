@@ -43,7 +43,8 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int BRIGHTLABEL = SECONDSSIZER + 1;
     private static final int BRIGHTSLIDER = BRIGHTLABEL + 1;
     private static final int BRIGHTVALUE = BRIGHTSLIDER + 1;
-    private static final int THRESHOLDLABEL = BRIGHTVALUE + 1;
+    private static final int ALPHALABEL = BRIGHTVALUE + 1;
+    private static final int THRESHOLDLABEL = ALPHALABEL + 1;
     private static final int THRESHOLDSLIDER = THRESHOLDLABEL + 1;
     private static final int THRESHOLDVALUE = THRESHOLDSLIDER + 1;
     private static final int SEVENSEGMENTS = THRESHOLDVALUE + 1;
@@ -56,36 +57,14 @@ public class ClockConfigureActivity extends ConfigureActivity
     private Slider m_secondsSizer;
     private Slider m_brightnessSlider;
     private EditText m_brightnessValue;
+    private Slider m_alphaSlider;
+    private EditText m_alphaValue;
     private Slider m_thresholdSlider;
     private EditText m_thresholdValue;
-    public TextView m_CurrentLux;
     private ClockView m_clockView;
     private Button m_textColour;
     private Button m_data;
     private Button m_display;
-
-    /* debugging
-    private TextView m_smoothedLux;
-    public void showSmoothedLux(float value) {
-        m_smoothedLux.setText("Smoothed Light Level = " + (int)value);
-    }
-    private TextView m_systemBrightness;
-    public void showSystemBrightness(int value) {
-        m_systemBrightness.setText("System Brightness = " + value);
-    }
-    private TextView m_calculatedBrightness;
-    public void showCalculatedBrightness(float value) {
-        m_calculatedBrightness.setText("Calculated Brightness is " + value);
-    }
-    private TextView m_windowBrightness;
-    public void showWindowBrightness(float value) {
-        m_windowBrightness.setText("Window Brightness set to " + value);
-    }
-    private TextView m_alpha;
-    public void showAlpha(int value) {
-        m_alpha.setText("Alpha set to " + value);
-    }
-    //*/
 
     @Override
     public boolean onLongClick(View v) {
@@ -107,6 +86,9 @@ public class ClockConfigureActivity extends ConfigureActivity
             case BRIGHTLABEL:
             case BRIGHTSLIDER: doToast(R.string.minbrightsliderhelp); return true;
             case BRIGHTVALUE: doToast(R.string.minbrightvaluehelp); return true;
+            case ALPHALABEL:
+            case ALPHASLIDER: doToast(R.string.minalphasliderhelp); return true;
+            case ALPHAVALUE: doToast(R.string.minalphavaluehelp); return true;
             case THRESHOLDLABEL:
             case THRESHOLDSLIDER: doToast(R.string.thresholdsliderhelp); return true;
             case THRESHOLDVALUE: doToast(R.string.thresholdvaluehelp); return true;
@@ -162,8 +144,18 @@ public class ClockConfigureActivity extends ConfigureActivity
                     m_brightnessValue.setText(String.valueOf(value));
                     recursive = false;
                 }
-                fixTintList(m_brightnessSlider, value);
+                fixTintList(m_brightnessSlider, (value * 255) / 100);
                 m_prefs.edit().putInt("Cbrightness", value).commit();
+                m_clockView.adjustColour();
+                break;
+            case ALPHASLIDER:
+                if (!recursive) {
+                    recursive = true;
+                    m_alphaValue.setText(String.valueOf(value));
+                    recursive = false;
+                }
+                fixTintList(m_alphaSlider, value);
+                m_prefs.edit().putInt("Calpha", value).commit();
                 m_clockView.adjustColour();
                 break;
             case THRESHOLDSLIDER:
@@ -403,6 +395,10 @@ public class ClockConfigureActivity extends ConfigureActivity
         lBright2.setOrientation(LinearLayout.VERTICAL);
         lBright2.setLayoutParams(lpMMWeight);
         lBright2.setGravity(Gravity.CENTER_VERTICAL); //FIXME may not need this
+        int fgColour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
+        m_brightnessSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xFF000000,  0xFF000000 | (fgColour & 0xFFFFFF)}));
         lBright2.addView(m_brightnessSlider);
         lBright1.addView(lBright2);
         LinearLayout lBright3 = new LinearLayout(this);
@@ -411,6 +407,24 @@ public class ClockConfigureActivity extends ConfigureActivity
         lBright3.addView(m_brightnessValue);
         lBright1.addView(lBright3);
         lDimming.addView(lBright1);
+        lDimming.addView(centredLabel(R.string.minalphalabel, ALPHALABEL));
+        LinearLayout lAlpha1 = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        LinearLayout lAlpha2 = new LinearLayout(this);
+        lAlpha2.setOrientation(LinearLayout.VERTICAL);
+        lAlpha2.setLayoutParams(lpMMWeight);
+        lAlpha2.setGravity(Gravity.CENTER_VERTICAL); //FIXME may not need this
+        m_alphaSlider.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xFF000000,  0xFF000000 | (fgColour & 0xFFFFFF)}));
+        lAlpha2.addView(m_alphaSlider);
+        lAlpha1.addView(lAlpha2);
+        LinearLayout lAlpha3 = new LinearLayout(this);
+        // default orientation is HORIZONTAL
+        lAlpha3.setLayoutParams(lpWrapWrap);
+        lAlpha3.addView(m_alphaValue);
+        lAlpha1.addView(lAlpha3);
+        lDimming.addView(lAlpha1);
         lDimming.addView(centredLabel(R.string.thresholdlabel, THRESHOLDLABEL));
         LinearLayout lThreshold1 = new LinearLayout(this);
         // default orientation is HORIZONTAL
@@ -426,14 +440,6 @@ public class ClockConfigureActivity extends ConfigureActivity
         lThreshold3.addView(m_thresholdValue);
         lThreshold1.addView(lThreshold3);
         lDimming.addView(lThreshold1);
-
-        /* debugging
-        lDimming.addView(m_smoothedLux);
-        lDimming.addView(m_systemBrightness);
-        lDimming.addView(m_calculatedBrightness);
-        lDimming.addView(m_windowBrightness);
-        lDimming.addView(m_alpha);
-        //*/
 
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             // Buttons in bottom left
@@ -485,7 +491,6 @@ public class ClockConfigureActivity extends ConfigureActivity
             lssb.addView(m_secondsSizer, rlp5);
             lControls.addView(lssb);
             lControls.addView(lDimming);
-            lControls.addView(m_CurrentLux);
             layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(0, 2),
                 GridLayout.spec(1, 1)
@@ -504,7 +509,6 @@ public class ClockConfigureActivity extends ConfigureActivity
             gl.addView(lButtons, -1, layoutParams);
             // remaining controls in bottom half
             lControls.addView(lDimming);
-            lControls.addView(m_CurrentLux);
             scrollView.addView(lControls);
             layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(1, 1, 1f),
@@ -584,16 +588,6 @@ public class ClockConfigureActivity extends ConfigureActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         m_CorW = "clock";
-        m_CurrentLux = new TextView(this);
-
-        /* debugging
-        m_smoothedLux = new TextView(this);
-        m_systemBrightness = new TextView(this);
-        m_calculatedBrightness = new TextView(this);
-        m_windowBrightness = new TextView(this);
-        m_alpha = new TextView(this);
-        //*/
-
         m_clockView = new ClockView(this);
         m_clockView.setId(DEMOCLOCK);
         m_clockView.setOnClickListener(this);
@@ -639,12 +633,6 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_brightnessSlider.setOnChangeListener(this);
         m_brightnessSlider.setOnLongClickListener(this);
         m_brightnessSlider.setValue(value);
-        int fgColour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
-        int userbright = Settings.System.getInt(
-            getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 255);
-        m_brightnessSlider.setBackground(new GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {0xFF000000,  (userbright << 24) | (fgColour & 0xFFFFFF)}));
         m_brightnessValue = new EditText(this);
         m_brightnessValue.setId(BRIGHTVALUE);
         m_brightnessValue.setOnLongClickListener(this);
@@ -670,11 +658,52 @@ public class ClockConfigureActivity extends ConfigureActivity
                         return;
                     }
                     m_brightnessSlider.setValue(value);
-                    fixTintList(m_brightnessSlider, value);
+                    fixTintList(m_brightnessSlider, (value * 255) / 100);
                     m_prefs.edit().putInt("Cbrightness", value).commit();
                     m_clockView.adjustColour();
                     m_brightnessValue.setSelection(
                         m_brightnessValue.getText().length());
+                }
+            }
+        });
+        value = m_prefs.getInt("Calpha", 255);
+        m_alphaSlider = new Slider(this);
+        m_alphaSlider.setMax(255);
+        m_alphaSlider.setId(ALPHASLIDER);
+        fixTintList(m_alphaSlider, value);
+        m_alphaSlider.setOnChangeListener(this);
+        m_alphaSlider.setOnLongClickListener(this);
+        m_alphaSlider.setValue(value);
+        m_alphaValue = new EditText(this);
+        m_alphaValue.setId(ALPHAVALUE);
+        m_alphaValue.setOnLongClickListener(this);
+        m_alphaValue.setInputType(TYPE_CLASS_NUMBER);
+        m_alphaValue.setWidth(m_numberWidth);
+        m_alphaValue.setText(String.valueOf(value));
+        m_alphaValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(
+                CharSequence s, int start, int count, int after)
+            {}
+            @Override
+            public void onTextChanged(
+                CharSequence s, int start, int before, int count)
+            {}
+            @SuppressLint({"ApplySharedPref", "SetTextI18n"})
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!recursive) {
+                    int value = safeParseInt(s.toString());
+                    if (value > 255) {
+                        m_alphaValue.setText("255");
+                        return;
+                    }
+                    m_alphaSlider.setValue(value);
+                    fixTintList(m_alphaSlider, value);
+                    m_prefs.edit().putInt("Calpha", value).commit();
+                    m_clockView.adjustColour();
+                    m_alphaValue.setSelection(
+                        m_alphaValue.getText().length());
                 }
             }
         });

@@ -98,57 +98,47 @@ class ClockView extends LinearLayout implements SensorEventListener {
      * It can be called from our configuration screen
      * or from onSensorChanged when the ambient light level changes.
      */
+    @SuppressLint("ApplySharedPref")
     public void adjustColour() {
         // This is the ambient light level (in lux)
         // above which we display at the user's set brightness.
         float threshold = m_prefs.getInt("Cthreshold", 0);
         // This is the minimum brightness when the lux is zero.
-        // The range is 0..100 becasue useful values are small.
-        int minbright= m_prefs.getInt("Cbrightness", 100);
+        // The range is 0..100 because useful values are small.
+        int minbright = m_prefs.getInt("Cbrightness", 100);
+        int minalpha = m_prefs.getInt("Calpha", 100);
         // This is a smoothed ambient light level to avoid hunting
         m_smoothedLightLevel = (7F * m_smoothedLightLevel + m_lightLevel) / 8F;
+        m_prefs.edit().putFloat("Csmoothed", m_smoothedLightLevel).commit();
         ContentResolver cr = m_owner.getContentResolver();
         int globright = Settings.System.getInt(
             cr, Settings.System.SCREEN_BRIGHTNESS, 255);
-        float brightness;
         int alpha;
+        float brightness = (m_smoothedLightLevel * globright) / threshold;
         Window w = m_owner.getWindow();
         WindowManager.LayoutParams lp = w.getAttributes();
-        if (   (m_smoothedLightLevel >= threshold)
-            || (minbright >= globright)) {
+        if (m_smoothedLightLevel >= threshold) {
             lp.screenBrightness = -1.0F;
             alpha = 255;
-           /* brightness = globright; // needed for debugging only */
         } else {
-            brightness = minbright +
-                (m_smoothedLightLevel / threshold) * (globright - minbright);
-            if (brightness >= ZEROBRIGHT) {
-                lp.screenBrightness =
-                    (brightness - ZEROBRIGHT) / (255F - ZEROBRIGHT);
+            if (minalpha == 255) {
+                float temp = ((globright - minbright) * brightness) / globright;
+                lp.screenBrightness = (minbright + temp) / 255;
                 alpha = 255;
-            } else {
+            } else if (minbright > (int)brightness) {
                 lp.screenBrightness = 0.0F;
-                float temp = (brightness - minbright) * (255 - minbright);
-                alpha = minbright + (int)(temp / (ZEROBRIGHT - minbright));
+                alpha = minalpha
+                    + (int)(( brightness * (255 - minalpha)) / minbright);
+            } else {
+                lp.screenBrightness =
+                    ((brightness - minbright) * globright)
+                        / ((globright - minbright) * 255);
+                alpha = 255;
             }
         }
         m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
         setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
         w.setAttributes(lp);
-
-        /*debugging
-        if (m_owner instanceof ClockConfigureActivity) {
-            ((ClockConfigureActivity) m_owner).showSmoothedLux(
-                m_smoothedLightLevel);
-            ((ClockConfigureActivity) m_owner).showSystemBrightness(
-                globright);
-            ((ClockConfigureActivity) m_owner).showCalculatedBrightness(
-                brightness);
-            ((ClockConfigureActivity) m_owner).showWindowBrightness(
-                lp.screenBrightness);
-            ((ClockConfigureActivity) m_owner).showAlpha(
-                alpha);
-        }//*/
     }
 
     // This gets the current ambient light level in lux and limits it to MAXLIGHT,
@@ -186,7 +176,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         CharSequence time = DateFormat.format(m_timeFormat, next);
         // Remove this bit of code if you're happy with the default for en_GB
         // of lower-case am/pm, which I don't like.
-        if (Locale.getDefault().getDisplayName().equals("English (United Kingdom)")) {
+        if (Locale.getDefault().getDisplayName().startsWith("English")) {
             if (m_trim) {
                 // We're in AM/PM mode with the seven segment font,
                 // which doesn't have a decent "M", so we remove it.
@@ -493,28 +483,34 @@ class ClockView extends LinearLayout implements SensorEventListener {
                             (int) (((lsp - 1F) * m_height) / space)));
                     }
                     addView(m_ampmView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (m_height / space)));
                 }
             }
             if (showWeekDay > 0) {
                 addView(m_weekdayView, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (int) (m_height / space)));
             }
             if (showShortDate > 0) {
                 addView(m_dateView, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (int) (m_height / space)));
             } else {
                 if (showMonthDay > 0) {
                     addView(m_monthdayView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (m_height / space)));
                 }
                 if (showMonth > 0) {
                     addView(m_monthView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (m_height / space)));
                 }
                 if (showYear > 0) {
                     addView(m_yearView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (m_height / space)));
                 }
             }
         }
@@ -553,13 +549,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
             m_lightSensor = m_sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         }
         m_visible = false;
-        m_lightLevel = m_prefs.getInt("Cthreshold", 0);
+        m_lightLevel = m_prefs.getFloat("Csmoothed", 0);
         m_smoothedLightLevel = m_lightLevel;
         updateLayout();
     }
 
     // This arranges for the seconds to tick only if they are
-    // being shown and a ClockView is visible.
+    // being shown and this ClockView is visible.
     @Override
     public void onVisibilityAggregated(boolean isVisible) {
         super.onVisibilityAggregated(isVisible);
