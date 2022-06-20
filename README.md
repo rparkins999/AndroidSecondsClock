@@ -1,3 +1,6 @@
+SecondsClock
+------------
+
 This app provides a seconds clock for Android.
 
 This is version 2.2.
@@ -35,6 +38,10 @@ Currently it has a problem running on some versions of Android 12 (API 31). Its 
 Truncating toasts is documented behaviour for applications which *target* Android 12, but SecondsClock doesn't do so, so IMHO it's a bug in Android, not in SecondsClock. If I find a workaround, I'll apply it, but for the time being I'm not willing to rewrite all my help information.
 
 It works on Android 8.0 API 26 or later.
+
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/uk.co.yahoo.p1rpp.secondsclock/)
 
 # Dimming
 The full screen night clock can dim itself in low light levels. This is a bit complicated because on at least some devices the actual brightness of the display is not set directly by the software brightness control. Instead a complex algorithm is used controlled by some OEM resources which a non-system app like SecondsClock is not able to read. The situation is further complicated by the auto-dimming option on some devices which adjusts the display brightness according to the ambient light level. Reading the system display brightness can give you the value before or after auto-dimming adjustment depending on the device and the OS version. Setting a zero screen brightness does not necessarily make the screen dark enough for a bedside night clock in a dark bedroom. So SecondsClock can use the opacity of the clock itself to dim it further, right down to zero intensity if you want.
