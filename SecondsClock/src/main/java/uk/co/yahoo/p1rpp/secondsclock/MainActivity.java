@@ -89,6 +89,7 @@ public class MainActivity extends Activity_common
             case GO_SYSTEM_CLOCK:
                 goSystemClock();
                 break;
+                // GO_SECONDS_CLOCK isn't a main menu button
             case CONFIGURE_NEW_WIDGET:
                 m_prefs.edit().putInt("Wview", CONFIGURE).commit();
                 startActivity(new Intent(
@@ -105,6 +106,12 @@ public class MainActivity extends Activity_common
                 m_prefs.edit().putInt("Wview", CONFIGURE)
                     .putInt("Wconfiguring", 1).commit();
                 doToast(R.string.actionoldwidget);
+                Intent homeIntent= new Intent(Intent.ACTION_MAIN);
+                homeIntent.addCategory(Intent.CATEGORY_HOME);
+                homeIntent.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(homeIntent);
                 finish();
                 break;
             case CONFIGURE_NIGHT_CLOCK:
@@ -131,6 +138,7 @@ public class MainActivity extends Activity_common
                 doToast(R.string.mainactivityhelp); return true;
             case GO_SYSTEM_CLOCK:
                 doToast(R.string.helpgosysclock); return true;
+            // GO_SECONDS_CLOCK isn't a main menu button
             case CONFIGURE_NEW_WIDGET:
                 doToast(R.string.helpconfignewwidget); return true;
             case CONFIGURE_THIS_WIDGET:
@@ -211,7 +219,8 @@ public class MainActivity extends Activity_common
                 sendBroadcast(intent);
             }
         }
-        // CHOOSE_ACTION or we got launched: onResume will set up our screen.
+        // CHOOSE_ACTION or GO_SECONDS_CLOCK or we got launched:
+        // onResume will set up our screen.
     }
 
     @SuppressLint("SetTextI18n")

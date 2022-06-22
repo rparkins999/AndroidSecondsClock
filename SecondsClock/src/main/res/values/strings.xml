@@ -17,6 +17,9 @@
         default clock app.</string>
     <string name="helptouchsysclock">Check this box to make a touch on the
         widget go to the device\'s default clock app.</string>
+    <string name="gosecondsclock">Go to SecondsClock app</string>
+    <string name="helptouchsecondsclock">Check this box to make a touch on the
+        widget go to this app (SecondsClock).</string>
     <string name="confignewwidget">Configure new widget</string>
     <string name="helpconfignewwidget">Touch this button to set the configuration
         for new widgets. To create a new widget, long press in an empty
@@ -33,7 +36,7 @@
         to configure.</string>
     <string name="configwidget">Configure this widget</string>
     <string name="helpconfigthis">Touch this button to configure the
-        the widegt that you touched.</string>
+        widget that you touched.</string>
     <string name="helpconfigwidget">Check this box to make a touch on the
         widget go to the configuration page to reconfigure it.</string>
     <string name="confignightclock">Configure full screen clock</string>
@@ -46,7 +49,7 @@
         the full screen clock.</string>
     <string name="touchrunnightclock">Check this box to make a touch on the
         widget run the full screen clock.</string>
-    <string name="chooseaction">Choose action when touched</string>
+    <string name="chooseaction">Go to action menu when touched</string>
     <string name="touchchooseaction">Check this box to make a touch on the
         widget go to the top level menu for the app to choose what to
         do next.</string>
@@ -72,7 +75,7 @@
     <string name="widgetconfighelp">This page allows you to configure a widget.
         If you came here from a particular widget, it reconfigures that:
         if you came here from the top level page,
-        it sets the the configuration for new widgets.
+        it sets the configuration for new widgets.
         You can make multiple widgets with different configurations.
         Long press on anything for a longer description of what it does.</string>
     <string name="clockconfighelp">This page allows you to configure

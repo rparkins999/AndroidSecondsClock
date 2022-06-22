@@ -30,13 +30,16 @@ public abstract class Activity_common extends Activity implements View.OnLongCli
 
     protected static final int CONFIGURE = 0; // m_currentView default value
 
-    // View IDs for buttons, to switch on click or long click:
+    // View IDs for top level menu buttons, to switch on click or long click:
     // also used as widget touch preference values, except that
     // CONFIGURE_NEW_WIDGET isn't a widget touch preference, and
-    // CHOOSE_ACTION isn't a button, as we're already doing it if we get here.
+    // GO_SECONDS_CLOCK isn't a button because we're alread there,
+    // and CHOOSE_ACTION is both a button in the widget configuration page
+    // and a possible action when teh widget is touched.
     protected static final int LONGPRESSHELP = 9091;
     protected static final int GO_SYSTEM_CLOCK = LONGPRESSHELP + 1;
-    protected static final int CONFIGURE_NEW_WIDGET = GO_SYSTEM_CLOCK + 1;
+    protected static final int GO_SECONDS_CLOCK = GO_SYSTEM_CLOCK + 1;
+    protected static final int CONFIGURE_NEW_WIDGET = GO_SECONDS_CLOCK + 1;
     protected static final int CONFIGURE_EXISTING_WIDGET =
         CONFIGURE_NEW_WIDGET + 1;
     protected static final int CONFIGURE_NIGHT_CLOCK =

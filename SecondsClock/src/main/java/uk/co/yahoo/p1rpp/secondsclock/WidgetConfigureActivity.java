@@ -51,6 +51,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private Button fgButton;
     private Button chooseButton;
     private CheckBox sysClockCheckBox;
+    private CheckBox secondsClockCheckBox;
     private CheckBox configThisCheckBox;
     private CheckBox configNightClockCheckBox;
     private CheckBox runNightClockCheckBox;
@@ -80,7 +81,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case SETTEXTCOLOUR: doToast(R.string.setfgcolourhelp); return true;
             case SETBACKGROUNDCOLOUR: doToast(R.string.setbgcolourhelp); return true;
             case GO_SYSTEM_CLOCK:
-                doToast(R.string.touchrunnightclock);
+                doToast(R.string.helptouchsysclock);
+                return true;
+            case GO_SECONDS_CLOCK:
+                doToast(R.string.helptouchsecondsclock);
                 return true;
             case CONFIGURE_EXISTING_WIDGET:
                 doToast(R.string.helpconfigwidget);
@@ -100,54 +104,37 @@ public class WidgetConfigureActivity extends ConfigureActivity
         }
         return super.onLongClick(v);
     }
+
+    private void fixCheckBoxes(int action) {
+        if (!recursive) {
+            recursive = true;
+            sysClockCheckBox.setChecked(action == GO_SYSTEM_CLOCK);
+            secondsClockCheckBox.setChecked(action == GO_SECONDS_CLOCK);
+            configThisCheckBox.setChecked(action == CONFIGURE_EXISTING_WIDGET);
+            configNightClockCheckBox.setChecked(action == CONFIGURE_NIGHT_CLOCK);
+            runNightClockCheckBox.setChecked(action == GO_NIGHT_CLOCK);
+            chooseCheckBox.setChecked(action == CHOOSE_ACTION);
+            recursive = false;
+        }
+    }
+
     @SuppressLint("ApplySharedPref")
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if (isChecked) {
-            switch (buttonView.getId()) {
-                case GO_SYSTEM_CLOCK:
-                    configThisCheckBox.setChecked(false);
-                    configNightClockCheckBox.setChecked(false);
-                    runNightClockCheckBox.setChecked(false);
-                    chooseCheckBox.setChecked(false);
-                    m_prefs.edit().putInt(
-                        m_key + "touchaction", GO_SYSTEM_CLOCK).commit();
-                    break;
-                case CONFIGURE_EXISTING_WIDGET:
-                    sysClockCheckBox.setChecked(false);
-                    configNightClockCheckBox.setChecked(false);
-                    runNightClockCheckBox.setChecked(false);
-                    chooseCheckBox.setChecked(false);
-                    m_prefs.edit().putInt(m_key + "touchaction",
-                        CONFIGURE_EXISTING_WIDGET).commit();
-                    break;
-                case CONFIGURE_NIGHT_CLOCK:
-                    sysClockCheckBox.setChecked(false);
-                    configThisCheckBox.setChecked(false);
-                    runNightClockCheckBox.setChecked(false);
-                    chooseCheckBox.setChecked(false);
-                    m_prefs.edit().putInt(
-                        m_key + "touchaction", CONFIGURE_NIGHT_CLOCK).commit();
-                    break;
-                case GO_NIGHT_CLOCK:
-                    sysClockCheckBox.setChecked(false);
-                    configThisCheckBox.setChecked(false);
-                    configNightClockCheckBox.setChecked(false);
-                    chooseCheckBox.setChecked(false);
-                    m_prefs.edit().putInt(
-                        m_key + "touchaction", GO_NIGHT_CLOCK).commit();
-                    break;
-                case CHOOSE_ACTION:
-                    sysClockCheckBox.setChecked(false);
-                    configThisCheckBox.setChecked(false);
-                    configNightClockCheckBox.setChecked(false);
-                    runNightClockCheckBox.setChecked(false);
-                    m_prefs.edit().putInt(
-                        m_key + "touchaction", CHOOSE_ACTION).commit();
-                    break;
-                default:
-                    super.onCheckedChanged(buttonView, isChecked);
-            }
+        int action = buttonView.getId();
+        switch (action) {
+            case GO_SYSTEM_CLOCK:
+            case GO_SECONDS_CLOCK:
+            case CONFIGURE_EXISTING_WIDGET:
+            case CONFIGURE_NIGHT_CLOCK:
+            case GO_NIGHT_CLOCK:;
+            case CHOOSE_ACTION:;
+                fixCheckBoxes(action);
+                m_prefs.edit().putInt(
+                    m_key + "touchaction", action).commit();
+                break;
+            default:
+                super.onCheckedChanged(buttonView, isChecked);
         }
     }
 
@@ -313,7 +300,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
         ScrollView lscroll = new ScrollView(this);
         lscroll.setScrollbarFadingEnabled(false);
         LinearLayout l1 = new LinearLayout(this);
-        l1.setBackgroundColor(0xFF000000);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
@@ -404,7 +390,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
         LinearLayout lc = makeChooser();
         int pad = (int)(5 * m_density);
         LinearLayout l1 = new LinearLayout(this);
-        l1.setBackgroundColor(0xFF000000);
         demobox.addView(demo);
         demoboxbox.setLayoutParams(lpMatchWrap);
         demoboxbox.setOrientation(LinearLayout.VERTICAL);
@@ -549,13 +534,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
         lbuttons.setOrientation(LinearLayout.VERTICAL);
         lbuttons.addView(centredLabel(R.string.actionpage, LONGPRESSHELP));
         lbuttons.addView(sysClockCheckBox, lpWrapWrap);
+        lbuttons.addView(secondsClockCheckBox, lpWrapWrap);
         lbuttons.addView(configThisCheckBox, lpWrapWrap);
         lbuttons.addView(configNightClockCheckBox, lpWrapWrap);
         lbuttons.addView(runNightClockCheckBox, lpWrapWrap);
         lbuttons.addView(chooseCheckBox, lpWrapWrap);
         LinearLayout l1 = new LinearLayout(this);
         // default orientation is HORIZONTAL
-        l1.setBackgroundColor(0xFF000000);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             LinearLayout l2 = new LinearLayout(this);
             l2.setOrientation(LinearLayout.VERTICAL);
@@ -690,7 +675,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                             showSecondsCheckBox.setVisibility(View.INVISIBLE);
                         }
                     }
-                    m_prefs.edit().putInt("WshowTime", showTime).commit();
+                    m_prefs.edit().putInt(m_key + "showTime", showTime).commit();
                     updateWidget();
                     updateDemo();
                 }
@@ -711,7 +696,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     } else {
                         showTime = 1;
                     }
-                    m_prefs.edit().putInt("WshowTime", showTime).commit();
+                    m_prefs.edit().putInt(m_key + "showTime", showTime).commit();
                     updateWidget();
                     updateDemo();
                 }
@@ -732,40 +717,41 @@ public class WidgetConfigureActivity extends ConfigureActivity
         chooseButton = new Button(this);
         chooseButton.setId(CHOOSE_ACTION);
         chooseButton.setAllCaps(false);
-        chooseButton.setText(R.string.chooseaction);
+        chooseButton.setText(R.string.setaction);
         chooseButton.setOnClickListener(this);
         chooseButton.setOnLongClickListener(this);
-        int action = m_prefs.getInt(m_key + "touchaction", CHOOSE_ACTION);
         sysClockCheckBox = new CheckBox(this);
         sysClockCheckBox.setId(GO_SYSTEM_CLOCK);
         sysClockCheckBox.setText(getString(R.string.gosysclock));
-        sysClockCheckBox.setChecked(action == GO_SYSTEM_CLOCK);
         sysClockCheckBox.setOnCheckedChangeListener(this);
         sysClockCheckBox.setOnLongClickListener(this);
+        secondsClockCheckBox = new CheckBox(this);
+        secondsClockCheckBox.setId(GO_SECONDS_CLOCK);
+        secondsClockCheckBox.setText(getString(R.string.gosecondsclock));
+        secondsClockCheckBox.setOnCheckedChangeListener(this);
+        secondsClockCheckBox.setOnLongClickListener(this);
         configThisCheckBox = new CheckBox(this);
         configThisCheckBox.setId(CONFIGURE_EXISTING_WIDGET);
         configThisCheckBox.setText(getString(R.string.configwidget));
-        configThisCheckBox.setChecked(action == CONFIGURE_EXISTING_WIDGET);
         configThisCheckBox.setOnCheckedChangeListener(this);
         configThisCheckBox.setOnLongClickListener(this);
         configNightClockCheckBox = new CheckBox(this);
         configNightClockCheckBox.setId(CONFIGURE_NIGHT_CLOCK);
         configNightClockCheckBox.setText(getString(R.string.confignightclock));
-        configNightClockCheckBox.setChecked(action == CONFIGURE_NIGHT_CLOCK);
         configNightClockCheckBox.setOnCheckedChangeListener(this);
         configNightClockCheckBox.setOnLongClickListener(this);
         runNightClockCheckBox = new CheckBox(this);
         runNightClockCheckBox.setId(GO_NIGHT_CLOCK);
         runNightClockCheckBox.setText(getString(R.string.runnightclock));
-        runNightClockCheckBox.setChecked(action == GO_NIGHT_CLOCK);
         runNightClockCheckBox.setOnCheckedChangeListener(this);
         runNightClockCheckBox.setOnLongClickListener(this);
         chooseCheckBox = new CheckBox(this);
         chooseCheckBox.setId(CHOOSE_ACTION);
         chooseCheckBox.setText(getString(R.string.chooseaction));
-        chooseCheckBox.setChecked(action == CHOOSE_ACTION);
         chooseCheckBox.setOnCheckedChangeListener(this);
         chooseCheckBox.setOnLongClickListener(this);
+        int action = m_prefs.getInt(m_key + "touchaction", CHOOSE_ACTION);
+        fixCheckBoxes(action);
 
         saturationValue.addTextChangedListener(new TextWatcher() {
             @Override

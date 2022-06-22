@@ -56,10 +56,10 @@ public class SecondsClockWidget extends AppWidgetProvider {
         if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
             // Get the preferences for this widget.
             showTime =
-                prefs.getInt(key +" showTime", 2); // include seconds
+                prefs.getInt(key + "showTime", 2); // include seconds
             showWeekDay =
-                prefs.getInt(key + " showWeekDay", 2); // long format
-            showShortDate = prefs.getInt(key +" showShortDate", 0);
+                prefs.getInt(key + "showWeekDay", 2); // long format
+            showShortDate = prefs.getInt(key + "showShortDate", 0);
             showMonthDay =
                 prefs.getInt(key + "showMonthDay", 1);
             showMonth =
