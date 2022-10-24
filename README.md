@@ -7,6 +7,8 @@ This is version 2.2.
 
 It can be used to create home screen widgets and as a full screen night clock.
 
+If you report a problem or request a change, please say whether you are referring to the widget or the full screen clock. Although some of the setup code is common to both, the mechanism used to display them is quite different, so the things that are easy or hard to change are also different.
+
 Each widget (there can be more than one), and the night clock, can be configured to display any combination of the following:-
 
 1. the time in 12-or 24-hour format in accordance with the device's preference, with or without seconds,
@@ -48,7 +50,7 @@ The full screen night clock can dim itself in low light levels. This is a bit co
 
 There are three controls available to help you to get it right for your device (and your eyesight). The lux threshold determines when SecondsClock tries to dim the screen. The maximum value is 255, which corresponds to a room reasonably well lit by artificial lighting. Although the actual measured lux value can go up to several thousands in direct sunlight, in practice you aren't likely to want to dim the clock display unless the ambient light level is less than in a well-lit room.
 
-If the ambient lux level is above the threshold SecondsClock doesn't dim the screen, and if the ambient lux level goes below the threshold it smoothly reduces its idea of what brightness you want (the wanted brightness) from the system display brightness down to zero when the lux level is zero. This automatically disables auto-dimming. If you see a step change in screen brightness as the ambient lux level drops past the threshold, this is either because your device reports the system display brightness before auto-dimming adjustment, or possibly because setting the screen brightness in software doesnt give the same effect as setting the system display brightness manually to the same value using the settings page. There isn't much that I can do about that because SecondsClock can't find the parameters of the device's dimming logic.
+If the ambient lux level is above the threshold SecondsClock doesn't dim the screen, and if the ambient lux level goes below the threshold it smoothly reduces its idea of what brightness you want (the wanted brightness) from the system display brightness down to zero when the lux level is zero. This automatically disables auto-dimming. If you see a step change in screen brightness as the ambient lux level drops past the threshold, this is either because your device reports the system display brightness before auto-dimming adjustment, or possibly because setting the screen brightness in software doesn't give the same effect as setting the system display brightness manually to the same value using the settings page. There isn't much that I can do about that because SecondsClock can't find the parameters of the device's dimming logic.
 
 The two other controls are the minimum brightness and the minimum opacity. The minimum brightness range only goes up to 100 (rather than 255) because larger values aren't likely to be useful and you need plenty of resolution at the low end of the scale.
 
@@ -62,4 +64,4 @@ I don't just use opacity all the time because that doesn't work well with a back
 SecondsClock requests SET_ALARM permission although it doesn't actually set any alarms. For some strange reason on some phones this permission is required to go to the phone's built-in clock app when you touch the widget. If you deny SecondsClock SET_ALARM permission, the app can't go to the device's clock app if your device requires SET_ALARM permission to do so. Currently Android automatically grants SET_ALARM permission for any app which requests it, so you shouldn't see a problem unless you explicitly deny SET_ALARM permission.
 
 # Licensing
-One file (Slider.java) is licensed undet the Apache license 2.0 because it is derived from an Android source file which uses that licence. Evrything else was written by me and is licensed under GPL V3 or later (if you're puzzled by the apparently inconsistent spelling of "licen{s|c}e", in the UK English spelling the verb is license, but the noun is licence).
+One file (Slider.java) is licensed under the Apache license 2.0 because it is derived from an Android source file which uses that licence. Evrything else was written by me and is licensed under GPL V3 or later (if you're puzzled by the apparently inconsistent spelling of "licen{s|c}e", in the UK English spelling the verb is license, but the noun is licence).
