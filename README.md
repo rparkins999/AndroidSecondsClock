@@ -3,7 +3,7 @@ SecondsClock
 
 This app provides a seconds clock for Android.
 
-This is version 2.2.
+This is version 2.4.
 
 It can be used to create home screen widgets and as a full screen night clock.
 

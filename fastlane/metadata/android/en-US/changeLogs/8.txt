@@ -1,0 +1,1 @@
+Fix bug in updatehsv causing invisible widget text

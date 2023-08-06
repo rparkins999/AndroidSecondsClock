@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022. Richard P. Parkins, M. A.
+ * Copyright © 2023. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This is common logic for WidgetConfigureActivity and ClockConfigureActivity.
@@ -766,13 +766,13 @@ abstract class ConfigureActivity extends Activity_common
         int value = safeParseInt(s.toString());
         if (value > 255) {
             valueValue.setText("255"); // makes recursive call
-            return 255;
+            value = 255;
         }
         int saturation = saturationSlider.getValue();
         if (saturation + value < 255) {
             saturation = 255 - value;
             saturationValue.setText(String.valueOf(saturation));
-        } else
+        }
         valueSlider.setValue(value);
         return valueChanged();
     }
