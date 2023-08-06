@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022. Richard P. Parkins, M. A.
+ * Copyright © 2023. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This class handles the settings for SecondsClockWidget.
@@ -12,7 +12,6 @@ import static android.text.InputType.TYPE_CLASS_NUMBER;
 
 import android.annotation.SuppressLint;
 import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -127,8 +126,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case GO_SECONDS_CLOCK:
             case CONFIGURE_EXISTING_WIDGET:
             case CONFIGURE_NIGHT_CLOCK:
-            case GO_NIGHT_CLOCK:;
-            case CHOOSE_ACTION:;
+            case GO_NIGHT_CLOCK:
+            case CHOOSE_ACTION:
                 fixCheckBoxes(action);
                 m_prefs.edit().putInt(
                     m_key + "touchaction", action).commit();
@@ -182,7 +181,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             setAlphaSliderBackground();
         } else { // SETTEXTCOLOUR
             m_fgcolour = colour | (m_fgcolour & 0xFF000000);
-            m_prefs.edit().putInt(m_key + "fgcolour", colour).commit();
+            m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
             demo.setTextColor(m_fgcolour);
             setAlphaSliderTint();
         }
