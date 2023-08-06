@@ -1,8 +1,48 @@
-// Copyright © 2022. Richard P. Parkins, M. A.
+// Copyright © 2023. Richard P. Parkins, M. A.
 // Released under GPL V3 or later
 
+// Module build file
 plugins {
     id 'com.android.application'
+}
+
+def gitdata1 = new ByteArrayOutputStream()
+def gitdata2 = new ByteArrayOutputStream()
+def gitdata3 = new ByteArrayOutputStream()
+// change this line to /* if not using git
+exec {
+    commandLine "git", "--no-pager", "show", "-s",
+            "--format=from commit %H"
+    standardOutput = gitdata1
+}
+exec {
+    commandLine "git", "--no-pager", "show", "-s",
+            "--date=format:%H:%M:%S GMT%z %a %b %d %Y",
+            "--format=of %ad"
+    standardOutput = gitdata2
+}
+exec {
+    commandLine "git", "branch", "--show-current"
+    standardOutput = gitdata3
+}
+//*/
+
+// Update these three to make new version
+def VERSIONCODE = 8
+def VERSIONNAME = "2.4"
+def CHANGESTRING = "Fix bug in updatehsv causing invisible widget text"
+
+def CHANGELOGS = "fastlane/metadata/android/en-US/changeLogs/"
+def CHANGEFILE = CHANGELOGS + VERSIONCODE + ".txt"
+exec {
+    commandLine "echo", "${CHANGESTRING.toString()}"
+    standardOutput = new FileOutputStream(rootProject.file(CHANGEFILE))
+}
+exec {
+    commandLine "git", "add", "../" + "${CHANGEFILE.toString()}"
+}
+exec {
+    commandLine "sed", "-i", "/This is version/cThis is version " + VERSIONNAME + ".", "../README.md"
 }
 
 def keystorePropertiesFile = rootProject.file("../Keys/keystore.properties")
@@ -10,7 +50,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdk 28
+    compileSdkVersion 28
 
     signingConfigs {
         config {
@@ -22,10 +62,11 @@ android {
     }
     defaultConfig {
         applicationId "uk.co.yahoo.p1rpp.secondsclock"
+        versionCode VERSIONCODE
+        versionName VERSIONNAME
         minSdk 26
+        //noinspection ExpiredTargetSdkVersion
         targetSdk 26
-        versionCode 7
-        versionName "2.3"
     }
     buildTypes {
         release {
@@ -34,11 +75,20 @@ android {
             signingConfig signingConfigs.config
             delete("build/intermediates/incremental/mergeReleaseResources/merger.xml")
             resValue("string", 'build_time', "${(new Date()).toString()}")
+            resValue("string", 'build_git1', "${gitdata1.toString()}")
+            resValue("string", 'build_git2', "${gitdata2.toString()}")
+            resValue("string", 'build_git3',
+                    "${" on branch " + gitdata3.toString()}")
         }
         debug {
             signingConfig signingConfigs.config
             delete("build/intermediates/incremental/mergeDebugResources/merger.xml")
             resValue("string", 'build_time', "${(new Date()).toString()}")
+            resValue("string", 'build_git1', "${gitdata1.toString()}")
+            resValue("string", 'build_git2', "${gitdata2.toString()}")
+            resValue("string", 'build_git3',
+                    "${" on branch " + gitdata3.toString()}")
+            applicationIdSuffix ".debug"
         }
     }
     compileOptions {
