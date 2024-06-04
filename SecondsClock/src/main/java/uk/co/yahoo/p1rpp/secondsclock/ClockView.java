@@ -7,6 +7,13 @@
  * in ClockConfigureActivity to show what the full screen clock will look like.
  */
 
+//FIXME
+/* more hysteresis on lux value
+   move gradually from system brightness to mine
+   see if can read system brightness when I'm setting it
+   if so, move gradually from my value ti systemn brightness
+ */
+
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
@@ -45,12 +52,6 @@ import java.util.Set;
 
 @SuppressLint("ViewConstructor")
 class ClockView extends LinearLayout implements SensorEventListener {
-    /* Setting a zero window brightness does not make the clock completely
-     * invisible, so for requested brightness values less than this threshold
-     * we set the window brightness to zero and reduce the opacity.
-     */
-    private static final int ZEROBRIGHT = 16;
-
     public String m_dateFormat = " ";
     public String m_hoursFormat = " ";
     public String m_monthFormat =  " ";
@@ -100,45 +101,43 @@ class ClockView extends LinearLayout implements SensorEventListener {
      */
     @SuppressLint("ApplySharedPref")
     public void adjustColour() {
+        // This is the maximum screen brightness that we use at high lux levels.
+        int maxbright = m_prefs.getInt("CmaxBright", 100);
         // This is the ambient light level (in lux)
-        // above which we display at the user's set brightness.
+        // above which we display at maximum brightness.
         float threshold = m_prefs.getInt("Cthreshold", 0);
-        // This is the minimum brightness when the lux is zero.
+        // This is the minimum brightness at low lux levels.
         // The range is 0..100 because useful values are small.
-        int minbright = m_prefs.getInt("Cbrightness", 100);
-        int minalpha = m_prefs.getInt("Calpha", 100);
+        // Adjusting opacity may make the display dimmer
+        int minbright = m_prefs.getInt("CminBright", 0);
+        // This is the minimum opacity at zero lux
+        int minalpha = m_prefs.getInt("Calpha", 0);
         // This is a smoothed ambient light level to avoid hunting
         m_smoothedLightLevel = (7F * m_smoothedLightLevel + m_lightLevel) / 8F;
         m_prefs.edit().putFloat("Csmoothed", m_smoothedLightLevel).commit();
         ContentResolver cr = m_owner.getContentResolver();
-        int globright = Settings.System.getInt(
-            cr, Settings.System.SCREEN_BRIGHTNESS, 255);
         int alpha;
-        float brightness = (m_smoothedLightLevel * globright) / threshold;
+        float brightness = m_smoothedLightLevel / threshold;
         Window w = m_owner.getWindow();
         WindowManager.LayoutParams lp = w.getAttributes();
         if (m_smoothedLightLevel >= threshold) {
-            lp.screenBrightness = -1.0F;
             alpha = 255;
+            brightness = 1.0F;
+        } else if (brightness * 255F >= minbright) {
+            alpha = 255;
+            brightness = brightness;
         } else {
-            if (minalpha == 255) {
-                float temp = ((globright - minbright) * brightness) / globright;
-                lp.screenBrightness = (minbright + temp) / 255;
-                alpha = 255;
-            } else if (minbright > (int)brightness) {
-                lp.screenBrightness = 0.0F;
-                alpha = minalpha
-                    + (int)(( brightness * (255 - minalpha)) / minbright);
-            } else {
-                lp.screenBrightness =
-                    ((brightness - minbright) * globright)
-                        / ((globright - minbright) * 255);
-                alpha = 255;
-            }
+            alpha = minalpha + (int)(255 * brightness * (255 - minalpha) / minbright);
+            brightness = minbright / 255F;
         }
+        lp.screenBrightness = brightness;
         m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
         setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
         w.setAttributes(lp);
+        if (m_owner instanceof ClockConfigureActivity) {
+            ((ClockConfigureActivity)m_owner).updateTexts(
+                m_lightLevel, brightness, alpha);
+        }
     }
 
     // This gets the current ambient light level in lux and limits it to MAXLIGHT,
@@ -529,7 +528,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     public ClockView(Activity context) {
         super(context);
-        setOrientation(VERTICAL);
         setBackgroundColor(0xFF000000);
         m_owner = context;
         m_ampmView = createInstance();
@@ -551,6 +549,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_visible = false;
         m_lightLevel = m_prefs.getFloat("Csmoothed", 0);
         m_smoothedLightLevel = m_lightLevel;
+        setOrientation(VERTICAL);
         updateLayout();
     }
 
