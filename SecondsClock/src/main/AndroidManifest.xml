@@ -4,8 +4,7 @@
    Released under GPL V3 or later
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.co.yahoo.p1rpp.secondsclock">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
@@ -22,6 +21,9 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="uk.co.yahoo.p1rpp.UpdateWidget" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

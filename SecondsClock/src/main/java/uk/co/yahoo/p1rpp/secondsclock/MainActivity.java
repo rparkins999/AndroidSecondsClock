@@ -1,5 +1,6 @@
 /*
- * Copyright © 2022. Richard P. Parkins, M. A.
+
+ * Copyright © 2024. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This is the top level activity, launched when you touch tha app's icon.
@@ -212,7 +213,7 @@ public class MainActivity extends Activity_common
             int[] widgetIds
                 = appWidgetManager.getAppWidgetIds(secondsClockWidget);
             if (widgetIds.length > 0) {
-                intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                intent = new Intent("uk.co.yahoo.p1rpp.UpdateWidget");
                 intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
                     "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
                 intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022. Richard P. Parkins, M. A.
+ * Copyright © 2024. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This class implements the AppWidgetProvider for a home screen widget
@@ -192,6 +192,15 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Toast.makeText(context, intent.getAction(),
             Toast.LENGTH_LONG).show();
         // */
-        super.onReceive(context, intent);
+        if (Objects.equals(intent.getAction(),
+                "uk.co.yahoo.p1rpp.UpdateWidget"))
+        {
+            AppWidgetManager appWidgetManager =
+                    AppWidgetManager.getInstance(context);
+            onUpdate(context, appWidgetManager,
+            intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+        } else {
+            super.onReceive(context, intent);
+        }
     }
 }

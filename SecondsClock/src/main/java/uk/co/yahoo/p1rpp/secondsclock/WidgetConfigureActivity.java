@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023. Richard P. Parkins, M. A.
+ * Copyright © 2024. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This class handles the settings for SecondsClockWidget.
@@ -152,7 +152,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             minWidth = newOptions.getInt(
                 AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidth);
         }
-        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        Intent intent = new Intent("uk.co.yahoo.p1rpp.UpdateWidget");
         intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
             "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
@@ -601,7 +601,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             = appWidgetManager.getAppWidgetIds(secondsClockWidget);
         if (widgetIds.length > 0) {
             // update widgets in case orientation has changed
-            intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+            intent = new Intent("uk.co.yahoo.p1rpp.UpdateWidget");
             intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
                 "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
