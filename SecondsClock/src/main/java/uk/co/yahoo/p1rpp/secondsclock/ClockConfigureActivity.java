@@ -12,6 +12,7 @@ import static android.text.InputType.TYPE_CLASS_NUMBER;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -723,6 +724,10 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_secondsSizer.setOnChangeListener(this);
         m_secondsSizer.setOnLongClickListener(this);
         m_secondsSizer.setValue(m_prefs.getInt("CsecondsSize", 255));
+        m_secondsSizer.setThumbTintList(
+                ColorStateList.valueOf(m_foreground));
+        m_secondsSizer.setTrackTintList(
+                ColorStateList.valueOf(m_foreground));
         int value = m_prefs.getInt("CmaxBright", 255);
         m_maxBrightSlider = new Slider(this);
         m_maxBrightSlider.setMax(255);

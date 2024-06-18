@@ -421,16 +421,11 @@ public class Slider extends View {
         a.recycle();
         if (thumb != null) {
             mThumb = thumb.mutate();
-            if (mThumbTintList == null) {
-                mThumbTintList = ColorStateList.valueOf(0xFFFFFFFF);
-            }
             mThumb.setTintList(mThumbTintList);
         }
         if (track != null) {
             mTrack = track.mutate();
-            if (mTrackTintList == null) {
-                mTrack.setTintList(ColorStateList.valueOf(0xFFFFFFFF));
-            } else { mTrack.setTintList(mTrackTintList); }
+            mTrack.setTintList(mTrackTintList);
         }
 
         /* If the touch position has moved along the track by less than

@@ -13,6 +13,7 @@
    see if can read system brightness when I'm setting it
    if so, move gradually from my value ti systemn brightness
  */
+// FIXME small seconds in AM/PM mode
 
 package uk.co.yahoo.p1rpp.secondsclock;
 

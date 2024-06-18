@@ -117,6 +117,7 @@ public abstract class Activity_common extends Activity implements View.OnLongCli
         super.onCreate(savedInstanceState);
         m_prefs = getSharedPreferences("SecondsClock", Context.MODE_PRIVATE);
         setContentView(R.layout.generic_layout);
+        m_topLayout = findViewById(R.id.genericlayout);
     }
 
     protected void getDatePrefs() {
