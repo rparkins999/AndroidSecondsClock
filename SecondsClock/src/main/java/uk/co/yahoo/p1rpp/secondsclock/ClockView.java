@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022. Richard P. Parkins, M. A.
+ * Copyright © 2024. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This is the view which shows the fullscreen clock.
@@ -13,7 +13,7 @@
    see if can read system brightness when I'm setting it
    if so, move gradually from my value ti systemn brightness
  */
-// FIXME small seconds in AM/PM mode
+// FIXME Add option to only use opacity
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
@@ -55,7 +55,7 @@ import java.util.Set;
 class ClockView extends LinearLayout implements SensorEventListener {
     public String m_dateFormat = " ";
     public String m_hoursFormat = " ";
-    public String m_monthFormat =  " ";
+    public String m_monthFormat = " ";
     public String m_timeFormat = " ";
     public String m_weekdayFormat = " ";
 
@@ -79,8 +79,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private float m_lightLevel;
     private float m_smoothedLightLevel; // prevent hunting
     private Sensor m_lightSensor;
-    private boolean m_trim = false; // chop off last char of time
     private boolean m_visible;
+    private int m_secondsSize;
 
     // Set the colour of all of our display objects.
     public void setColour(int colour) {
@@ -154,6 +154,28 @@ class ClockView extends LinearLayout implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
+    /* This gets called by updateLayout in AM/PM mode as well as
+     * updateTime, because switching from 9:59 to 10:00
+     * or from 12:59 to 1:00 can change
+     * the length of the text in m_timeView,
+     * which can affect the layout.
+     */
+    private void fixLengths(Calendar next) {
+        CharSequence ampm = DateFormat.format("a", next);
+        CharSequence time = DateFormat.format(m_timeFormat, next);
+        // Remove this bit of code if you're happy with the default for en_GB
+        // of lower-case am/pm, which I don't like.
+        if (Locale.getDefault().getDisplayName().startsWith("English")) {
+            m_ampmView.setAllCaps(true);
+            m_timeView.setAllCaps(true);
+        } else {
+            m_ampmView.setAllCaps(false);
+            m_timeView.setAllCaps(false);
+        }
+        m_ampmView.setText(ampm);
+        m_timeView.setText(time);
+    }
+
     private Calendar updateTime() {
         Calendar next = Calendar.getInstance(); // new one in case time zone changed
         /* Once per minute, we check if we're connected to a charger:
@@ -172,31 +194,22 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_owner.getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
             }
         }
-        CharSequence ampm = DateFormat.format("a", next);
-        CharSequence time = DateFormat.format(m_timeFormat, next);
-        // Remove this bit of code if you're happy with the default for en_GB
-        // of lower-case am/pm, which I don't like.
-        if (Locale.getDefault().getDisplayName().startsWith("English")) {
-            if (m_trim) {
-                // We're in AM/PM mode with the seven segment font,
-                // which doesn't have a decent "M", so we remove it.
-                time = time.subSequence(0, time.length() - 1);
-                ampm = ampm.subSequence(0, ampm.length() - 1);
-            }
-            m_ampmView.setAllCaps(true);
-            m_timeView.setAllCaps(true);
-        } else {
-            m_ampmView.setAllCaps(false);
-            m_timeView.setAllCaps(false);
+        int timeLength = String.valueOf(m_timeView.getText()).length();
+        fixLengths(next);
+        if (timeLength != String.valueOf(m_timeView.getText()).length()) {
+            /* fixLengths changed the length, so we need to relayout.
+             * updateLayout does more than we need, but it's too
+             * complicated to extract the part that we want,
+             * and this only happens four times per 24 hours.
+             */
+            updateLayout();
         }
-        m_ampmView.setText(ampm);
         m_dateView.setText(DateFormat.format(m_dateFormat, next));
         m_hoursView.setText(DateFormat.format(m_hoursFormat, next));
         m_minutesView.setText(DateFormat.format("mm", next));
         m_monthdayView.setText(DateFormat.format("dd", next));
         m_monthView.setText(DateFormat.format(m_monthFormat, next));
         m_secondsView.setText(DateFormat.format("ss", next));
-        m_timeView.setText(time);
         m_weekdayView.setText(DateFormat.format(m_weekdayFormat, next));
         m_yearView.setText(DateFormat.format("yyyy", next));
         return next;
@@ -256,7 +269,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         removeAllViews(this);
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
-        int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
+        m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
         int showMonth = m_prefs.getInt("CshowMonth", 2); // long format
         int showMonthDay = m_prefs.getInt("CshowMonthDay",1);
         int showShortDate = m_prefs.getInt("CshowShortDate",0);
@@ -267,43 +280,72 @@ class ClockView extends LinearLayout implements SensorEventListener {
         Typeface font;
         float lsp = 1.0F;
         if (m_prefs.getBoolean("C7seg", false)) {
+            /* The 7 segment "M" didn't look very nice, so this
+             * version of the 7 segment font has a nicer "M" which
+             * can't be produced on a 7 segemnt display, but we
+             * don't *really* have one.
+             */
             font = Typeface.createFromAsset(
             m_owner.getAssets(), "DSEG7Classic-BoldItalic.ttf");
             // The seven segment font has no line spacing....
             lsp = 1.1F;
-            m_trim = !is24;
         } else {
             font = Typeface.DEFAULT;
-            m_trim = false;
         }
         m_ampmView.setTypeface(font);
         m_hoursView.setTypeface(font);
         m_minutesView.setTypeface(font);
         m_secondsView.setTypeface(font);
-        m_secondsView.setGravity(Gravity.CENTER);
         m_timeView.setTypeface(font);
         boolean m_haveDate =
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
+        LinearLayout ll = new LinearLayout(m_owner);
+        float timeWidth;
+        float secondsWidth;
+        float ampmWidth;
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            boolean haveSeconds;
-            if (m_secondsSize == 255) {
-                haveSeconds = false;
+            setOrientation(VERTICAL);
+            ll.setOrientation(HORIZONTAL);
+            if (m_secondsSize == 255) { // full sixe seconds
                 if (is24) {
                     m_timeFormat = "HH:mm:ss";
                 } else {
                     m_timeFormat = "h:mm:ss a";
                 }
-            } else {
-                haveSeconds = m_secondsSize > 0;
+                ll.addView(m_timeView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+            } else { // small seconds or none
                 if (is24) {
                     m_timeFormat = "HH:mm";
+                    ampmWidth = 0;
                 } else {
-                    m_timeFormat = "h:mm a";
+                    m_timeFormat = "h:mm";
+                    // only needed in AM/PM mode
+                    fixLengths(Calendar.getInstance());
+                    ampmWidth = m_timeView.getPaint().measureText(
+                            String.valueOf(m_ampmView.getText()));
+                }
+                timeWidth = m_timeView.getPaint().measureText(
+                        String.valueOf(m_timeView.getText()));
+                secondsWidth = m_timeView.getPaint().measureText("00")
+                        * m_secondsSize / 255F;
+                ll.addView(m_timeView, new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.MATCH_PARENT,
+                        timeWidth));
+                ll.addView(m_secondsView, new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.MATCH_PARENT,
+                        secondsWidth));
+                if (ampmWidth != 0) {
+                    ll.addView(m_ampmView, new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.MATCH_PARENT,
+                            ampmWidth));
                 }
             }
+            addView(ll, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.85F));
             if (m_haveDate) {
-                setOrientation(VERTICAL);
                 boolean first = true;
                 StringBuilder sb = new StringBuilder();
                 if (showWeekDay > 0) {
@@ -315,78 +357,44 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     }
                 }
                 if (showShortDate > 0) {
-                    if (!first) { sb.append(" "); }
+                    if (!first) {
+                        sb.append(" ");
+                    }
                     sb.append(shortDateFormat());
                 } else {
                     if (showMonthDay > 0) {
-                        if (first) { first = false; }
-                        else { sb.append(" "); }
+                        if (first) {
+                            first = false;
+                        } else {
+                            sb.append(" ");
+                        }
                         sb.append("d");
                     }
                     if (showMonth == 1) {
-                        if (first) { first = false; }
-                        else { sb.append(" "); }
+                        if (first) {
+                            first = false;
+                        } else {
+                            sb.append(" ");
+                        }
                         sb.append("LLL");
                     } else if (showMonth == 2) {
-                        if (first) { first = false; }
-                        else { sb.append(" "); }
+                        if (first) {
+                            first = false;
+                        } else {
+                            sb.append(" ");
+                        }
                         sb.append("LLLL");
                     }
                     if (showYear > 0) {
-                        if (!first) { sb.append(" "); }
+                        if (!first) {
+                            sb.append(" ");
+                        }
                         sb.append("yyyy");
                     }
                 }
                 m_dateFormat = sb.toString();
-                if (haveSeconds) {
-                    float timeWidth = m_timeView.getPaint().measureText(
-                        String.valueOf(m_timeView.getText()));
-                    float secondsWidth =
-                        m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
-                    LinearLayout ll = new LinearLayout(m_owner);
-                    ll.setOrientation(HORIZONTAL);
-                    ll.addView(m_timeView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        secondsWidth / (timeWidth + secondsWidth)));
-                    ll.addView(m_secondsView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        timeWidth / (timeWidth + secondsWidth)));
-                    addView(ll, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.15F));
-                    addView(m_dateView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.85F));
-                } else {
-                    addView(m_timeView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.15F));
-                    addView(m_dateView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0.85F));
-                }
-            } else {
-                if (haveSeconds) {
-                    setOrientation(HORIZONTAL);
-                    float timeWidth = m_timeView.getPaint().measureText(
-                        String.valueOf(m_timeView.getText()));
-                    float secondsWidth =
-                        m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
-                    addView(m_timeView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        secondsWidth / (timeWidth + secondsWidth)));
-                    addView(m_secondsView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        timeWidth / (timeWidth + secondsWidth)));
-                } else {
-                    addView(m_timeView, new LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT));
-                }
+                addView(m_dateView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.15F));
             }
         } else { // assume PORTRAIT
             setOrientation(VERTICAL);
@@ -395,25 +403,49 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 (   (showMonth == 2) || (showWeekDay == 2) || (showShortDate > 0))
                  && !(m_prefs.getBoolean("Cforcevertical", false));
             // first work out how much space we need
-            boolean haveSeconds = false;
             if (horizontalTime)
             {
-                if (m_secondsSize == 255) {
+                ll.setOrientation(HORIZONTAL);
+                if (m_secondsSize == 255) { // full size seconds
                     if (is24) {
                         m_timeFormat = "HH:mm:ss";
                     } else {
                         m_timeFormat = "h:mm:ss a";
+                        // only needed in AM/PM mode
+                        fixLengths(Calendar.getInstance());
                     }
-                } else {
-                    haveSeconds = m_secondsSize > 0;
+                    ll.addView(m_timeView, new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                } else { // small seconds or none
                     if (is24) {
                         m_timeFormat = "HH:mm";
+                        ampmWidth = 0;
                     } else {
-                        m_timeFormat = "h:mm a";
+                        m_timeFormat = "h:mm";
+                        // only needed in AM/PM mode
+                        fixLengths(Calendar.getInstance());
+                        ampmWidth = m_timeView.getPaint().measureText(
+                                String.valueOf(m_ampmView.getText()));
+                    }
+                    timeWidth = m_timeView.getPaint().measureText(
+                            String.valueOf(m_timeView.getText()));
+                    secondsWidth = m_timeView.getPaint().measureText("00")
+                            * m_secondsSize / 255F;
+                    ll.addView(m_timeView, new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.MATCH_PARENT,
+                            timeWidth));
+                    ll.addView(m_secondsView, new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.MATCH_PARENT,
+                            secondsWidth));
+                    if (ampmWidth != 0) {
+                        ll.addView(m_ampmView, new LinearLayout.LayoutParams(
+                                0, ViewGroup.LayoutParams.MATCH_PARENT,
+                                ampmWidth));
                     }
                 }
                 space += lsp;
-            } else {
+            } else { // not horizontalTime
                 if (is24) {
                     m_hoursFormat = "HH";
                     space += 2F + lsp;  // hours + minutes (fixed format)
@@ -430,33 +462,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
             else if (showMonth == 2) { space += 1F; m_monthFormat = "LLLL"; }
             if (showYear != 0) { space += 1F; }
             // now add the views
-            LinearLayout.LayoutParams lpmm = new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, (int)(m_height / space));
             if (horizontalTime) {
-                if (haveSeconds) {
-                    float timeWidth = m_timeView.getPaint().measureText(
-                        String.valueOf(m_timeView.getText()));
-                    float secondsWidth =
-                        m_timeView.getPaint().measureText("00") * m_secondsSize / 255F;
-                    LinearLayout ll = new LinearLayout(m_owner);
-                    ll.setOrientation(HORIZONTAL);
-                    ll.addView(m_timeView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        secondsWidth / (timeWidth + secondsWidth)));
-                    ll.addView(m_secondsView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        timeWidth / (timeWidth + secondsWidth)));
-                    addView(ll, new LinearLayout.LayoutParams(
+                addView(ll, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         (int) (lsp * m_height / space)));
-                } else {
-                    addView(m_timeView, new LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        (int) (lsp * m_height / space)));
-                }
-            } else {
+            } else { // time in vertical format
                 addView(m_hoursView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
                 if (lsp > 1F) {

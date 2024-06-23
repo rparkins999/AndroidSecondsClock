@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023. Richard P. Parkins, M. A.
+ * Copyright © 2024. Richard P. Parkins, M. A.
  * Released under GPL V3 or later
  *
  * This class handles the settings for the full screen clock.
