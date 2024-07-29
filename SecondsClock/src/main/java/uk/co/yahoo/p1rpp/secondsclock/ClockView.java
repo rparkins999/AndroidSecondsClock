@@ -44,6 +44,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -81,6 +82,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private Sensor m_lightSensor;
     private boolean m_visible;
     private int m_secondsSize;
+
+    /** Interpolator used for smooth progress animations. */
+    private static final AccelerateDecelerateInterpolator VALUE_ANIM_INTERPOLATOR =
+            new AccelerateDecelerateInterpolator();
 
     // Set the colour of all of our display objects.
     public void setColour(int colour) {

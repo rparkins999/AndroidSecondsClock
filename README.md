@@ -27,7 +27,7 @@ The time, day of the week, and long date, will all fit into a 1x1 widget with a 
 
 On some devices tthe widget doesn't make as good a job of reformatting itself in landscape orientation, because Android doesn't require a home screen launcher to notify the widget provider when the screen is rotated between portrait and landscape orientation. If the widget provider does get notified (as it does on my Samsung Galaxy S21) it will reformat the widget.
 
-You can also configure the text colour of both the widget and the night clock, and the colour and transparency of the widget's background. The night clock's background is always black. The default for the widget of white text on a transparent background works well unless you have a very light or very complex wallpaper on your home screen.
+You can also configure the text colour of both the widget and the night clock, and the colour and transparency of the widget's background. The night clock's background is always black. The default for the widget of white text on a transparent background works well unless you have a very light or very complex wallpaper on your home screen. If you have complex wallpaper you probably want an opaque backgrpund.
 
 You can also configure what happens when you touch a widget.
 
@@ -64,4 +64,4 @@ I don't just use opacity all the time because that doesn't work well with a back
 SecondsClock requests SET_ALARM permission although it doesn't actually set any alarms. For some strange reason on some phones this permission is required to go to the phone's built-in clock app when you touch the widget. If you deny SecondsClock SET_ALARM permission, the app can't go to the device's clock app if your device requires SET_ALARM permission to do so. Currently Android automatically grants SET_ALARM permission for any app which requests it, so you shouldn't see a problem unless you explicitly deny SET_ALARM permission.
 
 # Licensing
-One file (Slider.java) is licensed under the Apache license 2.0 because it is derived from an Android source file which uses that licence. Evrything else was written by me and is licensed under GPL V3 or later (if you're puzzled by the apparently inconsistent spelling of "licen{s|c}e", in the UK English spelling the verb is license, but the noun is licence).
+One file (Slider.java) is licensed under the Apache license 2.0 because it is derived from an Android source file which uses that licence. Everything else was written by me and is licensed under GPL V3 or later. If you're puzzled by the apparently inconsistent spelling of "licen{s|c}e", in the UK English spelling the verb is license, but the noun is licence. There is also a noun license in UK English, but it means something different.
