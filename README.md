@@ -65,3 +65,19 @@ SecondsClock requests SET_ALARM permission although it doesn't actually set any 
 
 # Licensing
 One file (Slider.java) is licensed under the Apache license 2.0 because it is derived from an Android source file which uses that licence. Evrything else was written by me and is licensed under GPL V3 or later (if you're puzzled by the apparently inconsistent spelling of "licen{s|c}e", in the UK English spelling the verb is license, but the noun is licence).
+
+# Building
+Android now requires all applications to be signed. If you build your own version, you need to sign it -
+I'm not giving you my signing key. `build.gradle` expects to find a `keystore.properties` file in the
+subdirectory `keys` of the parent directory of the project's top level directory
+(the one you cloned into). If you keep yours somewhere else, edit `build.gradle`.
+The `keystore.properties` file should look something like this:-
+
+`keyAlias=`<i>your user name</i><br>
+`keyPassword=`<i>paasword for your key</i><br>
+`storeFile=`<i>full pathname of key file</i><br>
+`storePassword=`<i>password for your keystore (may be different)</i>
+
+You should also be aware that if you debug your own version with Androis Studio, it will sign it with a
+debug key, and Android will not let you install a version of an app signed with a different key unless
+you delete the old version first. Unfortunatley this throws away all the stored peferences.
