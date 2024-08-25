@@ -300,7 +300,11 @@
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
+    <string name="onlyopacitylabel">Use only opacity for dimming</string>
+    <string name="onlyopacityhelp">Check this box to use only
+        the opacity for dimming. This saves power on OLED displays.</string>
     <string name="currentlux">Current Lux level is %1d</string>
-    <string name="currentbright">Current screen brightness is %1d</string>
+    <string name="currentbright">Current clock brightness is %1d</string>
+    <string name="systembright">Current system brightness is %1d</string>
     <string name="currentopacity">Current clock opacity is %1d</string>
 </resources>

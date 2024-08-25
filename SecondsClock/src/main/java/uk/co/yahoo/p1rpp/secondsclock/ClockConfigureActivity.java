@@ -16,6 +16,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -36,8 +37,7 @@ import android.widget.TextView;
  * Settable silders:-
  * Minimum brightness
  * Minimum Opacity
- * Maximum brightness
- * Lux level for maximum brightness
+ * Lux threshold bvelow which to dim
  *
  * Display while setting dim parameters:-
  * Lux level
@@ -58,10 +58,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int SMALLSECONDS = NOSECONDS + 1;
     private static final int LARGESECONDS = SMALLSECONDS + 1;
     private static final int SECONDSSIZER = LARGESECONDS + 1;
-    private static final int MAXBRIGHTLABEL = SECONDSSIZER + 1;
-    private static final int MAXBRIGHTSLIDER = MAXBRIGHTLABEL + 1;
-    private static final int MAXBRIGHTVALUE = MAXBRIGHTSLIDER + 1;
-    private static final int MINBRIGHTLABEL = MAXBRIGHTVALUE + 1;
+    private static final int MINBRIGHTLABEL = SECONDSSIZER + 1;
     private static final int MINBRIGHTSLIDER = MINBRIGHTLABEL + 1;
     private static final int MINBRIGHTVALUE = MINBRIGHTSLIDER + 1;
     private static final int ALPHALABEL = MINBRIGHTVALUE + 1;
@@ -76,36 +73,42 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int CURRENTLUX = DIMBUTTON + 1;
     private static final int CURRENTBRIGHT = CURRENTLUX + 1;
     private static final int CURRENTALPHA = CURRENTBRIGHT + 1;
-
+    private static final int ONLYOPACITY = CURRENTALPHA + 1;
 
     // Conversion between threshold slider and numeric value
-    private static final double EXPONENT = 1.8;
-    private static final double IMPONENT = 1.0/EXPONENT;
-    private static final double MULTIPLIER = Math.pow(255,EXPONENT)/9999;
-
     private int m_fgcolour;
     private Slider m_secondsSizer;
-    private Slider m_maxBrightSlider;
-    private EditText m_maxBrightValue;
     private Slider m_minBrightSlider;
     private EditText m_minBrightValue;
     private Slider m_alphaSlider;
     private EditText m_alphaValue;
     private Slider m_thresholdSlider;
     private EditText m_thresholdValue;
+    private CheckBox m_onlyopacity;
     private ClockView m_clockView;
     private Button m_textColour;
     private Button m_data;
     private Button m_display;
-
     private TextView m_currentLux;
     private TextView m_currentBright;
     private TextView m_currentOpacity;
 
     public void updateTexts(float lux, float bright, int alpha) {
-        m_currentLux.setText(getString(R.string.currentlux, (int)lux));
-        m_currentBright.setText(getString(R.string.currentbright, (int)(bright * 255)));
-        m_currentOpacity.setText(getString(R.string.currentopacity, alpha));
+        if (m_currentView == DISPLAYBUTTON) {
+            m_currentLux.setText(getString(R.string.currentlux, (int) lux));
+            if (bright < 0) {
+                int settingsBrightness = Settings.System.getInt(
+                        getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, 255);
+                m_currentBright.setText(getString(R.string.systembright,
+                        settingsBrightness));
+            } else {
+                m_currentBright.setText(getString(R.string.currentbright,
+                        (int) (bright * 255F)));
+            }
+            m_currentBright.setText(getString(R.string.currentbright, (int) (bright * 255)));
+            m_currentOpacity.setText(getString(R.string.currentopacity, alpha));
+        }
     }
 
     @Override
@@ -125,9 +128,6 @@ public class ClockConfigureActivity extends ConfigureActivity
             case NOSECONDS: doToast(R.string.nosecondshelp); return true;
             case SMALLSECONDS: doToast(R.string.smallsecondshelp); return true;
             case LARGESECONDS: doToast(R.string.largesecondshelp); return true;
-            case MAXBRIGHTLABEL:
-            case MAXBRIGHTSLIDER: doToast(R.string.maxbrightsliderhelp); return true;
-            case MAXBRIGHTVALUE: doToast(R.string.maxbrightvaluehelp); return true;
             case MINBRIGHTLABEL:
             case MINBRIGHTSLIDER: doToast(R.string.minbrightsliderhelp); return true;
             case MINBRIGHTVALUE: doToast(R.string.minbrightvaluehelp); return true;
@@ -146,24 +146,9 @@ public class ClockConfigureActivity extends ConfigureActivity
             case CURRENTLUX: doToast(R.string.luxhelp); return true;
             case CURRENTBRIGHT: doToast(R.string.brighthelp); return true;
             case CURRENTALPHA: doToast(R.string.opacityhelp); return true;
+            case ONLYOPACITY: doToast(R.string.onlyopacityhelp); return true;
         }
         return super.onLongClick(v);
-    }
-
-    // Convert threshold slider value to numeric string nonlinearly.
-    private String thresholdString(int value) {
-        return String.valueOf(
-            (int)(Math.ceil(Math.pow(value,EXPONENT)/MULTIPLIER)));
-    }
-
-    // Inverse funtion to convert numeric string to threshold slider value.
-    private int toslider(Editable s) {
-        int value = safeParseInt(s.toString());
-        if (value > 9999) {
-            m_thresholdValue.setText("9999");
-            return 9999;
-        }
-        return (int)(Math.pow(value * MULTIPLIER,IMPONENT));
     }
 
     @SuppressLint("ApplySharedPref")
@@ -202,16 +187,6 @@ public class ClockConfigureActivity extends ConfigureActivity
                 m_prefs.edit().putInt("CsecondsSize", value).commit();
                 m_clockView.updateLayout();
                 break;
-            case MAXBRIGHTSLIDER:
-                if (!recursive) {
-                    recursive = true;
-                    m_maxBrightValue.setText(String.valueOf(value));
-                    recursive = false;
-                }
-                fixTintList(m_maxBrightSlider, (value * 255) / 100);
-                m_prefs.edit().putInt("CmaxBright", value).commit();
-                m_clockView.adjustColour();
-                break;
             case MINBRIGHTSLIDER:
                 if (!recursive) {
                     recursive = true;
@@ -235,7 +210,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             case THRESHOLDSLIDER:
                 if (!recursive) {
                     recursive = true;
-                    m_thresholdValue.setText(thresholdString(value));
+                    m_thresholdValue.setText(String.valueOf(value));
                     recursive = false;
                 }
                 fixTintList(m_thresholdSlider, value);
@@ -373,56 +348,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             layoutParams.height = 0;
             gl.addView(scrollView, -1, layoutParams);
         } else { // assume PORTRAIT
-            // Vertical seconds size slider at top right
-            LinearLayout lSeconds = new LinearLayout(this);
-            lSeconds.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams lSpars1 = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-            lSpars1.gravity = Gravity.CENTER_HORIZONTAL;
-            lSeconds.addView(textLabel(R.string.secondssizelabel, SSLABEL), lSpars1);
-            LinearLayout lSecondsSlider = new LinearLayout(this);
-            // default orientation is HORIZONTAL
-            LinearLayout.LayoutParams lSSpars = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-            m_secondsSizer.setDirection(Slider.SLIDER_UPWARDS);
-            lSecondsSlider.addView(m_secondsSizer, lSSpars);
-            RelativeLayout rl = new RelativeLayout(this);
-            RelativeLayout.LayoutParams rlp1 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp1.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            rlp1.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            rl.addView(textLabel("00:00:00", LARGESECONDS), rlp1);
-            RelativeLayout.LayoutParams rlp2 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp2.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            rlp2.addRule(RelativeLayout.CENTER_VERTICAL);
-            rl.addView(doSmallSeconds(), rlp2);
-            RelativeLayout.LayoutParams rlp3 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp3.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            rlp3.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            rl.addView(textLabel("00:00", NOSECONDS), rlp3);
-            lSecondsSlider.addView(rl, lSSpars);
-            LinearLayout.LayoutParams lSpars = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-            lSpars.weight = 1F;
-            lSeconds.addView(lSecondsSlider, lSpars);
-            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(
-                GridLayout.spec(0, 1),
-                GridLayout.spec(1, 1, 1F)
-            );
-            layoutParams.height = m_height / 2;
-            gl.addView(lSeconds, -1, layoutParams);
-            // remaining controls in bottom half
+             // remaining controls in bottom half
             cb = new CheckBox(this);
             cb.setId(FORCEVERTICAL);
             cb.setText(R.string.forcevertical);
@@ -432,15 +358,19 @@ public class ClockConfigureActivity extends ConfigureActivity
             lboxes.addView(cb);
             lControls.addView(lboxes);
             m_display.setId(DIMBUTTON);
-            lControls.addView(lButtons);
             scrollView.addView(lControls);
-            layoutParams = new GridLayout.LayoutParams(
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(1, 1, 1f),
                 GridLayout.spec(0, 2, 1f)
             );
             layoutParams.width = 0;
             layoutParams.height = 0;
             gl.addView(scrollView, -1, layoutParams);
+            layoutParams = new GridLayout.LayoutParams(
+                    GridLayout.spec(0, 1),
+                    GridLayout.spec(1, 1, 1F)
+            );
+            gl.addView(lButtons, -1, layoutParams);
         }
         m_topLayout.addView(gl);
     }
@@ -454,6 +384,45 @@ public class ClockConfigureActivity extends ConfigureActivity
         lControls.setOrientation(LinearLayout.VERTICAL);
         m_helptext.setText(R.string.longpresshoriz);
         lControls.addView(m_helptext);
+        RelativeLayout lssb = new RelativeLayout(this);
+        RelativeLayout.LayoutParams rlp1 =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        rlp1.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        rlp1.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lssb.addView(textLabel(R.string.secondssizelabel, SSLABEL), rlp1);
+        RelativeLayout.LayoutParams rlp2 =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        rlp2.addRule(RelativeLayout.BELOW, SSLABEL);
+        rlp2.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        lssb.addView(textLabel("00:00", NOSECONDS), rlp2);
+        RelativeLayout.LayoutParams rlp3 =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        rlp3.addRule(RelativeLayout.BELOW, SSLABEL);
+        rlp3.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lssb.addView(doSmallSeconds(), rlp3);
+        RelativeLayout.LayoutParams rlp4 =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        rlp4.addRule(RelativeLayout.BELOW, SSLABEL);
+        rlp4.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        lssb.addView(textLabel("00:00:00", LARGESECONDS), rlp4);
+        RelativeLayout.LayoutParams rlp5 =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        rlp5.addRule(RelativeLayout.BELOW, LARGESECONDS);
+        rlp5.addRule(RelativeLayout.BELOW, SMALLSECONDS);
+        rlp5.addRule(RelativeLayout.BELOW, NOSECONDS);
+        m_secondsSizer.setDirection(Slider.SLIDER_RIGHTWARDS);
+        lssb.addView(m_secondsSizer, rlp5);
+        lControls.addView(lssb);
         LinearLayout lButtons = new LinearLayout(this);
         lButtons.setOrientation(LinearLayout.VERTICAL);
         lButtons.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -462,25 +431,6 @@ public class ClockConfigureActivity extends ConfigureActivity
         lButtons.addView(m_okButton, lpWrapWrap);
         LinearLayout lDimming = new LinearLayout(this);
         lDimming.setOrientation(LinearLayout.VERTICAL);
-        lDimming.addView(centredLabel(R.string.maxbrightlabel, MAXBRIGHTLABEL));
-        LinearLayout lBright1 = new LinearLayout(this);
-        // default orientation is HORIZONTAL
-        LinearLayout lBright2 = new LinearLayout(this);
-        lBright2.setOrientation(LinearLayout.VERTICAL);
-        lBright2.setLayoutParams(lpMMWeight);
-        lBright2.setGravity(Gravity.CENTER_VERTICAL); //FIXME may not need this
-        int fgColour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
-        m_maxBrightSlider.setBackground(new GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {0xFF000000,  0xFF000000 | (fgColour & 0xFFFFFF)}));
-        lBright2.addView(m_maxBrightSlider);
-        lBright1.addView(lBright2);
-        LinearLayout lBright3 = new LinearLayout(this);
-        // default orientation is HORIZONTAL
-        lBright3.setLayoutParams(lpWrapWrap);
-        lBright3.addView(m_maxBrightValue);
-        lBright1.addView(lBright3);
-        lDimming.addView(lBright1);
         lDimming.addView(centredLabel(R.string.minbrightlabel, MINBRIGHTLABEL));
         LinearLayout lBright4 = new LinearLayout(this);
         // default orientation is HORIZONTAL
@@ -488,6 +438,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         lBright5.setOrientation(LinearLayout.VERTICAL);
         lBright5.setLayoutParams(lpMMWeight);
         lBright5.setGravity(Gravity.CENTER_VERTICAL); //FIXME may not need this
+        int fgColour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
         m_minBrightSlider.setBackground(new GradientDrawable(
             GradientDrawable.Orientation.LEFT_RIGHT,
             new int[] {0xFF000000,  0xFF000000 | (fgColour & 0xFFFFFF)}));
@@ -532,9 +483,12 @@ public class ClockConfigureActivity extends ConfigureActivity
         lThreshold3.addView(m_thresholdValue);
         lThreshold1.addView(lThreshold3);
         lDimming.addView(lThreshold1);
+        lDimming.addView(m_onlyopacity);
         lDimming.addView(m_currentLux);
         lDimming.addView(m_currentBright);
         lDimming.addView(m_currentOpacity);
+        lControls.addView(lDimming);
+        scrollView.addView(lControls);
 
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             // Buttons in bottom left
@@ -545,48 +499,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             layoutParams.width = m_width / 2;
             layoutParams.height = m_height / 2;
             gl.addView(lButtons, -1, layoutParams);
-            // remaining controls in right half
-            RelativeLayout lssb = new RelativeLayout(this);
-            RelativeLayout.LayoutParams rlp1 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp1.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            rlp1.addRule(RelativeLayout.CENTER_HORIZONTAL);
-            lssb.addView(textLabel(R.string.secondssizelabel, SSLABEL), rlp1);
-            RelativeLayout.LayoutParams rlp2 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp2.addRule(RelativeLayout.BELOW, SSLABEL);
-            rlp2.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            lssb.addView(textLabel("00:00", NOSECONDS), rlp2);
-            RelativeLayout.LayoutParams rlp3 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp3.addRule(RelativeLayout.BELOW, SSLABEL);
-            rlp3.addRule(RelativeLayout.CENTER_HORIZONTAL);
-            lssb.addView(doSmallSeconds(), rlp3);
-            RelativeLayout.LayoutParams rlp4 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp4.addRule(RelativeLayout.BELOW, SSLABEL);
-            rlp4.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            lssb.addView(textLabel("00:00:00", LARGESECONDS), rlp4);
-            RelativeLayout.LayoutParams rlp5 =
-                new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.MATCH_PARENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            rlp5.addRule(RelativeLayout.BELOW, LARGESECONDS);
-            rlp5.addRule(RelativeLayout.BELOW, SMALLSECONDS);
-            rlp5.addRule(RelativeLayout.BELOW, NOSECONDS);
-            m_secondsSizer.setDirection(Slider.SLIDER_RIGHTWARDS);
-            lssb.addView(m_secondsSizer, rlp5);
-            lControls.addView(lssb);
-            lControls.addView(lDimming);
-            scrollView.addView(lControls);
+            // Controls in right half
             layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(0, 2),
                 GridLayout.spec(1, 1)
@@ -603,9 +516,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             layoutParams.width = m_width / 2;
             layoutParams.height = m_height / 2;
             gl.addView(lButtons, -1, layoutParams);
-            // remaining controls in bottom half
-            lControls.addView(lDimming);
-            scrollView.addView(lControls);
+            // Controls in bottom half
             layoutParams = new GridLayout.LayoutParams(
                 GridLayout.spec(1, 1, 1f),
                 GridLayout.spec(0, 2, 1f)
@@ -683,9 +594,6 @@ public class ClockConfigureActivity extends ConfigureActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        m_currentLux = new TextView(this);
-        m_currentBright = new TextView(this);
-        m_currentOpacity = new TextView(this);
         m_CorW = "clock";
         m_clockView = new ClockView(this);
         m_clockView.setId(DEMOCLOCK);
@@ -707,6 +615,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             case SETTEXTCOLOUR: doChooserLayout(); break;
             case DISPLAYBUTTON: doDisplayLayout(); break;
         }
+        m_clockView.adjustColour();
     }
 
     @Override
@@ -728,48 +637,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                 ColorStateList.valueOf(m_foreground));
         m_secondsSizer.setTrackTintList(
                 ColorStateList.valueOf(m_foreground));
-        int value = m_prefs.getInt("CmaxBright", 255);
-        m_maxBrightSlider = new Slider(this);
-        m_maxBrightSlider.setMax(255);
-        m_maxBrightSlider.setId(MAXBRIGHTSLIDER);
-        fixTintList(m_maxBrightSlider, value);
-        m_maxBrightSlider.setOnChangeListener(this);
-        m_maxBrightSlider.setOnLongClickListener(this);
-        m_maxBrightSlider.setValue(value);
-        m_maxBrightValue = new EditText(this);
-        m_maxBrightValue.setId(MAXBRIGHTVALUE);
-        m_maxBrightValue.setOnLongClickListener(this);
-        m_maxBrightValue.setInputType(TYPE_CLASS_NUMBER);
-        m_maxBrightValue.setWidth(m_numberWidth);
-        m_maxBrightValue.setText(String.valueOf(value));
-        m_maxBrightValue.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(
-                CharSequence s, int start, int count, int after)
-            {}
-            @Override
-            public void onTextChanged(
-                CharSequence s, int start, int before, int count)
-            {}
-            @SuppressLint({"ApplySharedPref", "SetTextI18n"})
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (!recursive) {
-                    int value = safeParseInt(s.toString());
-                    if (value > 100) {
-                        m_maxBrightValue.setText("100");
-                        return;
-                    }
-                    m_maxBrightSlider.setValue(value);
-                    fixTintList(m_maxBrightSlider, (value * 255) / 100);
-                    m_prefs.edit().putInt("CmaxBright", value).commit();
-                    m_clockView.adjustColour();
-                    m_maxBrightValue.setSelection(
-                        m_maxBrightValue.getText().length());
-                }
-            }
-        });
-        value = m_prefs.getInt("CminBright", 255);
+        int value = m_prefs.getInt("CminBright", 255);
         m_minBrightSlider = new Slider(this);
         m_minBrightSlider.setMax(100);
         m_minBrightSlider.setId(MINBRIGHTSLIDER);
@@ -866,10 +734,8 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_thresholdValue.setId(THRESHOLDVALUE);
         m_thresholdValue.setOnLongClickListener(this);
         m_thresholdValue.setInputType(TYPE_CLASS_NUMBER);
-        // The 1.3 is a fudge factor = I don't know why it is needed.
-        m_thresholdValue.setWidth((int)(
-            m_thresholdValue.getPaint().measureText("0000") * 1.3));
-        m_thresholdValue.setText(thresholdString(value));
+        m_thresholdValue.setWidth(m_numberWidth);
+        m_thresholdValue.setText(String.valueOf(value));
         m_thresholdValue.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
@@ -883,7 +749,11 @@ public class ClockConfigureActivity extends ConfigureActivity
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive) {
-                    int value = toslider(s);
+                    int value = safeParseInt(s.toString());
+                    if (value > 255) {
+                        m_thresholdValue.setText("255");
+                        return;
+                    }
                     m_thresholdSlider.setValue(value);
                     fixTintList(m_thresholdSlider, value);
                     m_prefs.edit().putInt("Cthreshold", value).commit();
@@ -893,6 +763,32 @@ public class ClockConfigureActivity extends ConfigureActivity
                 }
             }
         });
+        value = m_prefs.getInt("Conlyalpha", 0);
+        m_onlyopacity = new CheckBox(this);
+        m_onlyopacity.setId(ONLYOPACITY);
+        m_onlyopacity.setText(R.string.onlyopacitylabel);
+        m_onlyopacity.setChecked(value != 0);
+        m_onlyopacity.setOnCheckedChangeListener(
+                new CompoundButton.OnCheckedChangeListener() {
+                    @SuppressLint({"ApplySharedPref"})
+                    @Override
+                    public void onCheckedChanged(
+                            CompoundButton buttonView, boolean isChecked) {
+                        m_prefs.edit().putInt("Conlyalpha",
+                                isChecked ? 1 : 0).commit();
+                        m_clockView.adjustColour();
+                    }
+                });
+        m_onlyopacity.setOnLongClickListener(this);
+        m_currentLux = new TextView(this);
+        m_currentLux.setId(CURRENTLUX);
+        m_currentLux.setOnLongClickListener(this);
+        m_currentBright = new TextView(this);
+        m_currentBright.setId(CURRENTBRIGHT);
+        m_currentBright.setOnLongClickListener(this);
+        m_currentOpacity = new TextView(this);
+        m_currentOpacity.setId(CURRENTALPHA);
+        m_currentOpacity.setOnLongClickListener(this);
         saturationValue.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
