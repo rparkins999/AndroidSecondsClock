@@ -10,8 +10,8 @@
 //FIXME
 /* more hysteresis on lux value
    move gradually from system brightness to mine
-   see if can read system brightness when I'm setting it
-   if so, move gradually from my value ti systemn brightness
+   see if can read system brightness when I'm setting it - yes
+   if so, move gradually from my value ti system brightness
  */
 // FIXME Add option to only use opacity
 
@@ -19,9 +19,9 @@ package uk.co.yahoo.p1rpp.secondsclock;
 
 import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -37,19 +37,19 @@ import android.os.BatteryManager;
 import android.os.Handler;
 import android.provider.Settings;
 import android.text.format.DateFormat;
-import android.util.ArraySet;
+import android.util.IntProperty;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.Set;
 
 @SuppressLint("ViewConstructor")
 class ClockView extends LinearLayout implements SensorEventListener {
@@ -58,7 +58,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public String m_monthFormat = " ";
     public String m_timeFormat = " ";
     public String m_weekdayFormat = " ";
-
     private final TextView m_ampmView;
     private final Activity m_owner;
     private final TextView m_dateView;
@@ -68,19 +67,21 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final TextView m_monthdayView;
     private final TextView m_monthView;
     private final TextView m_secondsView;
+    private boolean m_visible;
     private final SensorManager m_sensorManager;
     private final SharedPreferences m_prefs;
     private final TextView m_timeView;
     private final TextView m_weekdayView;
     private final TextView m_yearView;
-
     private int m_fgcolour;
     private int m_height;
-    private float m_lightLevel;
     private float m_smoothedLightLevel; // prevent hunting
     private Sensor m_lightSensor;
-    private boolean m_visible;
-    private int m_secondsSize;
+
+    // Interpolator used for brightness animations.
+    private static final DecelerateInterpolator VALUE_ANIM_INTERPOLATOR =
+            new DecelerateInterpolator();
+    private int m_wanted;
 
     // Set the colour of all of our display objects.
     public void setColour(int colour) {
@@ -96,48 +97,201 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_yearView.setTextColor(colour);
     }
 
+    private void setLp (int value) {
+        Window w = m_owner.getWindow();
+        WindowManager.LayoutParams lp = w.getAttributes();
+        int sb = Settings.System.getInt(
+                m_owner.getContentResolver(),
+                Settings.System.SCREEN_BRIGHTNESS, 255);
+        if ((value == sb) && (value == m_wanted)) {
+            value = -255;
+        }
+        lp.screenBrightness = value / 255F;
+        w.setAttributes(lp);
+        if (m_owner instanceof ClockConfigureActivity) {
+            ((ClockConfigureActivity)m_owner).updateTexts(
+                    m_smoothedLightLevel, value, 255);
+        }
+    }
+
+    private Integer getLp() {
+        Window w = m_owner.getWindow();
+        WindowManager.LayoutParams lp = w.getAttributes();
+        return (int)(lp.screenBrightness * 255F);
+    }
+
+    // called by animator
+    private final IntProperty<ClockView> LP_VALUE =
+            new IntProperty<ClockView>("brightness") {
+                @Override
+                public void setValue(ClockView object, int value) {
+                    object.setLp(value);
+                }
+                @Override
+                public Integer get(ClockView object) {
+                    return object.getLp();
+                }
+            };
+
+    private void setOpacity(int value) {
+        m_fgcolour= (m_fgcolour & 0xFFFFFF) | value << 24;
+        setColour(m_fgcolour);
+        if (m_owner instanceof ClockConfigureActivity) {
+            Window w = m_owner.getWindow();
+            WindowManager.LayoutParams lp = w.getAttributes();
+            int lb = (int)(lp.screenBrightness * 255);
+            ((ClockConfigureActivity)m_owner).updateTexts(
+                    m_smoothedLightLevel, lb, value);
+        }
+    }
+    private Integer getOpacity() {
+        return (m_fgcolour >> 24) & 255;
+    }
+
+    // called by animator
+    private final IntProperty<ClockView> OPACITY_VALUE =
+            new IntProperty<ClockView>("opacity" ) {
+                @Override
+                public void setValue(ClockView object, int value) {
+                    object.setOpacity(value);
+                }
+                @Override
+                public Integer get(ClockView object) {
+                    return object.getOpacity();
+                }
+            };
+
     /* This adjusts the colour and brightness of the clock display.
      * It can be called from our configuration screen
      * or from onSensorChanged when the ambient light level changes.
      */
     @SuppressLint("ApplySharedPref")
     public void adjustColour() {
-        // This is the maximum screen brightness that we use at high lux levels.
-        int maxbright = m_prefs.getInt("CmaxBright", 100);
         // This is the ambient light level (in lux)
-        // above which we display at maximum brightness.
-        float threshold = m_prefs.getInt("Cthreshold", 0);
+        // above which we display at system brightness.
+        int threshold = m_prefs.getInt("Cthreshold", 0);
         // This is the minimum brightness at low lux levels.
         // The range is 0..100 because useful values are small.
-        // Adjusting opacity may make the display dimmer
+        // Adjusting opacity may make the display dimmer.
         int minbright = m_prefs.getInt("CminBright", 0);
-        // This is the minimum opacity at zero lux
-        int minalpha = m_prefs.getInt("Calpha", 0);
-        // This is a smoothed ambient light level to avoid hunting
-        m_smoothedLightLevel = (7F * m_smoothedLightLevel + m_lightLevel) / 8F;
-        m_prefs.edit().putFloat("Csmoothed", m_smoothedLightLevel).commit();
-        ContentResolver cr = m_owner.getContentResolver();
+        // This is the system brightness, possibly modified by
+        // the device's own auto-dimming
+        int sb = Settings.System.getInt(
+                m_owner.getContentResolver(),
+                Settings.System.SCREEN_BRIGHTNESS, 255);
+        /* If this is > 1.0, lux is above threshold and we should
+         * let the system set the screen brightness:
+         * otherwise it is the brightness value (0F .. 1F) that we want.
+         * In either case we may be still animating to get there.
+         */
         int alpha;
-        float brightness = m_smoothedLightLevel / threshold;
-        Window w = m_owner.getWindow();
-        WindowManager.LayoutParams lp = w.getAttributes();
+        int wb = getLp();
+        int onlyalpha = m_prefs.getInt("Conlyalpha", 0);
         if (m_smoothedLightLevel >= threshold) {
-            alpha = 255;
-            brightness = 1.0F;
-        } else if (brightness * 255F >= minbright) {
-            alpha = 255;
-            brightness = brightness;
+            // revert to system brightness
+            if (wb < 0) {
+                // already using system brightness
+                if (m_owner instanceof ClockConfigureActivity) {
+                    ((ClockConfigureActivity) m_owner).updateTexts(
+                            m_smoothedLightLevel, -255, 255);
+                }
+                return;
+            } else if (wb == sb) {
+                // Animation reached system brightness
+                setLp(-255);
+                if (m_owner instanceof ClockConfigureActivity) {
+                    ((ClockConfigureActivity) m_owner).updateTexts(
+                            m_smoothedLightLevel, -255, 255);
+                }
+                return;
+            } else {
+                // move smoothly to system brightness
+                m_wanted = sb;
+                alpha = 255;
+            }
         } else {
-            alpha = minalpha + (int)(255 * brightness * (255 - minalpha) / minbright);
-            brightness = minbright / 255F;
+            int bright = (int) ((m_smoothedLightLevel * sb) / threshold);
+            // This is the minimum transparency at low light level
+            // If it is 255, transparency is not used at all.
+            int minalpha = m_prefs.getInt("Calpha", 0);
+            if (onlyalpha != 0) {
+                // only controlling opacity
+                m_wanted = sb;
+                alpha = minalpha + (bright * (255 - minalpha)) / 255;
+            } else if ((minalpha == 255) || (bright >= minbright)) {
+                if (bright > sb) {
+                    // should be impossible
+                    // but can happen because of rounding errors
+                    m_wanted = sb;
+                } else {
+                    m_wanted = minbright + (
+                            (bright * (sb - minbright)) / 255);
+                }
+                alpha = 255;
+            } else {
+                m_wanted = minbright;
+                alpha = minalpha + (bright * (255 - minalpha)) / minbright;
+            }
         }
-        lp.screenBrightness = brightness;
-        m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
-        setColour((alpha << 24) | (m_fgcolour & 0xFFFFFF));
-        w.setAttributes(lp);
-        if (m_owner instanceof ClockConfigureActivity) {
-            ((ClockConfigureActivity)m_owner).updateTexts(
-                m_lightLevel, brightness, alpha);
+        long diff1;
+        if (wb < 0) {
+            Window w = m_owner.getWindow();
+            WindowManager.LayoutParams lp = w.getAttributes();
+            lp.screenBrightness = sb / 255F;
+            w.setAttributes(lp);
+            diff1 = m_wanted - sb;
+        } else {
+            diff1 = m_wanted - wb;
+        }
+        if (diff1 < 0) {
+            diff1 = -diff1;
+        }
+        long diff2;
+        diff2 = alpha - ((m_fgcolour >> 24) & 255);
+        if (diff2 < 0) {
+            diff2 = -diff2;
+        }
+        long difference;
+        if (diff1 > diff2) {
+            difference = 5 * diff1;
+        } else {
+            difference = 5 * diff2;
+        }
+        if (diff1 > 0) {
+            if (diff1 > 10) {
+                // Animator for smoothing changes in screen brightness
+                ObjectAnimator m_brightnessAnimator = ObjectAnimator.ofInt(
+                        this, LP_VALUE, getLp(), m_wanted);
+                m_brightnessAnimator.setAutoCancel(true);
+                m_brightnessAnimator.setDuration(difference);
+                m_brightnessAnimator.setInterpolator(VALUE_ANIM_INTERPOLATOR);
+                m_brightnessAnimator.start();
+            } else {
+                /* Small differences can occur if we are in the configure page
+                 * and one of the sliders is being animated. In this case we
+                 * want to go straight to the new value to avoid drag.
+                 */
+                setLp(m_wanted);
+            }
+        }
+        if (diff2 > 0) {
+            if (diff2 > 10) {
+                // Animator for smoothing changes in screen brightness
+                ObjectAnimator m_opacityAnimator = ObjectAnimator.ofInt(
+                        this, OPACITY_VALUE, getOpacity(), alpha);
+                m_opacityAnimator.setAutoCancel(true);
+                m_opacityAnimator.setDuration(difference);
+                m_opacityAnimator.setInterpolator(VALUE_ANIM_INTERPOLATOR);
+                m_opacityAnimator.start();
+            } else {
+                setOpacity(alpha);
+            }
+        }
+        if (diff1 + diff2 == 0) {
+            if (m_owner instanceof ClockConfigureActivity) {
+                ((ClockConfigureActivity) m_owner).updateTexts(
+                        m_smoothedLightLevel, m_wanted, alpha);
+            }
         }
     }
 
@@ -146,8 +300,16 @@ class ClockView extends LinearLayout implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
-            m_lightLevel = event.values[0];
-            adjustColour();
+            float lightLevel = event.values[0];
+            m_smoothedLightLevel =
+                    (7F * m_smoothedLightLevel + lightLevel) / 8F;
+            // Only call adjustColour() for significant changes
+            float ratio = lightLevel / m_prefs.getFloat("Csmoothed", 0);
+            if ((ratio < 0.99) || (ratio > 1.01)) {
+                m_prefs.edit().putFloat(
+                        "Csmoothed", m_smoothedLightLevel).commit();
+                adjustColour();
+            }
         }
     }
 
@@ -269,7 +431,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         removeAllViews(this);
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
-        m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
+        int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
         int showMonth = m_prefs.getInt("CshowMonth", 2); // long format
         int showMonthDay = m_prefs.getInt("CshowMonthDay",1);
         int showShortDate = m_prefs.getInt("CshowShortDate",0);
@@ -448,9 +610,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
             } else { // not horizontalTime
                 if (is24) {
                     m_hoursFormat = "HH";
-                    space += 2F + lsp;  // hours + minutes (fixed format)
+                    space += 2F + lsp; // hours 0-24
                 } else {
-                    m_hoursFormat = "KK";  // hours + minutes (fixed format) + AM/PM
+                    m_hoursFormat = "KK";  // hours 0-12
                     space += 3F * lsp;
                 }
             }
@@ -558,8 +720,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
             m_lightSensor = m_sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         }
         m_visible = false;
-        m_lightLevel = m_prefs.getFloat("Csmoothed", 0);
-        m_smoothedLightLevel = m_lightLevel;
         setOrientation(VERTICAL);
         updateLayout();
     }

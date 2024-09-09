@@ -237,6 +237,9 @@
         which is the light intensity seen by the front camera.</string>
     <string name="brighthelp">This shows the current screen brightness as
         computed by SecondsClock for the full screen clock.</string>
+    <string name="systembrighthelp">This shows the current system brightness
+        when SecondsClock is not overriding the screen brightness
+        for the full screen clock.</string>
     <string name="opacityhelp">This shows the current opacity as
         computed by SecondsClock for the full screen clock.
         This opacity is applied to the demo clock at the top left corner
@@ -254,17 +257,6 @@
         intermediate values from bottom to top show seconds of increasing size;
         all the way to the top shows seconds the same size as the hours and minutes.
     </string>
-    <string name="maxbrightlabel">Maximum brightness</string>
-    <string name="maxbrightsliderhelp">This slider adjusts the maximum
-        brightness of the full screen clock. See the README.md file for
-        an explanation of how this works.
-    </string>
-    <string name="maxbrightvaluehelp">This number shows the maximum brightness
-        of the full screen clock. See the README.md file for
-        an explanation of how this works. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
     <string name="minbrightlabel">Minimum brightness</string>
     <string name="minbrightsliderhelp">This slider adjusts the minimum
         brightness of the full screen clock. See the README.md file for
@@ -290,9 +282,11 @@
     <string name="thresholdlabel">Lux threshold</string>
     <string name="thresholdsliderhelp">This slider adjusts the ambient level in lux
         below which the full screen clock will reduce its brightness.
-        The maximum is 9999 lux, which is a bright day, but not in direct sunlight.
-        The scale is nonlinear in order to provide more resolution at lower
-        values where users are more likely to want to start dimming.
+        The maximum is 255 lux, which is a brightly lit room.
+        Maximumm lux levels in bright sunlight can be much higher
+        but users are unlikely to want to start dimmingin bright sunlight,
+        and a larger range would provide less resolution at values
+        likely to be useful.
     </string>
     <string name ="thresholdvaluehelp">This number shows the ambient level in lux
         below which the full screen clock will reduce its brightness.
@@ -300,7 +294,11 @@
         A single tap on the number will put the edit cursor where you tap;
         a double tap on the number will select the whole of it;
         a long tap on the number will display this message.</string>
-    <string name="currentlux">Current Lux level is %1d</string>
-    <string name="currentbright">Current screen brightness is %1d</string>
-    <string name="currentopacity">Current clock opacity is %1d</string>
+    <string name="onlyopacitylabel">Use only opacity for dimming</string>
+    <string name="onlyopacityhelp">Check this box to use only
+        the opacity for dimming. This saves power on OLED displays.</string>
+    <string name="currentlux">Current Lux level is %d</string>
+    <string name="currentbright">Current clock brightness is %d</string>
+    <string name="systembright">Current system brightness is %d</string>
+    <string name="currentopacity">Current clock opacity is %d</string>
 </resources>

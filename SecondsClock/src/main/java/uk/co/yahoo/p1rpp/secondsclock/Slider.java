@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022. Richard P. Parkins, M. A.
+ * Copyright © 2024. Richard P. Parkins, M. A.
  * Much of the code is copied from ProgressBar.java, AbsSeekBar.java,
  * and SeekBar.java,
  * which are Copyright (C) 2007 The Android Open Source Project
@@ -175,8 +175,6 @@ public class Slider extends View {
         invalidate();
     }
 
-    /** Duration of smooth progress animations. */
-    private static final int VALUE_ANIM_DURATION = 80;
     private ObjectAnimator mLastValueAnimator; // current value animator
     private final IntProperty<Slider> VISUAL_VALUE =
         new IntProperty<Slider>("thumbPos") {
@@ -1103,7 +1101,12 @@ public class Slider extends View {
             final ObjectAnimator animator =
                 ObjectAnimator.ofInt(this, VISUAL_VALUE, value);
             animator.setAutoCancel(true);
-            animator.setDuration(VALUE_ANIM_DURATION);
+            long difference = value - mValue;
+            if (difference < 0) {
+                difference = - difference;
+            }
+            // 1 second for whole length of slider
+            animator.setDuration(1000 * difference / (mMax - mMin));
             animator.setInterpolator(VALUE_ANIM_INTERPOLATOR);
             animator.addListener(new AnimatorListenerAdapter() {
                 @Override
