@@ -22,6 +22,8 @@ import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -93,7 +95,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private TextView m_currentBright;
     private TextView m_currentOpacity;
 
-    public void updateTexts(float lux, float bright, int alpha) {
+    public void updateTexts(float lux, int bright, int alpha) {
         if (m_currentView == DISPLAYBUTTON) {
             m_currentLux.setText(getString(R.string.currentlux, (int) lux));
             if (bright < 0) {
@@ -104,9 +106,8 @@ public class ClockConfigureActivity extends ConfigureActivity
                         settingsBrightness));
             } else {
                 m_currentBright.setText(getString(R.string.currentbright,
-                        (int) (bright * 255F)));
+                        bright));
             }
-            m_currentBright.setText(getString(R.string.currentbright, (int) (bright * 255)));
             m_currentOpacity.setText(getString(R.string.currentopacity, alpha));
         }
     }
@@ -144,7 +145,15 @@ public class ClockConfigureActivity extends ConfigureActivity
             case DISPLAYBUTTON: doToast(R.string.setdisplayhelp); return true;
             case DIMBUTTON: doToast(R.string.setdimminghelp); return true;
             case CURRENTLUX: doToast(R.string.luxhelp); return true;
-            case CURRENTBRIGHT: doToast(R.string.brighthelp); return true;
+            case CURRENTBRIGHT:
+                Window w = getWindow();
+                WindowManager.LayoutParams lp = w.getAttributes();
+                if (lp.screenBrightness >= 0) {
+                    doToast(R.string.brighthelp);
+                } else {
+                    doToast(R.string.systembrighthelp);
+                }
+                return true;
             case CURRENTALPHA: doToast(R.string.opacityhelp); return true;
             case ONLYOPACITY: doToast(R.string.onlyopacityhelp); return true;
         }
@@ -367,9 +376,11 @@ public class ClockConfigureActivity extends ConfigureActivity
             layoutParams.height = 0;
             gl.addView(scrollView, -1, layoutParams);
             layoutParams = new GridLayout.LayoutParams(
-                    GridLayout.spec(0, 1),
+                    GridLayout.spec(0, 1, 1f),
                     GridLayout.spec(1, 1, 1F)
             );
+            layoutParams.width = m_width / 2;
+            layoutParams.height = 0;
             gl.addView(lButtons, -1, layoutParams);
         }
         m_topLayout.addView(gl);
@@ -933,5 +944,6 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_fgcolour = m_prefs.getInt(m_key + "fgcolour", 0xFFFFFFFF);
         getDatePrefs();
         setCurrentView(m_prefs.getInt("Cview", DATABUTTON));
+        m_clockView.adjustColour();
     }
 }
