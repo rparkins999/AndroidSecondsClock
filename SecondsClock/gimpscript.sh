@@ -5,7 +5,7 @@ gimp -i -b - <<end
 ; White on black, not black on white
 (gimp-context-swap-colors)
 ; Create object 2 as a text layer in that image
-(gimp-text-layer-new 1 "20:04:56\n$1\n12\nSeptember\n2024" "arial" 25 0)
+(gimp-text-layer-new 1 "$1\n$2\n$3\n$4\n$5" "arial" 25 0)
 ; Add the layer to the image
 (gimp-image-insert-layer 1 2 0 0)
 ; Centre the text
@@ -17,7 +17,7 @@ gimp -i -b - <<end
 ; Froce width to fit image width
 (gimp-layer-resize-to-image-size 2)
 ; Export the icon
-(file-png-save 1 1 2 "ic_launcher.png" "ic_launcher.png" 0 0 0 0 0 0 0)
+(file-png-save 1 1 2 "src/main/res/drawable/ic_launcher.png" "src/main/res/drawable/ic_launcher.png" 0 0 0 0 0 0 0)
 ; Exit
 (gimp-quit TRUE)
 end

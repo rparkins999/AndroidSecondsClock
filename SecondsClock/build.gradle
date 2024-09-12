@@ -6,6 +6,7 @@ plugins {
     id 'com.android.application'
 }
 
+// git data for timestamp in code
 def gitdata1 = new ByteArrayOutputStream()
 def gitdata2 = new ByteArrayOutputStream()
 def gitdata3 = new ByteArrayOutputStream()
@@ -24,6 +25,21 @@ exec {
 exec {
     commandLine "git", "branch", "--show-current"
     standardOutput = gitdata3
+}
+
+// Create icon with current tiem and date
+//*/
+// change this line to /* if GIMP is not available
+exec {
+    commandLine "date", "+./gimpscript.sh %X %A %-e %B %Y"
+    standardOutput = new FileOutputStream(rootProject.file("gimpcommand"))
+}
+exec {
+    ignoreExitValue true
+    commandLine "chmod", "a+x", "../gimpcommand"
+}
+exec {
+    commandLine "../gimpcommand"
 }
 //*/
 
