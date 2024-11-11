@@ -1,0 +1,1 @@
+Make the app icon show its build time and date
