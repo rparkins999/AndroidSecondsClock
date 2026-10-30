@@ -1,0 +1,7 @@
+# Local machine configuration and generated Android build output
+local/
+local.properties
+**/build/
+.gradle/
+.idea/
+*.iml
