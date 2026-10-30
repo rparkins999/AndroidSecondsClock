@@ -27,21 +27,8 @@ exec {
     standardOutput = gitdata3
 }
 
-// Create icon with current tiem and date
-//*/
-// change this line to /* if GIMP is not available
-exec {
-    commandLine "date", "+./gimpscript.sh %X %A %-e %B %Y"
-    standardOutput = new FileOutputStream(rootProject.file("gimpcommand"))
-}
-exec {
-    ignoreExitValue true
-    commandLine "chmod", "a+x", "../gimpcommand"
-}
-exec {
-    commandLine "../gimpcommand"
-}
-//*/
+// Launcher icon is checked in at src/main/res/drawable/ic_launcher.png and
+// rasterized from seconds-clock-icon.svg in this module directory.
 
 // Update these three to make new version
 def VERSIONCODE = 9

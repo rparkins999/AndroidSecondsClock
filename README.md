@@ -23,6 +23,13 @@ Each widget (there can be more than one), and the night clock, can be configured
     2. the month name in short or long locale-appropriate format,
     3. the (Gregorian) year number
 
+## Launcher icon
+
+The editable artwork is `SecondsClock/seconds-clock-icon.svg`. The Android
+launcher PNG (`SecondsClock/src/main/res/drawable/ic_launcher.png`) and the
+144×144 F-Droid metadata icon are rasterized from it with `rsvg-convert`. The
+checked-in PNG is used directly; Gradle does not regenerate it.
+
 Displaying the seconds in a widget will increase battery drain because the widget has to update itself
 every second, but it doesn't update when the widget isn't visible. The night clock is intended
 to be run with the device connected to a charger and will keep the screen on if it is.
