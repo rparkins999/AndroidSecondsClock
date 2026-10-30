@@ -89,6 +89,36 @@
         display the time in locale-appropriate format including seconds.
         This will increase battery drain since the widget has to update itself
         every second.</string>
+    <string name="widget_format_label">Widget text format</string>
+    <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
+    <string name="widget_format_caption">Use date-style tokens; tap the buttons below to insert them.</string>
+    <string name="widget_format_help" formatted="false">Enter a date-command-style format. Type a real newline to start another line. Common conversions: %a/%A weekday name, %b/%B month name, %d day, %m month number, %Y year, %F ISO date, %H 24-hour, %I 12-hour, %M minute, %S second, %p AM/PM, %x localized date, %X localized time, %n newline, and %% a literal percent.\n\n%&lt; starts an optional alarm section; %&gt; ends it. The section is shown only when Android reports a next alarm. Conversions inside it use the alarm time; conversions outside use the current time.</string>
+    <string name="widget_format_guide_title">Build your own widget text</string>
+    <string name="widget_format_guide_hint">Tap a token to insert it at the cursor. Press Enter to add a line. Tokens are case-sensitive.</string>
+    <string name="widget_format_time_section">Time</string>
+    <string name="widget_format_date_section">Date</string>
+    <string name="widget_format_other_section">Other</string>
+    <string name="widget_format_alarm_section">Alarm</string>
+    <string name="format_token_hour24" formatted="false">24-hour hour (%H)</string>
+    <string name="format_token_hour12" formatted="false">12-hour hour (%I)</string>
+    <string name="format_token_minute" formatted="false">Minute (%M)</string>
+    <string name="format_token_second" formatted="false">Second (%S)</string>
+    <string name="format_token_ampm" formatted="false">AM/PM (%p)</string>
+    <string name="format_token_short_weekday" formatted="false">Short weekday (%a)</string>
+    <string name="format_token_full_weekday" formatted="false">Full weekday (%A)</string>
+    <string name="format_token_short_month" formatted="false">Short month (%b)</string>
+    <string name="format_token_full_month" formatted="false">Full month (%B)</string>
+    <string name="format_token_day" formatted="false">Day, zero-padded (%d)</string>
+    <string name="format_token_day_unpadded" formatted="false">Day, unpadded (%e)</string>
+    <string name="format_token_month" formatted="false">Month number (%m)</string>
+    <string name="format_token_year" formatted="false">Year (%Y)</string>
+    <string name="format_token_iso_date" formatted="false">ISO date (%F)</string>
+    <string name="format_token_local_date" formatted="false">Localized date (%x)</string>
+    <string name="format_token_local_time" formatted="false">Localized time (%X)</string>
+    <string name="format_token_newline" formatted="false">Newline (%n)</string>
+    <string name="format_token_percent" formatted="false">Literal percent (%%)</string>
+    <string name="format_token_alarm" formatted="false">Insert alarm block (%&lt;…%&gt;)</string>
+    <string name="widget_format_alarm_hint">The alarm block appears only when Android reports a next alarm. Tokens inside it use the alarm time. Put any line breaks inside the markers.</string>
     <string name="show_short_weekday">Show abbreviated day name
         in %1s.</string>
     <string name="showshortweekdayhelp">If this box is checked, the %1s will

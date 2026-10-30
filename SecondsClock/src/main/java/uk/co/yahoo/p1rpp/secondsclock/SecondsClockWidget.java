@@ -18,9 +18,11 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -39,12 +41,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
     void updateAppWidget(
         Context context, AppWidgetManager appWidgetManager, int appWidgetId)
     {
-        int showTime;
-        int showWeekDay;
-        int showShortDate;
-        int showMonthDay;
-        int showMonth;
-        int showYear;
+        String format;
         int bgcolour;
         int fgcolour;
         int touchaction;
@@ -55,43 +52,27 @@ public class SecondsClockWidget extends AppWidgetProvider {
         String thisWidget = "[" + String.valueOf(appWidgetId) + "]";
         if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
             // Get the preferences for this widget.
-            showTime =
-                prefs.getInt(key + "showTime", 2); // include seconds
-            showWeekDay =
-                prefs.getInt(key + "showWeekDay", 2); // long format
-            showShortDate = prefs.getInt(key + "showShortDate", 0);
-            showMonthDay =
-                prefs.getInt(key + "showMonthDay", 1);
-            showMonth =
-                prefs.getInt(key + "showMonth", 2); // long format
-            showYear = prefs.getInt(key + "showYear", 1);
+            format = prefs.getString(key + "format", null);
+            if (format == null) {
+                format = Formatter.fromLegacyPreferences(context, prefs, key);
+            }
             bgcolour = prefs.getInt(key + "bgcolour", 0x00000000);
             fgcolour = prefs.getInt(key + "fgcolour",0xFFFFFFFF);
             touchaction = prefs.getInt(key + "touchaction", 0);
         } else {
             // New widget, add to list and set its preferences
             // to the new widget defaults.
-            showTime =
-                prefs.getInt("WshowTime", 2); // include seconds
-            showWeekDay =
-                prefs.getInt("WshowWeekDay", 2); // long format
-            showShortDate = prefs.getInt("WshowShortDate", 0);
-            showMonthDay =
-                prefs.getInt("WshowMonthDay", 1);
-            showMonth = prefs.getInt("WshowMonth", 2); // long format
-            showYear = prefs.getInt("WshowYear", 1);
+            format = prefs.getString("Wformat", null);
+            if (format == null) {
+                format = Formatter.fromLegacyPreferences(context, prefs, "W");
+            }
             bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
             fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
             touchaction = prefs.getInt("Wtouchaction", 0);
             widgetIds += thisWidget;
             prefs.edit()
                  .putString("widgetIds", widgetIds)
-                 .putInt(key + "showTime", showTime)
-                 .putInt(key + "showWeekDay", showWeekDay)
-                 .putInt(key + "showShortDate", showShortDate)
-                 .putInt(key + "showMonthDay", showMonthDay)
-                 .putInt(key + "showMonth", showMonth)
-                 .putInt(key + "showYear", showYear)
+                 .putString(key + "format", format)
                  .putInt(key + "bgcolour", bgcolour)
                  .putInt(key + "fgcolour", fgcolour)
                  .putInt(key + "touchaction", touchaction)
@@ -116,11 +97,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
         // */
 
         Formatter f = new Formatter();
-        // If showShortDate is not zero,
-        // showMonthDay, showMonth, and showYear must all be zero.
-        f.set(context, minWidth, maxHeight,
-            showTime, showWeekDay, showShortDate,
-            showMonthDay, showMonth, showYear);
+        f.set(format, Formatter.getNextAlarmTime(context));
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews
             (context.getPackageName(), R.layout.seconds_clock_widget);
@@ -192,13 +169,22 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Toast.makeText(context, intent.getAction(),
             Toast.LENGTH_LONG).show();
         // */
-        if (Objects.equals(intent.getAction(),
-                "uk.co.yahoo.p1rpp.UpdateWidget"))
-        {
+        String action = intent.getAction();
+        if (Objects.equals(action, "uk.co.yahoo.p1rpp.UpdateWidget")) {
             AppWidgetManager appWidgetManager =
                     AppWidgetManager.getInstance(context);
             onUpdate(context, appWidgetManager,
             intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+        } else if (Objects.equals(action,
+                    AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED)
+                || Objects.equals(action, Intent.ACTION_TIME_CHANGED)
+                || Objects.equals(action, Intent.ACTION_DATE_CHANGED)
+                || Objects.equals(action, Intent.ACTION_TIMEZONE_CHANGED)) {
+            AppWidgetManager appWidgetManager =
+                    AppWidgetManager.getInstance(context);
+            int[] widgetIds = appWidgetManager.getAppWidgetIds(
+                    new ComponentName(context, SecondsClockWidget.class));
+            onUpdate(context, appWidgetManager, widgetIds);
         } else {
             super.onReceive(context, intent);
         }

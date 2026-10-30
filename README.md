@@ -23,6 +23,26 @@ Each widget (there can be more than one), and the night clock, can be configured
     2. the month name in short or long locale-appropriate format,
     3. the (Gregorian) year number
 
+## Widget format
+
+The widget can be customized with a multiline, `date`-style format string. Common conversions include
+`%H` (24-hour), `%I` (12-hour), `%M` (minute), `%S` (second), `%p` (AM/PM), `%a`/`%A` (weekday),
+`%b`/`%B` (month), `%d` (day), `%m` (month number), `%Y` (year), `%F` (ISO date), `%x` (localized
+date), `%X` (localized time), `%n` (newline), and `%%` (literal `%`). Actual newlines can also be
+entered directly. The widget's former checkbox settings are carried forward as the initial format.
+
+Use `%<` and `%>` to bracket optional alarm text. For example:
+
+```text
+%S%<
+Alarm: %H:%M%>
+```
+
+That block appears only when Android reports a next alarm; date/time conversions inside it use that
+alarm's time, while conversions outside use the current time. Seconds continue to update through
+Android's `TextClock`. The alarm time comes from `AlarmManager.getNextAlarmClock()`, which exposes
+the next alarm-clock timestamp reported by installed clock apps; it does not expose an alarm label.
+
 ## Launcher icon
 
 The editable artwork is `SecondsClock/seconds-clock-icon.svg`. The Android
