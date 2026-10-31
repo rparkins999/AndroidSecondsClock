@@ -22,6 +22,8 @@ import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -36,7 +38,11 @@ import android.hardware.SensorManager;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.provider.Settings;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.format.DateFormat;
+import android.text.style.MetricAffectingSpan;
 import android.util.IntProperty;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -46,10 +52,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
+import android.widget.TextClock;
 import android.widget.TextView;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 @SuppressLint("ViewConstructor")
 class ClockView extends LinearLayout implements SensorEventListener {
@@ -59,6 +68,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public String m_timeFormat = " ";
     public String m_weekdayFormat = " ";
     private final TextView m_ampmView;
+    private final TextView m_alarmView;
     private final Activity m_owner;
     private final TextView m_dateView;
     private final Handler m_handler = new Handler();
@@ -73,8 +83,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final TextView m_timeView;
     private final TextView m_weekdayView;
     private final TextView m_yearView;
+    private TextClock m_customClockView;
+    private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
     private int m_height;
+    private Typeface m_sevenSegmentTypeface;
     private float m_smoothedLightLevel; // prevent hunting
     private Sensor m_lightSensor;
 
@@ -83,9 +96,21 @@ class ClockView extends LinearLayout implements SensorEventListener {
             new DecelerateInterpolator();
     private int m_wanted;
 
+    private final BroadcastReceiver m_clockChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (m_customClockView != null) {
+                updateCustomClockFormat();
+            } else if (m_prefs.getBoolean("CshowNextAlarm", false)) {
+                updateLayout();
+            }
+        }
+    };
+
     // Set the colour of all of our display objects.
     public void setColour(int colour) {
         m_ampmView.setTextColor(colour);
+        m_alarmView.setTextColor(colour);
         m_dateView.setTextColor(colour);
         m_hoursView.setTextColor(colour);
         m_minutesView.setTextColor(colour);
@@ -95,6 +120,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_timeView.setTextColor(colour);
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
+        if (m_customClockView != null) m_customClockView.setTextColor(colour);
     }
 
     private void setLp (int value) {
@@ -340,6 +366,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     private Calendar updateTime() {
         Calendar next = Calendar.getInstance(); // new one in case time zone changed
+        if (m_customClockView != null) {
+            return next;
+        }
         /* Once per minute, we check if we're connected to a charger:
          * if so, we keep the screen on.
          */
@@ -374,7 +403,44 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_secondsView.setText(DateFormat.format("ss", next));
         m_weekdayView.setText(DateFormat.format(m_weekdayFormat, next));
         m_yearView.setText(DateFormat.format("yyyy", next));
+        if (m_prefs.getBoolean("CshowNextAlarm", false)) {
+            m_alarmView.setText(formatNextAlarm(
+                    Formatter.getNextAlarmTime(m_owner)));
+        }
         return next;
+    }
+
+    private CharSequence formatNextAlarm(Long triggerTime) {
+        String text = AlarmDisplayFormat.format(
+                triggerTime,
+                m_owner.getString(R.string.clock_alarm_prefix),
+                Locale.getDefault(),
+                TimeZone.getDefault());
+        if (text.isEmpty() || m_sevenSegmentTypeface == null) return text;
+        int timeStart = text.lastIndexOf(", ") + 2;
+        if (timeStart < 2 || timeStart >= text.length()) return text;
+        SpannableString styled = new SpannableString(text);
+        styled.setSpan(new TypefaceMetricSpan(m_sevenSegmentTypeface),
+                timeStart, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return styled;
+    }
+
+    private static final class TypefaceMetricSpan extends MetricAffectingSpan {
+        private final Typeface typeface;
+
+        TypefaceMetricSpan(Typeface typeface) {
+            this.typeface = typeface;
+        }
+
+        @Override
+        public void updateDrawState(TextPaint textPaint) {
+            textPaint.setTypeface(typeface);
+        }
+
+        @Override
+        public void updateMeasureState(TextPaint textPaint) {
+            textPaint.setTypeface(typeface);
+        }
     }
 
     private final Runnable m_ticker = new Runnable() {
@@ -401,6 +467,24 @@ class ClockView extends LinearLayout implements SensorEventListener {
     };
 
     public void setHeight (int height) { m_height = height; }
+
+    private void updateCustomClockFormat() {
+        if (m_customClockView == null) return;
+        Configuration config = getResources().getConfiguration();
+        String sync = m_prefs.getString("Cformat",
+                Formatter.fromClockPreferences(m_owner, m_prefs, "C"));
+        String format = FormatProfiles.clockFormat(
+                sync,
+                m_prefs.getString("CformatPortrait", null),
+                m_prefs.getString("CformatLandscape", null),
+                m_prefs.getBoolean("CformatSyncEnabled", true),
+                config.orientation == Configuration.ORIENTATION_LANDSCAPE);
+        Formatter formatter = new Formatter();
+        formatter.set(format, Formatter.getNextAlarmTime(m_owner));
+        m_customClockView.setFormat12Hour(formatter.time12);
+        m_customClockView.setFormat24Hour(formatter.time24);
+        m_customClockView.setLines(formatter.lines);
+    }
 
     // recursive version
     void removeAllViews(View v) {
@@ -429,6 +513,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     public void updateLayout() {
         removeAllViews(this);
+        m_customClockView = null;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
         int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
@@ -438,6 +523,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         int showWeekDay = m_prefs.getInt(
             "CshowWeekDay",2); // long format
         int showYear = m_prefs.getInt("CshowYear", 1);
+        boolean advancedFormatMode =
+                m_prefs.getBoolean("CadvancedFormatMode", false);
         m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
         Typeface font;
         float lsp = 1.0F;
@@ -449,19 +536,41 @@ class ClockView extends LinearLayout implements SensorEventListener {
              */
             font = Typeface.createFromAsset(
             m_owner.getAssets(), "DSEG7Classic-BoldItalic.ttf");
+            m_sevenSegmentTypeface = font;
             // The seven segment font has no line spacing....
             lsp = 1.1F;
         } else {
             font = Typeface.DEFAULT;
+            m_sevenSegmentTypeface = null;
         }
         m_ampmView.setTypeface(font);
         m_hoursView.setTypeface(font);
         m_minutesView.setTypeface(font);
         m_secondsView.setTypeface(font);
         m_timeView.setTypeface(font);
+        m_alarmView.setTypeface(Typeface.DEFAULT);
         boolean m_haveDate =
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
+        if (advancedFormatMode) {
+            m_customClockView = new TextClock(m_owner);
+            m_customClockView.setGravity(Gravity.CENTER);
+            m_customClockView.setTypeface(font);
+            m_customClockView.setTextColor(m_fgcolour);
+            m_customClockView.setAutoSizeTextTypeUniformWithConfiguration(
+                    10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
+            m_customClockView.setSingleLine(false);
+            updateCustomClockFormat();
+            addView(m_customClockView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            m_ticker.run();
+            return;
+        }
+        Long checkboxAlarmTime = m_prefs.getBoolean("CshowNextAlarm", false)
+                ? Formatter.getNextAlarmTime(m_owner) : null;
+        boolean showAlarmLine = checkboxAlarmTime != null;
+        if (showAlarmLine) m_alarmView.setText(formatNextAlarm(checkboxAlarmTime));
         LinearLayout ll = new LinearLayout(m_owner);
         float timeWidth;
         float secondsWidth;
@@ -505,8 +614,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
                             ampmWidth));
                 }
             }
+            float timeWeight = showAlarmLine
+                    ? (m_haveDate ? 0.75F : 0.85F) : 0.85F;
             addView(ll, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.85F));
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, timeWeight));
             if (m_haveDate) {
                 boolean first = true;
                 StringBuilder sb = new StringBuilder();
@@ -556,7 +667,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 }
                 m_dateFormat = sb.toString();
                 addView(m_dateView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.15F));
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0,
+                        showAlarmLine ? 0.125F : 0.15F));
+            }
+            if (showAlarmLine) {
+                addView(m_alarmView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0,
+                        m_haveDate ? 0.125F : 0.15F));
             }
         } else { // assume PORTRAIT
             setOrientation(VERTICAL);
@@ -623,6 +740,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
             if (showMonth == 1) { space += 1F; m_monthFormat = "LLL"; }
             else if (showMonth == 2) { space += 1F; m_monthFormat = "LLLL"; }
             if (showYear != 0) { space += 1F; }
+            if (showAlarmLine) { space += 1F; }
             // now add the views
             if (horizontalTime) {
                 addView(ll, new LinearLayout.LayoutParams(
@@ -685,6 +803,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
                         (int) (m_height / space)));
                 }
             }
+            if (showAlarmLine) {
+                addView(m_alarmView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (int) (m_height / space)));
+            }
         }
         m_ticker.run();
     }
@@ -704,6 +827,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         setBackgroundColor(0xFF000000);
         m_owner = context;
         m_ampmView = createInstance();
+        m_alarmView = createInstance();
         m_dateView = createInstance();
         m_hoursView = createInstance();
         m_minutesView = createInstance();
@@ -737,10 +861,21 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     m_sensorManager.registerListener(
                         this, m_lightSensor, 1000000);
                 }
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED);
+                filter.addAction(Intent.ACTION_TIME_CHANGED);
+                filter.addAction(Intent.ACTION_DATE_CHANGED);
+                filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+                m_owner.registerReceiver(m_clockChangeReceiver, filter);
+                m_clockReceiverRegistered = true;
                 m_ticker.run();
             } else {
                 m_handler.removeCallbacks(m_ticker);
                 m_sensorManager.unregisterListener(this);
+                if (m_clockReceiverRegistered) {
+                    m_owner.unregisterReceiver(m_clockChangeReceiver);
+                    m_clockReceiverRegistered = false;
+                }
             }
         }
     }

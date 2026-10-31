@@ -58,6 +58,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private LinearLayout demobox;
     private LinearLayout demoboxbox;
     private EditText formatInput;
+    private TextView formatLabel;
     private Button formatModeButton;
     private Button syncFormatButton;
     private Button horizontalFormatButton;
@@ -112,7 +113,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case SHOWTIME: doToast(R.string.showtimehelp); return true;
             case SHOWSECONDS: doToast(R.string.showsecondshelp); return true;
             case FORMATHELP: doToast(R.string.widget_format_help); return true;
-            case NEXTALARM: doToast(R.string.widget_alarm_source_help); return true;
+            case NEXTALARM: doToast(R.string.next_alarm_source_help); return true;
             case FORMATMODE: doToast(R.string.widgetconfighelp); return true;
             case DONEBUTTON: doToast(R.string.donehelp); return true;
             case SETTEXTCOLOUR: doToast(R.string.setfgcolourhelp); return true;
@@ -314,9 +315,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 setCurrentView(CONFIGURE);
                 break;
             case FORMATPROFILE_SYNC:
+                selectFormatProfile(FormatProfiles.SYNC);
+                break;
             case FORMATPROFILE_HORIZONTAL:
+                selectFormatProfile(FormatProfiles.HORIZONTAL);
+                break;
             case FORMATPROFILE_VERTICAL:
-                selectFormatProfile(v.getId());
+                selectFormatProfile(FormatProfiles.VERTICAL);
                 break;
             case DONEBUTTON:
                 if (m_currentView == CONFIGURE) {
@@ -374,24 +379,30 @@ public class WidgetConfigureActivity extends ConfigureActivity
             formatInput.setSelection(formatInput.length());
             changingFormatInput = false;
         }
-        updateProfileButtonStates();
+        updateFormatLabel();
         updateWidget();
         updateDemo();
     }
 
-    private void updateProfileButtonStates() {
+    private void updateFormatLabel() {
         if (syncFormatButton != null) {
-            boolean syncSelected = formatProfile == FormatProfiles.SYNC;
-            boolean horizontalSelected =
-                    formatProfile == FormatProfiles.HORIZONTAL;
-            boolean verticalSelected = formatProfile == FormatProfiles.VERTICAL;
-            syncFormatButton.setSelected(syncSelected);
-            horizontalFormatButton.setSelected(horizontalSelected);
-            verticalFormatButton.setSelected(verticalSelected);
-            syncFormatButton.setAlpha(syncSelected ? 1.0F : 0.65F);
-            horizontalFormatButton.setAlpha(horizontalSelected ? 1.0F : 0.65F);
-            verticalFormatButton.setAlpha(verticalSelected ? 1.0F : 0.65F);
+            FormatProfileSelection.apply(
+                    syncFormatButton, formatProfile == FormatProfiles.SYNC);
+            FormatProfileSelection.apply(
+                    horizontalFormatButton,
+                    formatProfile == FormatProfiles.HORIZONTAL);
+            FormatProfileSelection.apply(
+                    verticalFormatButton,
+                    formatProfile == FormatProfiles.VERTICAL);
         }
+        if (formatLabel == null) return;
+        int profileLabel = formatProfile == FormatProfiles.HORIZONTAL
+                ? R.string.format_profile_horizontal
+                : formatProfile == FormatProfiles.VERTICAL
+                        ? R.string.format_profile_vertical
+                        : R.string.format_profile_sync;
+        formatLabel.setText(getString(R.string.widget_format_label)
+                + " (" + getString(profileLabel) + ")");
     }
 
     private Button makeProfileButton(int id, int label) {
@@ -412,12 +423,22 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 FORMATPROFILE_HORIZONTAL, R.string.format_profile_horizontal);
         verticalFormatButton = makeProfileButton(
                 FORMATPROFILE_VERTICAL, R.string.format_profile_vertical);
-        LinearLayout.LayoutParams weight = new LinearLayout.LayoutParams(
+        LinearLayout orientationProfiles = new LinearLayout(this);
+        orientationProfiles.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams horizontalParams = new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F);
-        profiles.addView(syncFormatButton, weight);
-        profiles.addView(horizontalFormatButton, weight);
-        profiles.addView(verticalFormatButton, weight);
-        updateProfileButtonStates();
+        horizontalParams.rightMargin = -(int)(4 * m_density);
+        orientationProfiles.addView(horizontalFormatButton, horizontalParams);
+        orientationProfiles.addView(verticalFormatButton,
+                new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F));
+        LinearLayout.LayoutParams syncParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F);
+        syncParams.rightMargin = (int)(4 * m_density);
+        profiles.addView(syncFormatButton, syncParams);
+        profiles.addView(orientationProfiles, new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 2.0F));
+        updateFormatLabel();
         return profiles;
     }
 
@@ -529,7 +550,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         editor.addView(showYearCheckBox, lpWrapWrap);
         editor.addView(showNextAlarmCheckBox, lpWrapWrap);
         TextView alarmHelp = new TextView(this);
-        alarmHelp.setText(R.string.widget_alarm_source_help);
+        alarmHelp.setText(R.string.next_alarm_source_help);
         editor.addView(alarmHelp, lpMatchWrap);
         return editor;
     }
@@ -538,7 +559,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         LinearLayout editor = new LinearLayout(this);
         editor.setOrientation(LinearLayout.VERTICAL);
         TextView label = new TextView(this);
-        label.setText(R.string.widget_format_label);
+        formatLabel = label;
+        updateFormatLabel();
         label.setId(FORMATHELP);
         label.setLabelFor(FORMATFIELD);
         label.setOnLongClickListener(this);
@@ -922,6 +944,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (formatProfile < FormatProfiles.SYNC
                 || formatProfile > FormatProfiles.VERTICAL) {
             formatProfile = FormatProfiles.SYNC;
+            m_prefs.edit()
+                    .putInt(m_key + "formatProfile", FormatProfiles.SYNC)
+                    .putBoolean(m_key + "formatSyncEnabled", true)
+                    .apply();
         }
         widgetFormat = m_prefs.getString(m_key + "format", null);
         if (widgetFormat == null) {

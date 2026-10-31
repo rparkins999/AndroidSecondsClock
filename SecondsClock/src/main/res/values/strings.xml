@@ -90,8 +90,7 @@
         This will increase battery drain since the widget has to update itself
         every second.</string>
     <string name="show_next_alarm_any_app">Show next alarm (any alarm app)</string>
-    <string name="next_alarm_display_format" formatted="false">Alarm: %H:%M</string>
-    <string name="widget_alarm_source_help">This shows Android\'s reported next alarm-clock alarm. It may have been set by any alarm app, not only your default clock app.</string>
+    <string name="next_alarm_source_help">Android reports the next alarm-clock alarm from any app, not necessarily your default clock app. Checkbox mode displays it as ALM: Mon, 3:30.</string>
     <string name="advanced_format_mode">Advanced formatting mode</string>
     <string name="checkbox_mode">Checkbox mode</string>
     <string name="format_profile_sync">Sync</string>
@@ -99,12 +98,13 @@
     <string name="format_profile_vertical">Vertical</string>
     <string name="format_profile_portrait">Portrait</string>
     <string name="format_profile_landscape">Landscape</string>
-    <string name="widget_format_profile_hint">Sync uses one format for both shapes. Horizontal and Vertical are selected from the widget\'s reported dimensions. You control line breaks; the text still scales to fit.</string>
+    <string name="widget_format_profile_hint">Select a tab to edit that format. Sync uses one format for both shapes; Horizontal and Vertical are selected automatically from the widget\'s reported dimensions. New shape formats start from Sync. You control line breaks; the text still scales to fit.</string>
     <string name="clock_format_label">Full-screen clock format</string>
     <string name="clock_format_caption">Custom format is optional. Checkbox mode keeps the automatic layout.</string>
     <string name="clock_format_guide_title">Build your full-screen clock text</string>
-    <string name="clock_format_guide_hint">Tap tokens to insert them. Sync shares one format; Portrait and Landscape can be edited separately.</string>
+    <string name="clock_format_guide_hint">Tap tokens to insert them. Select a tab to edit that format. Sync shares one format; Portrait and Landscape are selected automatically by screen orientation and can be edited separately. New orientation formats start from Sync.</string>
     <string name="clock_format_seconds_help" formatted="false">In advanced mode, include or omit %S in the format to control seconds. The separate seconds-size slider applies in checkbox mode.</string>
+    <string name="clock_alarm_prefix">ALM:</string>
     <string name="widget_format_label">Widget text format</string>
     <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
     <string name="widget_format_caption">Use date-style tokens; tap the buttons below to insert them.</string>

@@ -19,11 +19,13 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -76,6 +78,12 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int CURRENTBRIGHT = CURRENTLUX + 1;
     private static final int CURRENTALPHA = CURRENTBRIGHT + 1;
     private static final int ONLYOPACITY = CURRENTALPHA + 1;
+    private static final int FORMATMODE = ONLYOPACITY + 1;
+    private static final int FORMATPROFILE_SYNC = FORMATMODE + 1;
+    private static final int FORMATPROFILE_PORTRAIT = FORMATPROFILE_SYNC + 1;
+    private static final int FORMATPROFILE_LANDSCAPE = FORMATPROFILE_PORTRAIT + 1;
+    private static final int FORMATFIELD = FORMATPROFILE_LANDSCAPE + 1;
+    private static final int SHOW_NEXT_ALARM = FORMATFIELD + 1;
 
     // Conversion between threshold slider and numeric value
     private int m_fgcolour;
@@ -94,6 +102,15 @@ public class ClockConfigureActivity extends ConfigureActivity
     private TextView m_currentLux;
     private TextView m_currentBright;
     private TextView m_currentOpacity;
+    private boolean m_advancedFormatMode;
+    private boolean m_changingFormatInput;
+    private int m_formatProfile = FormatProfiles.SYNC;
+    private EditText m_formatInput;
+    private TextView m_formatLabel;
+    private Button m_formatModeButton;
+    private Button m_syncFormatButton;
+    private Button m_portraitFormatButton;
+    private Button m_landscapeFormatButton;
 
     public void updateTexts(float lux, int bright, int alpha) {
         if (m_currentView == DISPLAYBUTTON) {
@@ -110,6 +127,236 @@ public class ClockConfigureActivity extends ConfigureActivity
             }
             m_currentOpacity.setText(getString(R.string.currentopacity, alpha));
         }
+    }
+
+    private String clockFormatPreferenceForProfile(int profile) {
+        if (profile == FormatProfiles.PORTRAIT) return "CformatPortrait";
+        if (profile == FormatProfiles.LANDSCAPE) return "CformatLandscape";
+        return "Cformat";
+    }
+
+    private String getClockFormatForProfile(int profile) {
+        String sync = m_prefs.getString(
+                "Cformat", Formatter.fromClockPreferences(this, m_prefs, "C"));
+        if (profile == FormatProfiles.PORTRAIT) {
+            return m_prefs.getString("CformatPortrait", sync);
+        }
+        if (profile == FormatProfiles.LANDSCAPE) {
+            return m_prefs.getString("CformatLandscape", sync);
+        }
+        return sync;
+    }
+
+    private void initializeClockAdvancedFormat() {
+        if (!m_prefs.contains("Cformat")) {
+            m_prefs.edit().putString("Cformat",
+                    Formatter.fromClockPreferences(this, m_prefs, "C")).apply();
+        }
+        if (!m_prefs.contains("CformatSyncEnabled")) {
+            m_prefs.edit().putBoolean("CformatSyncEnabled", true).apply();
+        }
+    }
+
+    private void selectClockFormatProfile(int profile) {
+        m_formatProfile = profile;
+        m_prefs.edit()
+                .putInt("CformatProfile", profile)
+                .putBoolean("CformatSyncEnabled", profile == FormatProfiles.SYNC)
+                .apply();
+        if (m_formatInput != null) {
+            m_changingFormatInput = true;
+            m_formatInput.setText(getClockFormatForProfile(profile));
+            m_formatInput.setSelection(m_formatInput.length());
+            m_changingFormatInput = false;
+        }
+        updateClockFormatLabel();
+        m_clockView.updateLayout();
+    }
+
+    private void updateClockFormatLabel() {
+        if (m_syncFormatButton != null) {
+            FormatProfileSelection.apply(
+                    m_syncFormatButton, m_formatProfile == FormatProfiles.SYNC);
+            FormatProfileSelection.apply(
+                    m_portraitFormatButton,
+                    m_formatProfile == FormatProfiles.PORTRAIT);
+            FormatProfileSelection.apply(
+                    m_landscapeFormatButton,
+                    m_formatProfile == FormatProfiles.LANDSCAPE);
+        }
+        if (m_formatLabel == null) return;
+        int profileLabel = m_formatProfile == FormatProfiles.PORTRAIT
+                ? R.string.format_profile_portrait
+                : m_formatProfile == FormatProfiles.LANDSCAPE
+                        ? R.string.format_profile_landscape
+                        : R.string.format_profile_sync;
+        m_formatLabel.setText(getString(R.string.clock_format_label)
+                + " (" + getString(profileLabel) + ")");
+    }
+
+    private Button makeClockProfileButton(int id, int label) {
+        Button button = new Button(this);
+        button.setId(id);
+        button.setText(label);
+        button.setAllCaps(false);
+        button.setOnClickListener(this);
+        return button;
+    }
+
+    private LinearLayout makeClockFormatProfiles() {
+        LinearLayout profiles = new LinearLayout(this);
+        profiles.setOrientation(LinearLayout.HORIZONTAL);
+        m_syncFormatButton = makeClockProfileButton(
+                FORMATPROFILE_SYNC, R.string.format_profile_sync);
+        m_portraitFormatButton = makeClockProfileButton(
+                FORMATPROFILE_PORTRAIT, R.string.format_profile_portrait);
+        m_landscapeFormatButton = makeClockProfileButton(
+                FORMATPROFILE_LANDSCAPE, R.string.format_profile_landscape);
+        LinearLayout orientationProfiles = new LinearLayout(this);
+        orientationProfiles.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams portraitParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F);
+        portraitParams.rightMargin = -(int)(4 * m_density);
+        orientationProfiles.addView(m_portraitFormatButton, portraitParams);
+        orientationProfiles.addView(m_landscapeFormatButton,
+                new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F));
+        LinearLayout.LayoutParams syncParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F);
+        syncParams.rightMargin = (int)(4 * m_density);
+        profiles.addView(m_syncFormatButton, syncParams);
+        profiles.addView(orientationProfiles, new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 2.0F));
+        updateClockFormatLabel();
+        return profiles;
+    }
+
+    private LinearLayout makeClockFormatEditor() {
+        LinearLayout editor = new LinearLayout(this);
+        editor.setOrientation(LinearLayout.VERTICAL);
+        TextView label = new TextView(this);
+        m_formatLabel = label;
+        updateClockFormatLabel();
+        editor.addView(label, lpMatchWrap);
+        TextView hint = new TextView(this);
+        hint.setText(R.string.clock_format_caption);
+        editor.addView(hint, lpMatchWrap);
+        editor.addView(makeClockFormatProfiles(), lpMatchWrap);
+        editor.addView(m_formatInput, lpMatchWrap);
+        editor.addView(makeClockFormatGuide(), lpMatchWrap);
+        return editor;
+    }
+
+    private LinearLayout makeClockFormatGuide() {
+        LinearLayout guide = new LinearLayout(this);
+        guide.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int)(6 * m_density);
+        guide.setPadding(padding, padding, padding, padding);
+        TextView title = new TextView(this);
+        title.setText(R.string.clock_format_guide_title);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        guide.addView(title, lpMatchWrap);
+        TextView instructions = new TextView(this);
+        instructions.setText(R.string.clock_format_guide_hint);
+        guide.addView(instructions, lpMatchWrap);
+        addClockTokenSection(guide, R.string.widget_format_time_section);
+        addClockTokenRow(guide,
+                R.string.format_token_hour24, "%H",
+                R.string.format_token_hour12, "%I");
+        addClockTokenRow(guide,
+                R.string.format_token_minute, "%M",
+                R.string.format_token_second, "%S");
+        addClockTokenRow(guide,
+                R.string.format_token_ampm, "%p",
+                R.string.format_token_local_time, "%X");
+        addClockTokenSection(guide, R.string.widget_format_date_section);
+        addClockTokenRow(guide,
+                R.string.format_token_short_weekday, "%a",
+                R.string.format_token_full_weekday, "%A");
+        addClockTokenRow(guide,
+                R.string.format_token_short_month, "%b",
+                R.string.format_token_full_month, "%B");
+        addClockTokenRow(guide,
+                R.string.format_token_day, "%d",
+                R.string.format_token_day_unpadded, "%e");
+        addClockTokenRow(guide,
+                R.string.format_token_month, "%m",
+                R.string.format_token_year, "%Y");
+        addClockTokenRow(guide,
+                R.string.format_token_iso_date, "%F",
+                R.string.format_token_local_date, "%x");
+        addClockTokenRow(guide,
+                R.string.format_token_newline, "%n",
+                R.string.format_token_percent, "%%");
+        addClockTokenSection(guide, R.string.widget_format_alarm_section);
+        addClockTokenRow(guide, R.string.format_token_alarm, "%<%>", 2);
+        TextView alarmHint = new TextView(this);
+        alarmHint.setText(R.string.next_alarm_source_help);
+        guide.addView(alarmHint, lpMatchWrap);
+        return guide;
+    }
+
+    private void addClockTokenSection(LinearLayout guide, int labelResource) {
+        TextView label = new TextView(this);
+        label.setText(labelResource);
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        label.setPadding(0, (int)(8 * m_density), 0, 0);
+        guide.addView(label, lpMatchWrap);
+    }
+
+    private void addClockTokenRow(
+            LinearLayout guide, int firstLabel, String firstToken,
+            int secondLabel, String secondToken) {
+        addClockTokenRow(guide, firstLabel, firstToken,
+                secondLabel, secondToken, firstToken.length());
+    }
+
+    private void addClockTokenRow(
+            LinearLayout guide, int firstLabel, String firstToken,
+            int firstCursorOffset) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.addView(makeClockTokenButton(firstLabel, firstToken, firstCursorOffset),
+                new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F));
+        guide.addView(row, lpMatchWrap);
+    }
+
+    private void addClockTokenRow(
+            LinearLayout guide, int firstLabel, String firstToken,
+            int secondLabel, String secondToken, int firstCursorOffset) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.addView(makeClockTokenButton(
+                firstLabel, firstToken, firstCursorOffset),
+                new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F));
+        if (secondToken != null) {
+            row.addView(makeClockTokenButton(
+                    secondLabel, secondToken, secondToken.length()),
+                    new LinearLayout.LayoutParams(
+                            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F));
+        }
+        guide.addView(row, lpMatchWrap);
+    }
+
+    private Button makeClockTokenButton(int label, String token, int cursorOffset) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setAllCaps(false);
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        button.setOnClickListener(v -> {
+            Editable text = m_formatInput.getText();
+            int start = m_formatInput.getSelectionStart();
+            int end = m_formatInput.getSelectionEnd();
+            if (start < 0 || end < 0) start = end = text.length();
+            int replaceStart = Math.min(start, end);
+            int replaceEnd = Math.max(start, end);
+            text.replace(replaceStart, replaceEnd, token);
+            m_formatInput.requestFocus();
+            m_formatInput.setSelection(replaceStart + cursorOffset);
+        });
+        return button;
     }
 
     @Override
@@ -142,6 +389,8 @@ public class ClockConfigureActivity extends ConfigureActivity
             case FORCEVERTICAL: doToast(R.string.forceverticalhelp); return true;
             case SETTEXTCOLOUR: doToast(R.string.setclockcolourhelp); return true;
             case DATABUTTON: doToast(R.string.setdatahelp); return true;
+            case FORMATMODE: doToast(R.string.clock_format_caption); return true;
+            case SHOW_NEXT_ALARM: doToast(R.string.next_alarm_source_help); return true;
             case DISPLAYBUTTON: doToast(R.string.setdisplayhelp); return true;
             case DIMBUTTON: doToast(R.string.setdimminghelp); return true;
             case CURRENTLUX: doToast(R.string.luxhelp); return true;
@@ -234,6 +483,23 @@ public class ClockConfigureActivity extends ConfigureActivity
         switch (v.getId()) {
             case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); break;
             case DATABUTTON: setCurrentView(DATABUTTON); break;
+            case FORMATMODE:
+                m_advancedFormatMode = !m_advancedFormatMode;
+                if (m_advancedFormatMode) initializeClockAdvancedFormat();
+                m_prefs.edit().putBoolean(
+                        "CadvancedFormatMode", m_advancedFormatMode).apply();
+                m_clockView.updateLayout();
+                setCurrentView(DATABUTTON);
+                break;
+            case FORMATPROFILE_SYNC:
+                selectClockFormatProfile(FormatProfiles.SYNC);
+                break;
+            case FORMATPROFILE_PORTRAIT:
+                selectClockFormatProfile(FormatProfiles.PORTRAIT);
+                break;
+            case FORMATPROFILE_LANDSCAPE:
+                selectClockFormatProfile(FormatProfiles.LANDSCAPE);
+                break;
             case DIMBUTTON:
             case DISPLAYBUTTON: setCurrentView(DISPLAYBUTTON); break;
             case DEMOCLOCK:
@@ -263,6 +529,10 @@ public class ClockConfigureActivity extends ConfigureActivity
                 break;
             case FORCEVERTICAL:
                 m_prefs.edit().putBoolean("Cforcevertical", isChecked).commit();
+                m_clockView.updateLayout();
+                break;
+            case SHOW_NEXT_ALARM:
+                m_prefs.edit().putBoolean("CshowNextAlarm", isChecked).commit();
                 m_clockView.updateLayout();
                 break;
             default: super.onCheckedChanged(buttonView, isChecked);
@@ -313,13 +583,26 @@ public class ClockConfigureActivity extends ConfigureActivity
         scrollView.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
         LinearLayout lboxes = new LinearLayout(this);
         lboxes.setOrientation(LinearLayout.VERTICAL);
-        lboxes.addView(showLongWeekDayCheckBox);
-        lboxes.addView(showShortWeekDayCheckBox);
-        lboxes.addView(showShortDateCheckBox);
-        lboxes.addView(showMonthDayCheckBox);
-        lboxes.addView(showLongMonthCheckBox);
-        lboxes.addView(showShortMonthCheckBox);
-        lboxes.addView(showYearCheckBox);
+        m_formatModeButton.setText(m_advancedFormatMode
+                ? R.string.checkbox_mode : R.string.advanced_format_mode);
+        if (m_advancedFormatMode) {
+            lboxes.addView(makeClockFormatEditor(), lpMatchWrap);
+        } else {
+            lboxes.addView(showLongWeekDayCheckBox);
+            lboxes.addView(showShortWeekDayCheckBox);
+            lboxes.addView(showShortDateCheckBox);
+            lboxes.addView(showMonthDayCheckBox);
+            lboxes.addView(showLongMonthCheckBox);
+            lboxes.addView(showShortMonthCheckBox);
+            lboxes.addView(showYearCheckBox);
+            CheckBox showNextAlarm = new CheckBox(this);
+            showNextAlarm.setId(SHOW_NEXT_ALARM);
+            showNextAlarm.setText(R.string.show_next_alarm_any_app);
+            showNextAlarm.setChecked(m_prefs.getBoolean("CshowNextAlarm", false));
+            showNextAlarm.setOnLongClickListener(this);
+            showNextAlarm.setOnCheckedChangeListener(this);
+            lboxes.addView(showNextAlarm);
+        }
         CheckBox cb = new CheckBox(this);
         cb.setId(SEVENSEGMENTS);
         cb.setText(R.string.sevensegments);
@@ -336,6 +619,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         lButtons.setGravity(Gravity.CENTER_HORIZONTAL);
         lButtons.addView(m_textColour, lpWrapWrap);
         lButtons.addView(m_display, lpWrapWrap);
+        lButtons.addView(m_formatModeButton, lpWrapWrap);
         lButtons.addView(m_okButton, lpWrapWrap);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             // Buttons in bottom left
@@ -358,13 +642,15 @@ public class ClockConfigureActivity extends ConfigureActivity
             gl.addView(scrollView, -1, layoutParams);
         } else { // assume PORTRAIT
              // remaining controls in bottom half
-            cb = new CheckBox(this);
-            cb.setId(FORCEVERTICAL);
-            cb.setText(R.string.forcevertical);
-            cb.setChecked(m_prefs.getBoolean("Cforcevertical", false));
-            cb.setOnLongClickListener(this);
-            cb.setOnCheckedChangeListener(this);
-            lboxes.addView(cb);
+            if (!m_advancedFormatMode) {
+                cb = new CheckBox(this);
+                cb.setId(FORCEVERTICAL);
+                cb.setText(R.string.forcevertical);
+                cb.setChecked(m_prefs.getBoolean("Cforcevertical", false));
+                cb.setOnLongClickListener(this);
+                cb.setOnCheckedChangeListener(this);
+                lboxes.addView(cb);
+            }
             lControls.addView(lboxes);
             m_display.setId(DIMBUTTON);
             scrollView.addView(lControls);
@@ -396,43 +682,49 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_helptext.setText(R.string.longpresshoriz);
         lControls.addView(m_helptext);
         RelativeLayout lssb = new RelativeLayout(this);
-        RelativeLayout.LayoutParams rlp1 =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-        rlp1.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        rlp1.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        lssb.addView(textLabel(R.string.secondssizelabel, SSLABEL), rlp1);
-        RelativeLayout.LayoutParams rlp2 =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-        rlp2.addRule(RelativeLayout.BELOW, SSLABEL);
-        rlp2.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        lssb.addView(textLabel("00:00", NOSECONDS), rlp2);
-        RelativeLayout.LayoutParams rlp3 =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-        rlp3.addRule(RelativeLayout.BELOW, SSLABEL);
-        rlp3.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        lssb.addView(doSmallSeconds(), rlp3);
-        RelativeLayout.LayoutParams rlp4 =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-        rlp4.addRule(RelativeLayout.BELOW, SSLABEL);
-        rlp4.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        lssb.addView(textLabel("00:00:00", LARGESECONDS), rlp4);
-        RelativeLayout.LayoutParams rlp5 =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.MATCH_PARENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-        rlp5.addRule(RelativeLayout.BELOW, LARGESECONDS);
-        rlp5.addRule(RelativeLayout.BELOW, SMALLSECONDS);
-        rlp5.addRule(RelativeLayout.BELOW, NOSECONDS);
-        m_secondsSizer.setDirection(Slider.SLIDER_RIGHTWARDS);
-        lssb.addView(m_secondsSizer, rlp5);
+        if (m_advancedFormatMode) {
+            TextView secondsHint = new TextView(this);
+            secondsHint.setText(R.string.clock_format_seconds_help);
+            lssb.addView(secondsHint);
+        } else {
+            RelativeLayout.LayoutParams rlp1 =
+                    new RelativeLayout.LayoutParams(
+                            RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+            rlp1.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            rlp1.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            lssb.addView(textLabel(R.string.secondssizelabel, SSLABEL), rlp1);
+            RelativeLayout.LayoutParams rlp2 =
+                    new RelativeLayout.LayoutParams(
+                            RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+            rlp2.addRule(RelativeLayout.BELOW, SSLABEL);
+            rlp2.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            lssb.addView(textLabel("00:00", NOSECONDS), rlp2);
+            RelativeLayout.LayoutParams rlp3 =
+                    new RelativeLayout.LayoutParams(
+                            RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+            rlp3.addRule(RelativeLayout.BELOW, SSLABEL);
+            rlp3.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            lssb.addView(doSmallSeconds(), rlp3);
+            RelativeLayout.LayoutParams rlp4 =
+                    new RelativeLayout.LayoutParams(
+                            RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+            rlp4.addRule(RelativeLayout.BELOW, SSLABEL);
+            rlp4.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            lssb.addView(textLabel("00:00:00", LARGESECONDS), rlp4);
+            RelativeLayout.LayoutParams rlp5 =
+                    new RelativeLayout.LayoutParams(
+                            RelativeLayout.LayoutParams.MATCH_PARENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+            rlp5.addRule(RelativeLayout.BELOW, LARGESECONDS);
+            rlp5.addRule(RelativeLayout.BELOW, SMALLSECONDS);
+            rlp5.addRule(RelativeLayout.BELOW, NOSECONDS);
+            m_secondsSizer.setDirection(Slider.SLIDER_RIGHTWARDS);
+            lssb.addView(m_secondsSizer, rlp5);
+        }
         lControls.addView(lssb);
         LinearLayout lButtons = new LinearLayout(this);
         lButtons.setOrientation(LinearLayout.VERTICAL);
@@ -633,6 +925,46 @@ public class ClockConfigureActivity extends ConfigureActivity
     protected void resume() {
         m_key = "C";
         super.resume();
+        m_advancedFormatMode = m_prefs.getBoolean("CadvancedFormatMode", false);
+        m_formatProfile = m_prefs.getInt("CformatProfile", FormatProfiles.SYNC);
+        if (m_formatProfile < FormatProfiles.SYNC
+                || m_formatProfile > FormatProfiles.LANDSCAPE) {
+            m_formatProfile = FormatProfiles.SYNC;
+        }
+        if (m_advancedFormatMode) initializeClockAdvancedFormat();
+        m_formatInput = new EditText(this);
+        m_formatInput.setId(FORMATFIELD);
+        m_formatInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        m_formatInput.setSingleLine(false);
+        m_formatInput.setMinLines(3);
+        m_formatInput.setMaxLines(6);
+        m_formatInput.setGravity(Gravity.TOP | Gravity.START);
+        m_formatInput.setVerticalScrollBarEnabled(true);
+        m_formatInput.setImeOptions(EditorInfo.IME_FLAG_NO_ENTER_ACTION);
+        m_formatInput.setHint(R.string.widget_format_hint);
+        m_formatInput.setText(getClockFormatForProfile(m_formatProfile));
+        m_formatInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (m_changingFormatInput) return;
+                m_prefs.edit().putString(
+                        clockFormatPreferenceForProfile(m_formatProfile),
+                        s.toString()).apply();
+                m_clockView.updateLayout();
+            }
+        });
+        m_formatModeButton = new Button(this);
+        m_formatModeButton.setId(FORMATMODE);
+        m_formatModeButton.setAllCaps(false);
+        m_formatModeButton.setOnClickListener(this);
+        m_formatModeButton.setOnLongClickListener(this);
         /* This is in fact the height of the actual view, but the ClockView
          * can't read its own height before it has been laid out, and in PORTRAIT
          * orientation we need it before then to assign space to its children.

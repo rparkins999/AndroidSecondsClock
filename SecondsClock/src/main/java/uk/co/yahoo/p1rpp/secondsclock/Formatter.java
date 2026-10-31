@@ -11,6 +11,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.format.DateFormat;
 
+import java.util.Locale;
+import java.util.TimeZone;
+
 class Formatter {
     public String time12;
     public String time24;
@@ -165,14 +168,14 @@ class Formatter {
         }
 
         if (showNextAlarm && nextAlarmTime != null) {
-            String alarmFormat = context.getString(R.string.next_alarm_display_format);
             boolean hadContent = time12.length() > 0 || restBuilder.length() > 0;
-            String alarmSection = (hadContent ? "\n" : "")
-                    + alarmFormat;
-            String alarmText = DateCommandFormat.toTextClockPattern(
-                    "%<" + alarmSection + "%>", nextAlarmTime);
+            String alarmText = AlarmDisplayFormat.format(
+                    nextAlarmTime,
+                    context.getString(R.string.clock_alarm_prefix),
+                    Locale.getDefault(), TimeZone.getDefault());
             if (!alarmText.isEmpty()) {
-                restBuilder.append(alarmText);
+                if (hadContent) restBuilder.append("\n");
+                restBuilder.append(DateCommandFormat.literalPattern(alarmText));
                 if (hadContent) ++lines;
             }
         }
