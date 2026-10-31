@@ -41,7 +41,6 @@ public class SecondsClockWidget extends AppWidgetProvider {
     void updateAppWidget(
         Context context, AppWidgetManager appWidgetManager, int appWidgetId)
     {
-        String format;
         int bgcolour;
         int fgcolour;
         int touchaction;
@@ -51,32 +50,55 @@ public class SecondsClockWidget extends AppWidgetProvider {
         String widgetIds = prefs.getString("widgetIds", "");
         String thisWidget = "[" + String.valueOf(appWidgetId) + "]";
         if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
-            // Get the preferences for this widget.
-            format = prefs.getString(key + "format", null);
-            if (format == null) {
-                format = Formatter.fromLegacyPreferences(context, prefs, key);
-            }
             bgcolour = prefs.getInt(key + "bgcolour", 0x00000000);
             fgcolour = prefs.getInt(key + "fgcolour",0xFFFFFFFF);
             touchaction = prefs.getInt(key + "touchaction", 0);
         } else {
-            // New widget, add to list and set its preferences
-            // to the new widget defaults.
-            format = prefs.getString("Wformat", null);
-            if (format == null) {
-                format = Formatter.fromLegacyPreferences(context, prefs, "W");
-            }
+            // New widget: copy the new-widget defaults into its own preferences.
             bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
             fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
             touchaction = prefs.getInt("Wtouchaction", 0);
             widgetIds += thisWidget;
-            prefs.edit()
-                 .putString("widgetIds", widgetIds)
-                 .putString(key + "format", format)
-                 .putInt(key + "bgcolour", bgcolour)
-                 .putInt(key + "fgcolour", fgcolour)
-                 .putInt(key + "touchaction", touchaction)
-                 .commit();
+            boolean defaultAdvancedFormatMode = prefs.getBoolean(
+                    "WadvancedFormatMode", prefs.contains("Wformat"));
+            String defaultFormat = prefs.getString("Wformat", null);
+            if (defaultAdvancedFormatMode && defaultFormat == null) {
+                defaultFormat = Formatter.fromLegacyPreferences(
+                        context, prefs, "W");
+            }
+            SharedPreferences.Editor edit = prefs.edit()
+                    .putString("widgetIds", widgetIds)
+                    .putBoolean(key + "formatSyncEnabled",
+                            prefs.getBoolean("WformatSyncEnabled", true))
+                    .putBoolean(key + "advancedFormatMode",
+                            defaultAdvancedFormatMode)
+                    .putInt(key + "showTime", prefs.getInt("WshowTime", 2))
+                    .putInt(key + "showWeekDay", prefs.getInt("WshowWeekDay", 2))
+                    .putInt(key + "showShortDate", prefs.getInt("WshowShortDate", 0))
+                    .putInt(key + "showMonthDay", prefs.getInt("WshowMonthDay", 1))
+                    .putInt(key + "showMonth", prefs.getInt("WshowMonth", 2))
+                    .putInt(key + "showYear", prefs.getInt("WshowYear", 1))
+                    .putBoolean(key + "showNextAlarm",
+                            prefs.getBoolean("WshowNextAlarm", false))
+                    .putInt(key + "bgcolour", bgcolour)
+                    .putInt(key + "fgcolour", fgcolour)
+                    .putInt(key + "touchaction", touchaction);
+            if (defaultFormat != null) {
+                edit.putString(key + "format", defaultFormat);
+            }
+            if (prefs.contains("WformatHorizontal")) {
+                edit.putString(key + "formatHorizontal",
+                        prefs.getString("WformatHorizontal", ""));
+            }
+            if (prefs.contains("WformatVertical")) {
+                edit.putString(key + "formatVertical",
+                        prefs.getString("WformatVertical", ""));
+            }
+            if (prefs.contains("WformatProfile")) {
+                edit.putInt(key + "formatProfile",
+                        prefs.getInt("WformatProfile", FormatProfiles.SYNC));
+            }
+            edit.commit();
         }
 
         Bundle newOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
@@ -96,8 +118,30 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Toast.makeText(context, s, Toast.LENGTH_LONG).show();
         // */
 
+        Long nextAlarmTime = Formatter.getNextAlarmTime(context);
         Formatter f = new Formatter();
-        f.set(format, Formatter.getNextAlarmTime(context));
+        boolean advancedFormatMode = prefs.getBoolean(
+                key + "advancedFormatMode", prefs.contains(key + "format"));
+        if (advancedFormatMode) {
+            String syncFormat = prefs.getString(key + "format", "");
+            String format = FormatProfiles.widgetFormat(
+                    syncFormat,
+                    prefs.getString(key + "formatHorizontal", null),
+                    prefs.getString(key + "formatVertical", null),
+                    prefs.getBoolean(key + "formatSyncEnabled", true),
+                    FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
+            f.set(format, nextAlarmTime);
+        } else {
+            f.setCheckboxes(context, minWidth, maxHeight,
+                    prefs.getInt(key + "showTime", 2),
+                    prefs.getInt(key + "showWeekDay", 2),
+                    prefs.getInt(key + "showShortDate", 0),
+                    prefs.getInt(key + "showMonthDay", 1),
+                    prefs.getInt(key + "showMonth", 2),
+                    prefs.getInt(key + "showYear", 1),
+                    prefs.getBoolean(key + "showNextAlarm", false),
+                    nextAlarmTime);
+        }
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews
             (context.getPackageName(), R.layout.seconds_clock_widget);

@@ -89,10 +89,26 @@
         display the time in locale-appropriate format including seconds.
         This will increase battery drain since the widget has to update itself
         every second.</string>
+    <string name="show_next_alarm_any_app">Show next alarm (any alarm app)</string>
+    <string name="next_alarm_display_format" formatted="false">Alarm: %H:%M</string>
+    <string name="widget_alarm_source_help">This shows Android\'s reported next alarm-clock alarm. It may have been set by any alarm app, not only your default clock app.</string>
+    <string name="advanced_format_mode">Advanced formatting mode</string>
+    <string name="checkbox_mode">Checkbox mode</string>
+    <string name="format_profile_sync">Sync</string>
+    <string name="format_profile_horizontal">Horizontal</string>
+    <string name="format_profile_vertical">Vertical</string>
+    <string name="format_profile_portrait">Portrait</string>
+    <string name="format_profile_landscape">Landscape</string>
+    <string name="widget_format_profile_hint">Sync uses one format for both shapes. Horizontal and Vertical are selected from the widget\'s reported dimensions. You control line breaks; the text still scales to fit.</string>
+    <string name="clock_format_label">Full-screen clock format</string>
+    <string name="clock_format_caption">Custom format is optional. Checkbox mode keeps the automatic layout.</string>
+    <string name="clock_format_guide_title">Build your full-screen clock text</string>
+    <string name="clock_format_guide_hint">Tap tokens to insert them. Sync shares one format; Portrait and Landscape can be edited separately.</string>
+    <string name="clock_format_seconds_help" formatted="false">In advanced mode, include or omit %S in the format to control seconds. The separate seconds-size slider applies in checkbox mode.</string>
     <string name="widget_format_label">Widget text format</string>
     <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
     <string name="widget_format_caption">Use date-style tokens; tap the buttons below to insert them.</string>
-    <string name="widget_format_help" formatted="false">Enter a date-command-style format. Type a real newline to start another line. Common conversions: %a/%A weekday name, %b/%B month name, %d day, %m month number, %Y year, %F ISO date, %H 24-hour, %I 12-hour, %M minute, %S second, %p AM/PM, %x localized date, %X localized time, %n newline, and %% a literal percent.\n\n%&lt; starts an optional alarm section; %&gt; ends it. The section is shown only when Android reports a next alarm. Conversions inside it use the alarm time; conversions outside use the current time.</string>
+    <string name="widget_format_help" formatted="false">Enter a date-command-style format. Type a real newline to start another line. Common conversions: %a/%A weekday name, %b/%B month name, %d day, %m month number, %Y year, %F ISO date, %H 24-hour, %I 12-hour, %M minute, %S second, %p AM/PM, %x localized date, %X localized time, %n newline, and %% a literal percent.\n\n%&lt; starts an optional alarm section; %&gt; ends it. The section is shown only when Android reports a next alarm-clock alarm. It can be from any alarm app. Conversions inside it use the alarm time; conversions outside use the current time.</string>
     <string name="widget_format_guide_title">Build your own widget text</string>
     <string name="widget_format_guide_hint">Tap a token to insert it at the cursor. Press Enter to add a line. Tokens are case-sensitive.</string>
     <string name="widget_format_time_section">Time</string>
@@ -118,7 +134,7 @@
     <string name="format_token_newline" formatted="false">Newline (%n)</string>
     <string name="format_token_percent" formatted="false">Literal percent (%%)</string>
     <string name="format_token_alarm" formatted="false">Insert alarm block (%&lt;…%&gt;)</string>
-    <string name="widget_format_alarm_hint">The alarm block appears only when Android reports a next alarm. Tokens inside it use the alarm time. Put any line breaks inside the markers.</string>
+    <string name="widget_format_alarm_hint">The alarm block appears only when Android reports a next alarm-clock alarm. It can come from any alarm app, not only your default clock app. Tokens inside it use that alarm time. Put line breaks inside the markers.</string>
     <string name="show_short_weekday">Show abbreviated day name
         in %1s.</string>
     <string name="showshortweekdayhelp">If this box is checked, the %1s will

@@ -199,4 +199,10 @@ final class DateCommandFormat {
         }
         pattern.append('\'');
     }
+
+    static String literalPattern(String text) {
+        StringBuilder pattern = new StringBuilder();
+        appendLiteral(pattern, text);
+        return pattern.toString();
+    }
 }

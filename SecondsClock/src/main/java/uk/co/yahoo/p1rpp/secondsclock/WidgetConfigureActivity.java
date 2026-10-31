@@ -37,6 +37,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private static final int SETBACKGROUNDCOLOUR = SETTEXTCOLOUR + 1;
     private static final int FORMATFIELD = SETBACKGROUNDCOLOUR + 1;
     private static final int FORMATHELP = FORMATFIELD + 1;
+    private static final int FORMATMODE = FORMATHELP + 1;
+    private static final int NEXTALARM = FORMATMODE + 1;
+    private static final int FORMATPROFILE_SYNC = NEXTALARM + 1;
+    private static final int FORMATPROFILE_HORIZONTAL = FORMATPROFILE_SYNC + 1;
+    private static final int FORMATPROFILE_VERTICAL = FORMATPROFILE_HORIZONTAL + 1;
 
     private int widgetId;
     private int maxHeight = 121;
@@ -45,9 +50,21 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private TextClock demo;
     private int m_fgcolour;
     private String widgetFormat;
+    private int showTime;
+    private int formatProfile = FormatProfiles.SYNC;
+    private boolean advancedFormatMode;
+    private boolean changingFormatInput;
+    private boolean changingTimeChecks;
     private LinearLayout demobox;
     private LinearLayout demoboxbox;
     private EditText formatInput;
+    private Button formatModeButton;
+    private Button syncFormatButton;
+    private Button horizontalFormatButton;
+    private Button verticalFormatButton;
+    private CheckBox showTimeCheckBox;
+    private CheckBox showSecondsCheckBox;
+    private CheckBox showNextAlarmCheckBox;
     private Button bgButton;
     private Button fgButton;
     private Button chooseButton;
@@ -92,7 +109,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 doToast(R.string.demohelp);
                 doToast(R.string.demohelp);
                 return true;
+            case SHOWTIME: doToast(R.string.showtimehelp); return true;
+            case SHOWSECONDS: doToast(R.string.showsecondshelp); return true;
             case FORMATHELP: doToast(R.string.widget_format_help); return true;
+            case NEXTALARM: doToast(R.string.widget_alarm_source_help); return true;
+            case FORMATMODE: doToast(R.string.widgetconfighelp); return true;
             case DONEBUTTON: doToast(R.string.donehelp); return true;
             case SETTEXTCOLOUR: doToast(R.string.setfgcolourhelp); return true;
             case SETBACKGROUNDCOLOUR: doToast(R.string.setbgcolourhelp); return true;
@@ -137,6 +158,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
     @SuppressLint("ApplySharedPref")
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (buttonView.getId() == NEXTALARM) {
+            m_prefs.edit().putBoolean(m_key + "showNextAlarm", isChecked).apply();
+            updateFromCheckBox();
+            return;
+        }
         int action = buttonView.getId();
         switch (action) {
             case GO_SYSTEM_CLOCK:
@@ -278,6 +304,20 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case SETTEXTCOLOUR: setCurrentView(SETTEXTCOLOUR); break;
             case SETBACKGROUNDCOLOUR: setCurrentView(SETBACKGROUNDCOLOUR); break;
             case CHOOSE_ACTION: setCurrentView(CHOOSE_ACTION); break;
+            case FORMATMODE:
+                advancedFormatMode = !advancedFormatMode;
+                if (advancedFormatMode) initializeAdvancedFormats();
+                m_prefs.edit().putBoolean(
+                        m_key + "advancedFormatMode", advancedFormatMode).apply();
+                updateWidget();
+                updateDemo();
+                setCurrentView(CONFIGURE);
+                break;
+            case FORMATPROFILE_SYNC:
+            case FORMATPROFILE_HORIZONTAL:
+            case FORMATPROFILE_VERTICAL:
+                selectFormatProfile(v.getId());
+                break;
             case DONEBUTTON:
                 if (m_currentView == CONFIGURE) {
                     finish();
@@ -287,11 +327,111 @@ public class WidgetConfigureActivity extends ConfigureActivity
         }
     }
 
+    private String formatPreferenceForProfile(int profile) {
+        if (profile == FormatProfiles.HORIZONTAL) {
+            return m_key + "formatHorizontal";
+        }
+        if (profile == FormatProfiles.VERTICAL) {
+            return m_key + "formatVertical";
+        }
+        return m_key + "format";
+    }
+
+    private String getFormatForProfile(int profile) {
+        String sync = m_prefs.getString(m_key + "format", widgetFormat);
+        if (profile == FormatProfiles.HORIZONTAL) {
+            return m_prefs.getString(m_key + "formatHorizontal", sync);
+        }
+        if (profile == FormatProfiles.VERTICAL) {
+            return m_prefs.getString(m_key + "formatVertical", sync);
+        }
+        return sync;
+    }
+
+    private void initializeAdvancedFormats() {
+        if (!m_prefs.contains(m_key + "format")) {
+            widgetFormat = Formatter.fromLegacyPreferences(this, m_prefs, m_key);
+            m_prefs.edit().putString(m_key + "format", widgetFormat).apply();
+        } else {
+            widgetFormat = m_prefs.getString(m_key + "format", "");
+        }
+        if (!m_prefs.contains(m_key + "formatSyncEnabled")) {
+            m_prefs.edit().putBoolean(m_key + "formatSyncEnabled", true).apply();
+        }
+    }
+
+    private void selectFormatProfile(int profile) {
+        formatProfile = profile;
+        boolean synchronizedFormats = profile == FormatProfiles.SYNC;
+        m_prefs.edit()
+                .putInt(m_key + "formatProfile", profile)
+                .putBoolean(m_key + "formatSyncEnabled", synchronizedFormats)
+                .apply();
+        widgetFormat = getFormatForProfile(profile);
+        if (formatInput != null) {
+            changingFormatInput = true;
+            formatInput.setText(widgetFormat);
+            formatInput.setSelection(formatInput.length());
+            changingFormatInput = false;
+        }
+        updateProfileButtonStates();
+        updateWidget();
+        updateDemo();
+    }
+
+    private void updateProfileButtonStates() {
+        if (syncFormatButton != null) {
+            boolean syncSelected = formatProfile == FormatProfiles.SYNC;
+            boolean horizontalSelected =
+                    formatProfile == FormatProfiles.HORIZONTAL;
+            boolean verticalSelected = formatProfile == FormatProfiles.VERTICAL;
+            syncFormatButton.setSelected(syncSelected);
+            horizontalFormatButton.setSelected(horizontalSelected);
+            verticalFormatButton.setSelected(verticalSelected);
+            syncFormatButton.setAlpha(syncSelected ? 1.0F : 0.65F);
+            horizontalFormatButton.setAlpha(horizontalSelected ? 1.0F : 0.65F);
+            verticalFormatButton.setAlpha(verticalSelected ? 1.0F : 0.65F);
+        }
+    }
+
+    private Button makeProfileButton(int id, int label) {
+        Button button = new Button(this);
+        button.setId(id);
+        button.setText(label);
+        button.setAllCaps(false);
+        button.setOnClickListener(this);
+        return button;
+    }
+
+    private LinearLayout makeFormatProfileSelector() {
+        LinearLayout profiles = new LinearLayout(this);
+        profiles.setOrientation(LinearLayout.HORIZONTAL);
+        syncFormatButton = makeProfileButton(
+                FORMATPROFILE_SYNC, R.string.format_profile_sync);
+        horizontalFormatButton = makeProfileButton(
+                FORMATPROFILE_HORIZONTAL, R.string.format_profile_horizontal);
+        verticalFormatButton = makeProfileButton(
+                FORMATPROFILE_VERTICAL, R.string.format_profile_vertical);
+        LinearLayout.LayoutParams weight = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0F);
+        profiles.addView(syncFormatButton, weight);
+        profiles.addView(horizontalFormatButton, weight);
+        profiles.addView(verticalFormatButton, weight);
+        updateProfileButtonStates();
+        return profiles;
+    }
+
     void updateDemo() {
         Formatter f = new Formatter();
-        String format = formatInput == null
-                ? widgetFormat : formatInput.getText().toString();
-        f.set(format, Formatter.getNextAlarmTime(this));
+        Long nextAlarm = Formatter.getNextAlarmTime(this);
+        if (advancedFormatMode) {
+            f.set(getFormatForProfile(formatProfile), nextAlarm);
+        } else {
+            f.setCheckboxes(this, minWidth, maxHeight, showTime,
+                    showWeekDay, showShortDate, showMonthDay, showMonth,
+                    showYear, showNextAlarmCheckBox != null
+                            && showNextAlarmCheckBox.isChecked(), nextAlarm);
+        }
         int width = (int)(minWidth * m_density);
         int height = (int)(maxHeight * m_density);
         demo.setMinimumWidth(width);
@@ -315,7 +455,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
         ScrollView lscroll = new ScrollView(this);
         lscroll.setScrollbarFadingEnabled(false);
         LinearLayout l1 = new LinearLayout(this);
-        LinearLayout formatEditor = makeFormatEditor();
+        LinearLayout settingsEditor = advancedFormatMode
+                ? makeFormatEditor() : makeCheckboxEditor();
+        formatModeButton.setText(advancedFormatMode
+                ? R.string.checkbox_mode : R.string.advanced_format_mode);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
@@ -328,22 +471,23 @@ public class WidgetConfigureActivity extends ConfigureActivity
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_VERTICAL);
             l2.addView(demoboxbox);
-            l2.addView(m_okButton, lpWrapWrap);
             l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
-            l3.addView(formatEditor, lpMatchWrap);
+            l3.addView(settingsEditor, lpMatchWrap);
             LinearLayout l8 = new LinearLayout(this);
             // default orientation is HORIZONTAL
             l8.addView(bgButton);
             l8.addView(fgButton);
             l3.addView(l8);
             l3.addView(chooseButton, lpWrapWrap);
+            l3.addView(formatModeButton, lpWrapWrap);
+            l3.addView(m_okButton, lpWrapWrap);
             l1.addView(l3, lpWrapWrap);
             LinearLayout page = new LinearLayout(this);
             page.setOrientation(LinearLayout.VERTICAL);
             page.addView(l1, lpMatchWrap);
-            page.addView(makeFormatGuide(), lpMatchWrap);
+            if (advancedFormatMode) page.addView(makeFormatGuide(), lpMatchWrap);
             lscroll.addView(page);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
@@ -354,7 +498,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             m_helptext.setText(R.string.longpresshoriz);
             m_helptext.setGravity(Gravity.NO_GRAVITY);
             l1.addView(m_helptext);
-            l1.addView(formatEditor, lpMatchWrap);
+            l1.addView(settingsEditor, lpMatchWrap);
             LinearLayout l2 = new LinearLayout(this);
             l2.setLayoutParams(lpMatchWrap);
             l2.setOrientation(LinearLayout.VERTICAL);
@@ -362,12 +506,32 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l2.addView(bgButton, lpWrapWrap);
             l2.addView(fgButton, lpWrapWrap);
             l2.addView(chooseButton, lpWrapWrap);
+            l2.addView(formatModeButton, lpWrapWrap);
             l2.addView(m_okButton, lpWrapWrap);
-            l2.addView(makeFormatGuide(), lpMatchWrap);
+            if (advancedFormatMode) l2.addView(makeFormatGuide(), lpMatchWrap);
             l1.addView(l2);
             lscroll.addView(l1);
         }
         m_topLayout.addView(lscroll);
+    }
+
+    private LinearLayout makeCheckboxEditor() {
+        LinearLayout editor = new LinearLayout(this);
+        editor.setOrientation(LinearLayout.VERTICAL);
+        editor.addView(showTimeCheckBox, lpWrapWrap);
+        editor.addView(showSecondsCheckBox, lpWrapWrap);
+        editor.addView(showShortWeekDayCheckBox, lpWrapWrap);
+        editor.addView(showLongWeekDayCheckBox, lpWrapWrap);
+        editor.addView(showShortDateCheckBox, lpWrapWrap);
+        editor.addView(showMonthDayCheckBox, lpWrapWrap);
+        editor.addView(showShortMonthCheckBox, lpWrapWrap);
+        editor.addView(showLongMonthCheckBox, lpWrapWrap);
+        editor.addView(showYearCheckBox, lpWrapWrap);
+        editor.addView(showNextAlarmCheckBox, lpWrapWrap);
+        TextView alarmHelp = new TextView(this);
+        alarmHelp.setText(R.string.widget_alarm_source_help);
+        editor.addView(alarmHelp, lpMatchWrap);
+        return editor;
     }
 
     private LinearLayout makeFormatEditor() {
@@ -379,11 +543,16 @@ public class WidgetConfigureActivity extends ConfigureActivity
         label.setLabelFor(FORMATFIELD);
         label.setOnLongClickListener(this);
         editor.addView(label);
-        editor.addView(formatInput, lpMatchWrap);
         TextView hint = new TextView(this);
         hint.setText(R.string.widget_format_caption);
         hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         editor.addView(hint, lpMatchWrap);
+        TextView profileHint = new TextView(this);
+        profileHint.setText(R.string.widget_format_profile_hint);
+        profileHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        editor.addView(profileHint, lpMatchWrap);
+        editor.addView(makeFormatProfileSelector(), lpMatchWrap);
+        editor.addView(formatInput, lpMatchWrap);
         return editor;
     }
 
@@ -745,10 +914,65 @@ public class WidgetConfigureActivity extends ConfigureActivity
         m_currentView = m_prefs.getInt("Wview", CONFIGURE);
         m_bgcolour = m_prefs.getInt(m_key + "bgcolour", 0x00000000);
         m_fgcolour = m_prefs.getInt(m_key + "fgcolour",0xFFFFFFFF);
+        showTime = m_prefs.getInt(m_key + "showTime", 2);
+        advancedFormatMode = m_prefs.getBoolean(
+                m_key + "advancedFormatMode", m_prefs.contains(m_key + "format"));
+        formatProfile = m_prefs.getInt(
+                m_key + "formatProfile", FormatProfiles.SYNC);
+        if (formatProfile < FormatProfiles.SYNC
+                || formatProfile > FormatProfiles.VERTICAL) {
+            formatProfile = FormatProfiles.SYNC;
+        }
         widgetFormat = m_prefs.getString(m_key + "format", null);
         if (widgetFormat == null) {
             widgetFormat = Formatter.fromLegacyPreferences(this, m_prefs, m_key);
         }
+        if (advancedFormatMode) initializeAdvancedFormats();
+        showTimeCheckBox = new CheckBox(this);
+        showTimeCheckBox.setId(SHOWTIME);
+        showTimeCheckBox.setText(R.string.show_time);
+        showTimeCheckBox.setChecked(showTime > 0);
+        showTimeCheckBox.setOnLongClickListener(this);
+        showTimeCheckBox.setOnCheckedChangeListener((button, checked) -> {
+            if (changingTimeChecks) return;
+            if (checked) {
+                showTime = showSecondsCheckBox.isChecked() ? 2 : 1;
+            } else {
+                showTime = 0;
+                changingTimeChecks = true;
+                showSecondsCheckBox.setChecked(false);
+                changingTimeChecks = false;
+            }
+            showSecondsCheckBox.setVisibility(
+                    checked ? View.VISIBLE : View.GONE);
+            m_prefs.edit().putInt(m_key + "showTime", showTime).apply();
+            updateFromCheckBox();
+        });
+        showSecondsCheckBox = new CheckBox(this);
+        showSecondsCheckBox.setId(SHOWSECONDS);
+        showSecondsCheckBox.setText(R.string.show_seconds);
+        showSecondsCheckBox.setChecked(showTime == 2);
+        showSecondsCheckBox.setVisibility(
+                showTime > 0 ? View.VISIBLE : View.GONE);
+        showSecondsCheckBox.setOnLongClickListener(this);
+        showSecondsCheckBox.setOnCheckedChangeListener((button, checked) -> {
+            if (changingTimeChecks) return;
+            if (checked && !showTimeCheckBox.isChecked()) {
+                changingTimeChecks = true;
+                showTimeCheckBox.setChecked(true);
+                changingTimeChecks = false;
+            }
+            showTime = checked ? 2 : (showTimeCheckBox.isChecked() ? 1 : 0);
+            m_prefs.edit().putInt(m_key + "showTime", showTime).apply();
+            updateFromCheckBox();
+        });
+        showNextAlarmCheckBox = new CheckBox(this);
+        showNextAlarmCheckBox.setId(NEXTALARM);
+        showNextAlarmCheckBox.setText(R.string.show_next_alarm_any_app);
+        showNextAlarmCheckBox.setChecked(
+                m_prefs.getBoolean(m_key + "showNextAlarm", false));
+        showNextAlarmCheckBox.setOnCheckedChangeListener(this);
+        showNextAlarmCheckBox.setOnLongClickListener(this);
         formatInput = new EditText(this);
         formatInput.setId(FORMATFIELD);
         formatInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT
@@ -760,7 +984,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         formatInput.setVerticalScrollBarEnabled(true);
         formatInput.setImeOptions(EditorInfo.IME_FLAG_NO_ENTER_ACTION);
         formatInput.setHint(R.string.widget_format_hint);
-        formatInput.setText(widgetFormat);
+        formatInput.setText(getFormatForProfile(formatProfile));
         formatInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
@@ -772,15 +996,21 @@ public class WidgetConfigureActivity extends ConfigureActivity
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (!recursive) {
+                if (!recursive && !changingFormatInput) {
                     widgetFormat = s.toString();
-                    m_prefs.edit().putString(m_key + "format", widgetFormat)
-                            .apply();
+                    m_prefs.edit().putString(
+                            formatPreferenceForProfile(formatProfile),
+                            widgetFormat).apply();
                     updateWidget();
                     updateDemo();
                 }
             }
         });
+        formatModeButton = new Button(this);
+        formatModeButton.setId(FORMATMODE);
+        formatModeButton.setAllCaps(false);
+        formatModeButton.setOnClickListener(this);
+        formatModeButton.setOnLongClickListener(this);
         demo = new TextClock(this);
         demo.setId(WIDGETDEMO);
         demo.setGravity(Gravity.CENTER_HORIZONTAL);
