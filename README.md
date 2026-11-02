@@ -155,6 +155,6 @@ The `keystore.properties` file should look something like this:-
 `storeFile=`<i>full pathname of key file</i><br>
 `storePassword=`<i>password for your keystore (may be different)</i>
 
-You should also be aware that if you debug your own version with Androis Studio, it will sign it with a
+You should also be aware that if you debug your own version with Android Studio, it will sign it with a
 debug key, and Android will not let you install a version of an app signed with a different key unless
 you delete the old version first. Unfortunately this throws away all the stored peferences.
