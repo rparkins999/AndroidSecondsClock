@@ -214,8 +214,7 @@ public class MainActivity extends Activity_common
                 = appWidgetManager.getAppWidgetIds(secondsClockWidget);
             if (widgetIds.length > 0) {
                 intent = new Intent("uk.co.yahoo.p1rpp.UpdateWidget");
-                intent.setClassName("uk.co.yahoo.p1rpp.secondsclock",
-                    "uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget");
+                intent.setClass(this, SecondsClockWidget.class);
                 intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
                 sendBroadcast(intent);
             }

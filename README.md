@@ -23,14 +23,56 @@ Each widget (there can be more than one), and the night clock, can be configured
     2. the month name in short or long locale-appropriate format,
     3. the (Gregorian) year number
 
+## Widget format
+
+Checkbox mode keeps the automatic layout. Optional advanced formatting accepts a multiline,
+`date`-style format string. Common conversions include
+`%H` (24-hour), `%I` (12-hour), `%M` (minute), `%S` (second), `%p` (AM/PM), `%a`/`%A` (weekday),
+`%b`/`%B` (month), `%d` (day), `%m` (month number), `%Y` (year), `%F` (ISO date), `%x` (localized
+date), `%X` (localized time), `%n` (newline), and `%%` (literal `%`). Actual newlines can also be
+entered directly. Sync uses the same format for both widget shapes; Horizontal and Vertical formats
+can be edited separately and are selected using the widget's reported dimensions. The text still
+scales to fit, but custom line breaks stay where entered and may need adjustment after resizing.
+
+Use `%<` and `%>` to bracket optional alarm text. For example:
+
+```text
+%S%<
+Alarm: %H:%M%>
+```
+
+That block appears only when Android reports a next alarm-clock alarm, from any app. Date/time
+conversions inside it use that alarm's time, while conversions outside use the current time. Seconds
+continue to update through Android's `TextClock`. Android does not expose the app's alarm label.
+
+Checkbox mode also has a **Show next alarm (any alarm app)** option. It displays the next alarm-clock
+alarm Android reports, not necessarily an alarm from the default clock app.
+
+## Full-screen clock format
+
+The full-screen clock keeps its automatic checkbox layout and also offers optional advanced
+formatting. Sync shares one format across orientations; Portrait and Landscape can be customized
+separately. The same date-style tokens and optional next-alarm block are available. In advanced mode,
+include `%S` to show seconds; the separate seconds-size setting applies to checkbox mode.
+Full-screen checkbox mode also has a **Show next alarm (any alarm app)** option, displayed as
+`ALM: Mon, 3:30`. The seven-segment font applies to the time portion, not the `ALM:` label or
+weekday.
+
+## Launcher icon
+
+The editable artwork is `SecondsClock/seconds-clock-icon.svg`. The Android
+launcher PNG (`SecondsClock/src/main/res/drawable/ic_launcher.png`) and the
+144×144 F-Droid metadata icon are rasterized from it with `rsvg-convert`. The
+checked-in PNG is used directly; Gradle does not regenerate it.
+
 Displaying the seconds in a widget will increase battery drain because the widget has to update itself
 every second, but it doesn't update when the widget isn't visible. The night clock is intended
 to be run with the device connected to a charger and will keep the screen on if it is.
 
-The time, day of the week, and long date, will all fit into a 1x1 widget with a fairly small text size.
-If the widget is given more space or either the widget or the night clock is configured to display less
-information, it will reformat itself so as to make effective use of the available space
-and use a larger text size if possible.
+In checkbox mode, the time, day of the week, and long date fit into a 1x1 widget with a fairly small
+text size. The widget and full-screen clock automatically arrange checkbox-selected information to
+make effective use of available space. Advanced formats instead use the user's explicit line layout
+and scale the text to fit.
 
 On some devices tthe widget doesn't make as good a job of reformatting itself in landscape orientation,
 because Android doesn't require a home screen launcher to notify the widget provider

@@ -7,6 +7,10 @@
 
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/app_widget_description"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
     android:initialKeyguardLayout="@layout/seconds_clock_widget"
     android:initialLayout="@layout/seconds_clock_widget"
     android:resizeMode="horizontal|vertical"

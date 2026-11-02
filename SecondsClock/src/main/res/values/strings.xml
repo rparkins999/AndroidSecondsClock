@@ -89,6 +89,52 @@
         display the time in locale-appropriate format including seconds.
         This will increase battery drain since the widget has to update itself
         every second.</string>
+    <string name="show_next_alarm_any_app">Show next alarm (any alarm app)</string>
+    <string name="next_alarm_source_help">Android reports the next alarm-clock alarm from any app, not necessarily your default clock app. Checkbox mode displays it as ALM: Mon, 3:30.</string>
+    <string name="advanced_format_mode">Advanced formatting mode</string>
+    <string name="checkbox_mode">Checkbox mode</string>
+    <string name="format_profile_sync">Sync</string>
+    <string name="format_profile_horizontal">Horizontal</string>
+    <string name="format_profile_vertical">Vertical</string>
+    <string name="format_profile_portrait">Portrait</string>
+    <string name="format_profile_landscape">Landscape</string>
+    <string name="widget_format_profile_hint">Select a tab to edit that format. Sync uses one format for both shapes; Horizontal and Vertical are selected automatically from the widget\'s reported dimensions. New shape formats start from Sync. You control line breaks; the text still scales to fit.</string>
+    <string name="clock_format_label">Full-screen clock format</string>
+    <string name="clock_format_caption">Custom format is optional. Checkbox mode keeps the automatic layout.</string>
+    <string name="clock_format_guide_title">Build your full-screen clock text</string>
+    <string name="clock_format_guide_hint">Tap tokens to insert them. Select a tab to edit that format. Sync shares one format; Portrait and Landscape are selected automatically by screen orientation and can be edited separately. New orientation formats start from Sync.</string>
+    <string name="clock_format_seconds_help" formatted="false">In advanced mode, include or omit %S in the format to control seconds. The separate seconds-size slider applies in checkbox mode.</string>
+    <string name="clock_alarm_prefix">ALM:</string>
+    <string name="widget_format_label">Widget text format</string>
+    <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
+    <string name="widget_format_caption">Use date-style tokens; tap the buttons below to insert them.</string>
+    <string name="widget_format_help" formatted="false">Enter a date-command-style format. Type a real newline to start another line. Common conversions: %a/%A weekday name, %b/%B month name, %d day, %m month number, %Y year, %F ISO date, %H 24-hour, %I 12-hour, %M minute, %S second, %p AM/PM, %x localized date, %X localized time, %n newline, and %% a literal percent.\n\n%&lt; starts an optional alarm section; %&gt; ends it. The section is shown only when Android reports a next alarm-clock alarm. It can be from any alarm app. Conversions inside it use the alarm time; conversions outside use the current time.</string>
+    <string name="widget_format_guide_title">Build your own widget text</string>
+    <string name="widget_format_guide_hint">Tap a token to insert it at the cursor. Press Enter to add a line. Tokens are case-sensitive.</string>
+    <string name="widget_format_time_section">Time</string>
+    <string name="widget_format_date_section">Date</string>
+    <string name="widget_format_other_section">Other</string>
+    <string name="widget_format_alarm_section">Alarm</string>
+    <string name="format_token_hour24" formatted="false">24-hour hour (%H)</string>
+    <string name="format_token_hour12" formatted="false">12-hour hour (%I)</string>
+    <string name="format_token_minute" formatted="false">Minute (%M)</string>
+    <string name="format_token_second" formatted="false">Second (%S)</string>
+    <string name="format_token_ampm" formatted="false">AM/PM (%p)</string>
+    <string name="format_token_short_weekday" formatted="false">Short weekday (%a)</string>
+    <string name="format_token_full_weekday" formatted="false">Full weekday (%A)</string>
+    <string name="format_token_short_month" formatted="false">Short month (%b)</string>
+    <string name="format_token_full_month" formatted="false">Full month (%B)</string>
+    <string name="format_token_day" formatted="false">Day, zero-padded (%d)</string>
+    <string name="format_token_day_unpadded" formatted="false">Day, unpadded (%e)</string>
+    <string name="format_token_month" formatted="false">Month number (%m)</string>
+    <string name="format_token_year" formatted="false">Year (%Y)</string>
+    <string name="format_token_iso_date" formatted="false">ISO date (%F)</string>
+    <string name="format_token_local_date" formatted="false">Localized date (%x)</string>
+    <string name="format_token_local_time" formatted="false">Localized time (%X)</string>
+    <string name="format_token_newline" formatted="false">Newline (%n)</string>
+    <string name="format_token_percent" formatted="false">Literal percent (%%)</string>
+    <string name="format_token_alarm" formatted="false">Insert alarm block (%&lt;…%&gt;)</string>
+    <string name="widget_format_alarm_hint">The alarm block appears only when Android reports a next alarm-clock alarm. It can come from any alarm app, not only your default clock app. Tokens inside it use that alarm time. Put line breaks inside the markers.</string>
     <string name="show_short_weekday">Show abbreviated day name
         in %1s.</string>
     <string name="showshortweekdayhelp">If this box is checked, the %1s will
