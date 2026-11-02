@@ -43,7 +43,7 @@ and the colour and transparency of the widget's background.
 The night clock's background is always black.
 The default for the widget of white text on a transparent background works well
 unless you have a very light or very complex wallpaper on your home screen.
-If you have complex wallpaper you probably want an opaque backgrpund.
+If you have complex wallpaper you probably want an opaque background.
 
 You can also configure what happens when you touch a widget.
 
@@ -126,7 +126,7 @@ This will allow the display to be dimmed right down to invisible (zero opacity).
 The opacity of the status bar isn't modified,
 but the status bar is quite small and doesn't emit much light.
 
-There is also a check box to only use the opacity and not interfere withe the screen brightne at all.
+There is also a check box to only use the opacity and not interfere with the screen brightne at all.
 This works well with an OLED display, but doesn't save any power with a backlit display.
 I haven't found a way of getting Android to tell me which kind of display it has.
 
@@ -151,10 +151,10 @@ subdirectory `keys` of the parent directory of the project's top level directory
 The `keystore.properties` file should look something like this:-
 
 `keyAlias=`<i>your user name</i><br>
-`keyPassword=`<i>paasword for your key</i><br>
+`keyPassword=`<i>password for your key</i><br>
 `storeFile=`<i>full pathname of key file</i><br>
 `storePassword=`<i>password for your keystore (may be different)</i>
 
 You should also be aware that if you debug your own version with Androis Studio, it will sign it with a
 debug key, and Android will not let you install a version of an app signed with a different key unless
-you delete the old version first. Unfortunatley this throws away all the stored peferences.
+you delete the old version first. Unfortunately this throws away all the stored peferences.
