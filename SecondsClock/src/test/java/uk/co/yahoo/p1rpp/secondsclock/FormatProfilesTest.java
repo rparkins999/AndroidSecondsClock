@@ -66,5 +66,15 @@ public class FormatProfilesTest {
     public void textStyleEmojiLeavesJoinedAndKeycapSequencesIntact() {
         assertEquals("👨‍👩‍👧‍👦", TextStyleEmoji.preferTextPresentation("👨‍👩‍👧‍👦"));
         assertEquals("1️⃣", TextStyleEmoji.preferTextPresentation("1️⃣"));
+
+        String subdivisionFlag = new String(Character.toChars(0x1F3F4))
+                + new String(Character.toChars(0xE0067))
+                + new String(Character.toChars(0xE0062))
+                + new String(Character.toChars(0xE0065))
+                + new String(Character.toChars(0xE006E))
+                + new String(Character.toChars(0xE0067))
+                + new String(Character.toChars(0xE007F));
+        assertEquals(subdivisionFlag,
+                TextStyleEmoji.preferTextPresentation(subdivisionFlag));
     }
 }
