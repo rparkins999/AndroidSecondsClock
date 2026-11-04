@@ -42,6 +42,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private static final int FORMATPROFILE_SYNC = NEXTALARM + 1;
     private static final int FORMATPROFILE_HORIZONTAL = FORMATPROFILE_SYNC + 1;
     private static final int FORMATPROFILE_VERTICAL = FORMATPROFILE_HORIZONTAL + 1;
+    private static final int TEXT_STYLE_EMOJI = FORMATPROFILE_VERTICAL + 1;
 
     private int widgetId;
     private int maxHeight = 121;
@@ -162,6 +163,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (buttonView.getId() == NEXTALARM) {
             m_prefs.edit().putBoolean(m_key + "showNextAlarm", isChecked).apply();
             updateFromCheckBox();
+            return;
+        }
+        if (buttonView.getId() == TEXT_STYLE_EMOJI) {
+            m_prefs.edit().putBoolean(
+                    m_key + "textStyleEmoji", isChecked).apply();
+            updateWidget();
+            updateDemo();
             return;
         }
         int action = buttonView.getId();
@@ -446,7 +454,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         Formatter f = new Formatter();
         Long nextAlarm = Formatter.getNextAlarmTime(this);
         if (advancedFormatMode) {
-            f.set(getFormatForProfile(formatProfile), nextAlarm);
+            f.set(getFormatForProfile(formatProfile), nextAlarm,
+                    m_prefs.getBoolean(m_key + "textStyleEmoji", false));
         } else {
             f.setCheckboxes(this, minWidth, maxHeight, showTime,
                     showWeekDay, showShortDate, showMonthDay, showMonth,
@@ -575,6 +584,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
         editor.addView(profileHint, lpMatchWrap);
         editor.addView(makeFormatProfileSelector(), lpMatchWrap);
         editor.addView(formatInput, lpMatchWrap);
+        CheckBox textStyleEmoji = new CheckBox(this);
+        textStyleEmoji.setId(TEXT_STYLE_EMOJI);
+        textStyleEmoji.setText(R.string.text_style_emoji);
+        textStyleEmoji.setChecked(m_prefs.getBoolean(
+                m_key + "textStyleEmoji", false));
+        textStyleEmoji.setOnCheckedChangeListener(this);
+        editor.addView(textStyleEmoji, lpWrapWrap);
         return editor;
     }
 

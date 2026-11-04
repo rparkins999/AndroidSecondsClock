@@ -52,4 +52,19 @@ public class FormatProfilesTest {
         assertEquals("", DateCommandFormat.toTextClockPattern(
                 "%<Alarm: %H:%M%>", null));
     }
+
+    @Test
+    public void textStyleEmojiRequestsMonochromeAlarmSymbol() {
+        assertEquals("⏰\uFE0E", TextStyleEmoji.preferTextPresentation("⏰"));
+        assertEquals("'⏰\uFE0E'", DateCommandFormat.toTextClockPattern(
+                "⏰", null, true));
+        assertEquals("'⏰'", DateCommandFormat.toTextClockPattern(
+                "⏰", null, false));
+    }
+
+    @Test
+    public void textStyleEmojiLeavesJoinedAndKeycapSequencesIntact() {
+        assertEquals("👨‍👩‍👧‍👦", TextStyleEmoji.preferTextPresentation("👨‍👩‍👧‍👦"));
+        assertEquals("1️⃣", TextStyleEmoji.preferTextPresentation("1️⃣"));
+    }
 }
