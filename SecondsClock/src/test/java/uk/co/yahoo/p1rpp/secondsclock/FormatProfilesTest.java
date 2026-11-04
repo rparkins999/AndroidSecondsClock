@@ -52,4 +52,25 @@ public class FormatProfilesTest {
         assertEquals("", DateCommandFormat.toTextClockPattern(
                 "%<Alarm: %H:%M%>", null));
     }
+
+    @Test
+    public void textAfterAlarmBlockDoesNotGainAnApostrophe() {
+        long alarmTime = 1_700_000_000_000L;
+        String formattedAlarm = new SimpleDateFormat("HH:mm", Locale.getDefault())
+                .format(new Date(alarmTime));
+        String pattern = DateCommandFormat.toTextClockPattern(
+                "Before %<Alarm: %H:%M%> after", alarmTime);
+        String actual = new SimpleDateFormat(pattern, Locale.getDefault())
+                .format(new Date());
+
+        assertEquals("Before Alarm: " + formattedAlarm + " after", actual);
+    }
+
+    @Test
+    public void tickerUsesSecondsWhenSecondsSizeIsNotConfigured() {
+        assertEquals(750L, ClockView.millisecondsUntilNextTick(
+                1_250L, ClockView.DEFAULT_SECONDS_SIZE));
+        assertEquals(58_750L, ClockView.millisecondsUntilNextTick(
+                1_250L, 0));
+    }
 }
