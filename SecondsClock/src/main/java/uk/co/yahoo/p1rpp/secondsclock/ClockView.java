@@ -84,6 +84,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final TextView m_weekdayView;
     private final TextView m_yearView;
     private TextClock m_customClockView;
+    private TextClock m_customDetailsView;
     private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
     private int m_height;
@@ -121,6 +122,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
         if (m_customClockView != null) m_customClockView.setTextColor(colour);
+        if (m_customDetailsView != null) m_customDetailsView.setTextColor(colour);
     }
 
     private void setLp (int value) {
@@ -479,11 +481,38 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_prefs.getString("CformatLandscape", null),
                 m_prefs.getBoolean("CformatSyncEnabled", true),
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
-        Formatter formatter = new Formatter();
-        formatter.set(format, Formatter.getNextAlarmTime(m_owner));
-        m_customClockView.setFormat12Hour(formatter.time12);
-        m_customClockView.setFormat24Hour(formatter.time24);
-        m_customClockView.setLines(formatter.lines);
+        Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
+        if (m_customDetailsView != null) {
+            String[] parts = FormatLineSplit.splitAtFirstLine(format);
+            Formatter time = new Formatter();
+            time.set(parts[0], nextAlarmTime);
+            Formatter details = new Formatter();
+            details.set(parts[1], nextAlarmTime);
+            setCustomClockFormat(m_customClockView, time);
+            setCustomClockFormat(m_customDetailsView, details);
+        } else {
+            Formatter formatter = new Formatter();
+            formatter.set(format, nextAlarmTime);
+            setCustomClockFormat(m_customClockView, formatter);
+        }
+    }
+
+    private static void setCustomClockFormat(
+            TextClock clock, Formatter formatter) {
+        clock.setFormat12Hour(formatter.time12);
+        clock.setFormat24Hour(formatter.time24);
+        clock.setLines(formatter.lines);
+    }
+
+    private TextClock makeCustomClock(Typeface font, int colour) {
+        TextClock clock = new TextClock(m_owner);
+        clock.setGravity(Gravity.CENTER);
+        clock.setTypeface(font);
+        clock.setTextColor(colour);
+        clock.setAutoSizeTextTypeUniformWithConfiguration(
+                10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
+        clock.setSingleLine(false);
+        return clock;
     }
 
     // recursive version
@@ -514,6 +543,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void updateLayout() {
         removeAllViews(this);
         m_customClockView = null;
+        m_customDetailsView = null;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
         int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
@@ -553,17 +583,36 @@ class ClockView extends LinearLayout implements SensorEventListener {
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
         if (advancedFormatMode) {
-            m_customClockView = new TextClock(m_owner);
-            m_customClockView.setGravity(Gravity.CENTER);
-            m_customClockView.setTypeface(font);
-            m_customClockView.setTextColor(m_fgcolour);
-            m_customClockView.setAutoSizeTextTypeUniformWithConfiguration(
-                    10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
-            m_customClockView.setSingleLine(false);
+            String sync = m_prefs.getString("Cformat",
+                    Formatter.fromClockPreferences(m_owner, m_prefs, "C"));
+            String format = FormatProfiles.clockFormat(
+                    sync,
+                    m_prefs.getString("CformatPortrait", null),
+                    m_prefs.getString("CformatLandscape", null),
+                    m_prefs.getBoolean("CformatSyncEnabled", true),
+                    config.orientation == Configuration.ORIENTATION_LANDSCAPE);
+            boolean largeLandscapeTime =
+                    config.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    && m_prefs.getBoolean("CadvancedLargeTime", true);
+            String[] formatLines = FormatLineSplit.splitAtFirstLine(format);
+            boolean showLargeTime = largeLandscapeTime
+                    && formatLines[1] != null && !formatLines[1].isEmpty();
+            m_customClockView = makeCustomClock(font, m_fgcolour);
+            if (showLargeTime) {
+                m_customDetailsView = makeCustomClock(font, m_fgcolour);
+            }
             updateCustomClockFormat();
-            addView(m_customClockView, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
+            if (showLargeTime) {
+                setOrientation(VERTICAL);
+                addView(m_customClockView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.70F));
+                addView(m_customDetailsView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.30F));
+            } else {
+                addView(m_customClockView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+            }
             m_ticker.run();
             return;
         }

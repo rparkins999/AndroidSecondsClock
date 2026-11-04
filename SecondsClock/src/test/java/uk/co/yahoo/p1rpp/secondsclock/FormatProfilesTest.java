@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -38,6 +39,22 @@ public class FormatProfilesTest {
                 "same", "portrait", "landscape", false, false));
         assertEquals("landscape", FormatProfiles.clockFormat(
                 "same", "portrait", "landscape", false, true));
+    }
+
+    @Test
+    public void landscapeLargeTimeSplitsAtTheFirstExplicitLineBreak() {
+        assertArrayEquals(new String[] {"%H:%M", "%A"},
+                FormatLineSplit.splitAtFirstLine("%H:%M%n%A"));
+        assertArrayEquals(new String[] {"time", "date"},
+                FormatLineSplit.splitAtFirstLine("time\ndate"));
+        assertArrayEquals(new String[] {"%H:%M%%n%A", null},
+                FormatLineSplit.splitAtFirstLine("%H:%M%%n%A"));
+    }
+
+    @Test
+    public void landscapeLargeTimeKeepsAlarmBlocksValidAcrossLineBreaks() {
+        assertArrayEquals(new String[] {"%<Alarm:%>", "%<%H:%M%> after"},
+                FormatLineSplit.splitAtFirstLine("%<Alarm:\n%H:%M%> after"));
     }
 
     @Test

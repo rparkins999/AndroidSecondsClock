@@ -54,6 +54,8 @@ The full-screen clock keeps its automatic checkbox layout and also offers option
 formatting. Sync shares one format across orientations; Portrait and Landscape can be customized
 separately. The same date-style tokens and optional next-alarm block are available. In advanced mode,
 include `%S` to show seconds; the separate seconds-size setting applies to checkbox mode.
+In landscape Advanced mode, an optional larger first line can keep the time prominent while showing
+other information on smaller lines below it.
 Full-screen checkbox mode also has a **Show next alarm (any alarm app)** option, displayed as
 `ALM: Mon, 3:30`. The seven-segment font applies to the time portion, not the `ALM:` label or
 weekday.
