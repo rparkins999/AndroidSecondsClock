@@ -39,10 +39,12 @@ import android.os.BatteryManager;
 import android.os.Handler;
 import android.provider.Settings;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.format.DateFormat;
 import android.text.style.MetricAffectingSpan;
+import android.text.style.RelativeSizeSpan;
 import android.util.IntProperty;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -86,7 +88,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final TextView m_weekdayView;
     private final TextView m_yearView;
     private TextClock m_customClockView;
-    private List<TextClock> m_customClockLines;
     private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
     private int m_height;
@@ -97,8 +98,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
     // Interpolator used for brightness animations.
     private static final DecelerateInterpolator VALUE_ANIM_INTERPOLATOR =
             new DecelerateInterpolator();
-    private static final float EMPHASIZED_LINE_WEIGHT = 3.0F;
-    private static final float DETAIL_LINE_WEIGHT = 1.0F;
     private int m_wanted;
 
     private final BroadcastReceiver m_clockChangeReceiver = new BroadcastReceiver() {
@@ -125,13 +124,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_timeView.setTextColor(colour);
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
-        if (m_customClockLines != null) {
-            for (TextClock clock : m_customClockLines) {
-                clock.setTextColor(colour);
-            }
-        } else if (m_customClockView != null) {
-            m_customClockView.setTextColor(colour);
-        }
+        if (m_customClockView != null) m_customClockView.setTextColor(colour);
     }
 
     private void setLp (int value) {
@@ -491,21 +484,79 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_prefs.getBoolean("CformatSyncEnabled", true),
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
-        if (m_customClockLines != null) {
-            List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
-            for (int i = 0; i < m_customClockLines.size(); ++i) {
-                Formatter formatter = new Formatter();
-                formatter.set(lines.get(i).format, nextAlarmTime);
-                TextClock clock = m_customClockLines.get(i);
-                setCustomClockFormat(clock, formatter);
-                clock.setVisibility(formatter.time12.isEmpty()
-                        && formatter.time24.isEmpty() ? View.GONE : View.VISIBLE);
-            }
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
+        boolean hasEmphasis = false;
+        for (FormatLineSplit.Line line : lines) {
+            hasEmphasis |= line.emphasized;
+        }
+        if (hasEmphasis) {
+            SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
+            m_customClockView.setFormat12Hour(pattern);
+            m_customClockView.setFormat24Hour(pattern);
+            m_customClockView.setLines(countLines(pattern));
         } else {
             Formatter formatter = new Formatter();
             formatter.set(FormatLineSplit.stripEmphasisMarkers(format), nextAlarmTime);
             setCustomClockFormat(m_customClockView, formatter);
         }
+    }
+
+    private SpannableStringBuilder makeAdvancedPattern(
+            List<FormatLineSplit.Line> lines, Long nextAlarmTime) {
+        List<AdvancedPatternLine> renderedLines = new ArrayList<>();
+        TextPaint measurePaint = new TextPaint(m_customClockView.getPaint());
+        measurePaint.setTextSize(100.0F);
+        float widestLine = 0.0F;
+        for (FormatLineSplit.Line line : lines) {
+            Formatter formatter = new Formatter();
+            formatter.set(line.format, nextAlarmTime);
+            String linePattern = formatter.time12;
+            if (linePattern.isEmpty() && line.format.contains("%<")) continue;
+
+            String renderedText = DateFormat.format(
+                    linePattern, System.currentTimeMillis()).toString();
+            float textWidth = measurePaint.measureText(renderedText);
+            widestLine = Math.max(widestLine, textWidth);
+            renderedLines.add(new AdvancedPatternLine(
+                    linePattern, line.emphasized, textWidth));
+        }
+
+        SpannableStringBuilder pattern = new SpannableStringBuilder();
+        for (int i = 0; i < renderedLines.size(); ++i) {
+            if (i > 0) pattern.append('\n');
+            AdvancedPatternLine line = renderedLines.get(i);
+            int start = pattern.length();
+            pattern.append(line.pattern);
+            int end = pattern.length();
+            if (line.emphasized && end > start) {
+                float widthRatio = line.textWidth > 0.0F && widestLine > 0.0F
+                        ? widestLine / line.textWidth : 1.0F;
+                float scale = Math.min(1.7F * widthRatio, 4.0F);
+                pattern.setSpan(new RelativeSizeSpan(scale), start, end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        return pattern;
+    }
+
+    private static final class AdvancedPatternLine {
+        final String pattern;
+        final boolean emphasized;
+        final float textWidth;
+
+        AdvancedPatternLine(String pattern, boolean emphasized, float textWidth) {
+            this.pattern = pattern;
+            this.emphasized = emphasized;
+            this.textWidth = textWidth;
+        }
+    }
+
+    private static int countLines(CharSequence pattern) {
+        int result = 1;
+        for (int i = 0; i < pattern.length(); ++i) {
+            if (pattern.charAt(i) == '\n') ++result;
+        }
+        return result;
     }
 
     private static void setCustomClockFormat(
@@ -554,7 +605,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void updateLayout() {
         removeAllViews(this);
         m_customClockView = null;
-        m_customClockLines = null;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
         int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
@@ -594,50 +644,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
         if (advancedFormatMode) {
-            String sync = m_prefs.getString("Cformat",
-                    Formatter.fromClockPreferences(m_owner, m_prefs, "C"));
-            String format = FormatProfiles.clockFormat(
-                    sync,
-                    m_prefs.getString("CformatPortrait", null),
-                    m_prefs.getString("CformatLandscape", null),
-                    m_prefs.getBoolean("CformatSyncEnabled", true),
-                    config.orientation == Configuration.ORIENTATION_LANDSCAPE);
-            boolean landscape =
-                    config.orientation == Configuration.ORIENTATION_LANDSCAPE;
-            List<FormatLineSplit.Line> formatLines =
-                    FormatLineSplit.splitLines(format);
-            boolean hasEmphasizedLine = false;
-            for (FormatLineSplit.Line line : formatLines) {
-                hasEmphasizedLine |= line.emphasized;
-            }
-            boolean useEmphasizedLandscapeLines = landscape
-                    && formatLines.size() > 1 && hasEmphasizedLine;
-            if (useEmphasizedLandscapeLines) {
-                m_customClockLines = new ArrayList<>();
-                for (FormatLineSplit.Line line : formatLines) {
-                    m_customClockLines.add(makeCustomClock(font, m_fgcolour));
-                }
-                m_customClockView = m_customClockLines.get(0);
-            } else {
-                m_customClockView = makeCustomClock(font, m_fgcolour);
-            }
+            m_customClockView = makeCustomClock(font, m_fgcolour);
             updateCustomClockFormat();
-            if (useEmphasizedLandscapeLines) {
-                setOrientation(VERTICAL);
-                for (int i = 0; i < formatLines.size(); ++i) {
-                    // Each detail line retains one share; emphasized lines
-                    // get extra space but still share it with all other lines.
-                    float weight = formatLines.get(i).emphasized
-                            ? EMPHASIZED_LINE_WEIGHT : DETAIL_LINE_WEIGHT;
-                    addView(m_customClockLines.get(i),
-                            new LinearLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT, 0, weight));
-                }
-            } else {
-                addView(m_customClockView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT));
-            }
+            addView(m_customClockView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
             m_ticker.run();
             return;
         }
