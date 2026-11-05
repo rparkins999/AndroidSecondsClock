@@ -97,6 +97,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
     // Interpolator used for brightness animations.
     private static final DecelerateInterpolator VALUE_ANIM_INTERPOLATOR =
             new DecelerateInterpolator();
+    private static final float EMPHASIZED_LINE_WEIGHT = 3.0F;
+    private static final float DETAIL_LINE_WEIGHT = 1.0F;
     private int m_wanted;
 
     private final BroadcastReceiver m_clockChangeReceiver = new BroadcastReceiver() {
@@ -623,7 +625,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
             if (useEmphasizedLandscapeLines) {
                 setOrientation(VERTICAL);
                 for (int i = 0; i < formatLines.size(); ++i) {
-                    float weight = formatLines.get(i).emphasized ? 3.0F : 1.0F;
+                    // Each detail line retains one share; emphasized lines
+                    // get extra space but still share it with all other lines.
+                    float weight = formatLines.get(i).emphasized
+                            ? EMPHASIZED_LINE_WEIGHT : DETAIL_LINE_WEIGHT;
                     addView(m_customClockLines.get(i),
                             new LinearLayout.LayoutParams(
                                     ViewGroup.LayoutParams.MATCH_PARENT, 0, weight));
