@@ -55,8 +55,10 @@ import android.widget.LinearLayout;
 import android.widget.TextClock;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -84,7 +86,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final TextView m_weekdayView;
     private final TextView m_yearView;
     private TextClock m_customClockView;
-    private TextClock m_customDetailsView;
+    private List<TextClock> m_customClockLines;
     private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
     private int m_height;
@@ -121,8 +123,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_timeView.setTextColor(colour);
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
-        if (m_customClockView != null) m_customClockView.setTextColor(colour);
-        if (m_customDetailsView != null) m_customDetailsView.setTextColor(colour);
+        if (m_customClockLines != null) {
+            for (TextClock clock : m_customClockLines) {
+                clock.setTextColor(colour);
+            }
+        } else if (m_customClockView != null) {
+            m_customClockView.setTextColor(colour);
+        }
     }
 
     private void setLp (int value) {
@@ -482,17 +489,19 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_prefs.getBoolean("CformatSyncEnabled", true),
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
-        if (m_customDetailsView != null) {
-            String[] parts = FormatLineSplit.splitAtFirstLine(format);
-            Formatter time = new Formatter();
-            time.set(parts[0], nextAlarmTime);
-            Formatter details = new Formatter();
-            details.set(parts[1], nextAlarmTime);
-            setCustomClockFormat(m_customClockView, time);
-            setCustomClockFormat(m_customDetailsView, details);
+        if (m_customClockLines != null) {
+            List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
+            for (int i = 0; i < m_customClockLines.size(); ++i) {
+                Formatter formatter = new Formatter();
+                formatter.set(lines.get(i).format, nextAlarmTime);
+                TextClock clock = m_customClockLines.get(i);
+                setCustomClockFormat(clock, formatter);
+                clock.setVisibility(formatter.time12.isEmpty()
+                        && formatter.time24.isEmpty() ? View.GONE : View.VISIBLE);
+            }
         } else {
             Formatter formatter = new Formatter();
-            formatter.set(format, nextAlarmTime);
+            formatter.set(FormatLineSplit.stripEmphasisMarkers(format), nextAlarmTime);
             setCustomClockFormat(m_customClockView, formatter);
         }
     }
@@ -543,7 +552,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void updateLayout() {
         removeAllViews(this);
         m_customClockView = null;
-        m_customDetailsView = null;
+        m_customClockLines = null;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
         int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
@@ -591,23 +600,34 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     m_prefs.getString("CformatLandscape", null),
                     m_prefs.getBoolean("CformatSyncEnabled", true),
                     config.orientation == Configuration.ORIENTATION_LANDSCAPE);
-            boolean largeLandscapeTime =
-                    config.orientation == Configuration.ORIENTATION_LANDSCAPE
-                    && m_prefs.getBoolean("CadvancedLargeTime", true);
-            String[] formatLines = FormatLineSplit.splitAtFirstLine(format);
-            boolean showLargeTime = largeLandscapeTime
-                    && formatLines[1] != null && !formatLines[1].isEmpty();
-            m_customClockView = makeCustomClock(font, m_fgcolour);
-            if (showLargeTime) {
-                m_customDetailsView = makeCustomClock(font, m_fgcolour);
+            boolean landscape =
+                    config.orientation == Configuration.ORIENTATION_LANDSCAPE;
+            List<FormatLineSplit.Line> formatLines =
+                    FormatLineSplit.splitLines(format);
+            boolean hasEmphasizedLine = false;
+            for (FormatLineSplit.Line line : formatLines) {
+                hasEmphasizedLine |= line.emphasized;
+            }
+            boolean useEmphasizedLandscapeLines = landscape
+                    && formatLines.size() > 1 && hasEmphasizedLine;
+            if (useEmphasizedLandscapeLines) {
+                m_customClockLines = new ArrayList<>();
+                for (FormatLineSplit.Line line : formatLines) {
+                    m_customClockLines.add(makeCustomClock(font, m_fgcolour));
+                }
+                m_customClockView = m_customClockLines.get(0);
+            } else {
+                m_customClockView = makeCustomClock(font, m_fgcolour);
             }
             updateCustomClockFormat();
-            if (showLargeTime) {
+            if (useEmphasizedLandscapeLines) {
                 setOrientation(VERTICAL);
-                addView(m_customClockView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.70F));
-                addView(m_customDetailsView, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.30F));
+                for (int i = 0; i < formatLines.size(); ++i) {
+                    float weight = formatLines.get(i).emphasized ? 3.0F : 1.0F;
+                    addView(m_customClockLines.get(i),
+                            new LinearLayout.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT, 0, weight));
+                }
             } else {
                 addView(m_customClockView, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,

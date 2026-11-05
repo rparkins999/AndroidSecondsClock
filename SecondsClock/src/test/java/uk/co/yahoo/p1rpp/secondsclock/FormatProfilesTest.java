@@ -4,9 +4,9 @@ import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -42,19 +42,36 @@ public class FormatProfilesTest {
     }
 
     @Test
-    public void landscapeLargeTimeSplitsAtTheFirstExplicitLineBreak() {
-        assertArrayEquals(new String[] {"%H:%M", "%A"},
-                FormatLineSplit.splitAtFirstLine("%H:%M%n%A"));
-        assertArrayEquals(new String[] {"time", "date"},
-                FormatLineSplit.splitAtFirstLine("time\ndate"));
-        assertArrayEquals(new String[] {"%H:%M%%n%A", null},
-                FormatLineSplit.splitAtFirstLine("%H:%M%%n%A"));
+    public void landscapeEmphasisCanAppearOnAnyLineAndKeepsSecondsToken() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "header%n%L%H:%M:%S\n%L%S\n%%L literal %S");
+
+        assertEquals(4, lines.size());
+        assertEquals("header", lines.get(0).format);
+        assertFalse(lines.get(0).emphasized);
+        assertEquals("%H:%M:%S", lines.get(1).format);
+        assertTrue(lines.get(1).emphasized);
+        assertEquals("%S", lines.get(2).format);
+        assertTrue(lines.get(2).emphasized);
+        assertEquals("%%L literal %S", lines.get(3).format);
+        assertFalse(lines.get(3).emphasized);
+        assertEquals("", FormatLineSplit.stripEmphasisMarkers("%L"));
+        assertEquals("%%L", FormatLineSplit.stripEmphasisMarkers("%%L"));
+        assertEquals(DateCommandFormat.toTextClockPattern("%H:%M:%S", null),
+                DateCommandFormat.toTextClockPattern(
+                        FormatLineSplit.stripEmphasisMarkers("%L%H:%M:%S"), null));
     }
 
     @Test
-    public void landscapeLargeTimeKeepsAlarmBlocksValidAcrossLineBreaks() {
-        assertArrayEquals(new String[] {"%<Alarm:%>", "%<%H:%M%> after"},
-                FormatLineSplit.splitAtFirstLine("%<Alarm:\n%H:%M%> after"));
+    public void landscapeEmphasisKeepsAlarmBlocksValidAcrossLineBreaks() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "%<Alarm:\n%L%H:%M%>");
+
+        assertEquals(2, lines.size());
+        assertEquals("%<Alarm:%>", lines.get(0).format);
+        assertFalse(lines.get(0).emphasized);
+        assertEquals("%<%H:%M%>", lines.get(1).format);
+        assertTrue(lines.get(1).emphasized);
     }
 
     @Test

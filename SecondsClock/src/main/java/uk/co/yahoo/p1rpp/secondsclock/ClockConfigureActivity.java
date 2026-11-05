@@ -84,7 +84,6 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int FORMATPROFILE_LANDSCAPE = FORMATPROFILE_PORTRAIT + 1;
     private static final int FORMATFIELD = FORMATPROFILE_LANDSCAPE + 1;
     private static final int SHOW_NEXT_ALARM = FORMATFIELD + 1;
-    private static final int LARGE_LANDSCAPE_TIME = SHOW_NEXT_ALARM + 1;
 
     // Conversion between threshold slider and numeric value
     private int m_fgcolour;
@@ -244,16 +243,6 @@ public class ClockConfigureActivity extends ConfigureActivity
         editor.addView(hint, lpMatchWrap);
         editor.addView(makeClockFormatProfiles(), lpMatchWrap);
         editor.addView(m_formatInput, lpMatchWrap);
-        CheckBox largeLandscapeTime = new CheckBox(this);
-        largeLandscapeTime.setId(LARGE_LANDSCAPE_TIME);
-        largeLandscapeTime.setText(R.string.clock_large_time_in_landscape);
-        largeLandscapeTime.setChecked(
-                m_prefs.getBoolean("CadvancedLargeTime", true));
-        largeLandscapeTime.setOnCheckedChangeListener(this);
-        editor.addView(largeLandscapeTime, lpWrapWrap);
-        TextView largeTimeHint = new TextView(this);
-        largeTimeHint.setText(R.string.clock_large_time_hint);
-        editor.addView(largeTimeHint, lpMatchWrap);
         editor.addView(makeClockFormatGuide(), lpMatchWrap);
         return editor;
     }
@@ -299,6 +288,11 @@ public class ClockConfigureActivity extends ConfigureActivity
         addClockTokenRow(guide,
                 R.string.format_token_newline, "%n",
                 R.string.format_token_percent, "%%");
+        addClockTokenSection(guide, R.string.widget_format_other_section);
+        addClockTokenRow(guide, R.string.format_token_large_line, "%L", 2);
+        TextView landscapeHint = new TextView(this);
+        landscapeHint.setText(R.string.clock_format_landscape_emphasis_hint);
+        guide.addView(landscapeHint, lpMatchWrap);
         addClockTokenSection(guide, R.string.widget_format_alarm_section);
         addClockTokenRow(guide, R.string.format_token_alarm, "%<%>", 2);
         TextView alarmHint = new TextView(this);
@@ -544,11 +538,6 @@ public class ClockConfigureActivity extends ConfigureActivity
                 break;
             case SHOW_NEXT_ALARM:
                 m_prefs.edit().putBoolean("CshowNextAlarm", isChecked).commit();
-                m_clockView.updateLayout();
-                break;
-            case LARGE_LANDSCAPE_TIME:
-                m_prefs.edit().putBoolean(
-                        "CadvancedLargeTime", isChecked).apply();
                 m_clockView.updateLayout();
                 break;
             default: super.onCheckedChanged(buttonView, isChecked);

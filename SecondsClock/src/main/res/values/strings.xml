@@ -101,11 +101,11 @@
     <string name="widget_format_profile_hint">Select a tab to edit that format. Sync uses one format for both shapes; Horizontal and Vertical are selected automatically from the widget\'s reported dimensions. New shape formats start from Sync. You control line breaks; the text still scales to fit.</string>
     <string name="clock_format_label">Full-screen clock format</string>
     <string name="clock_format_caption">Custom format is optional. Checkbox mode keeps the automatic layout.</string>
-    <string name="clock_large_time_in_landscape">Make the first line larger in landscape Advanced mode</string>
-    <string name="clock_large_time_hint">Put the time on the first line. In landscape, it uses most of the screen; remaining lines are smaller.</string>
     <string name="clock_format_guide_title">Build your full-screen clock text</string>
     <string name="clock_format_guide_hint">Tap tokens to insert them. Select a tab to edit that format. Sync shares one format; Portrait and Landscape are selected automatically by screen orientation and can be edited separately. New orientation formats start from Sync.</string>
     <string name="clock_format_seconds_help" formatted="false">In advanced mode, include or omit %S in the format to control seconds. The separate seconds-size slider applies in checkbox mode.</string>
+    <string name="format_token_large_line" formatted="false">Emphasize line (%L)</string>
+    <string name="clock_format_landscape_emphasis_hint" formatted="false">In landscape Advanced mode, put %L on any line to emphasize it; the marker is not displayed. Both %n and a real newline separate lines. Emphasized lines share extra space; other lines keep room for details. %S still displays seconds.</string>
     <string name="clock_alarm_prefix">ALM:</string>
     <string name="widget_format_label">Widget text format</string>
     <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
