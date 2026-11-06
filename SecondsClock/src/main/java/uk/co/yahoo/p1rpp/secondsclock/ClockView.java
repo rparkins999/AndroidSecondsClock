@@ -59,6 +59,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -485,20 +486,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
         List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
-        boolean hasEmphasis = false;
-        for (FormatLineSplit.Line line : lines) {
-            hasEmphasis |= line.emphasized;
-        }
-        if (hasEmphasis) {
-            SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
-            m_customClockView.setFormat12Hour(pattern);
-            m_customClockView.setFormat24Hour(pattern);
-            m_customClockView.setLines(countLines(pattern));
-        } else {
-            Formatter formatter = new Formatter();
-            formatter.set(FormatLineSplit.stripEmphasisMarkers(format), nextAlarmTime);
-            setCustomClockFormat(m_customClockView, formatter);
-        }
+        SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
+        m_customClockView.setFormat12Hour(pattern);
+        m_customClockView.setFormat24Hour(pattern);
+        m_customClockView.setLines(countLines(pattern));
     }
 
     private SpannableStringBuilder makeAdvancedPattern(
@@ -508,14 +499,25 @@ class ClockView extends LinearLayout implements SensorEventListener {
         measurePaint.setTextSize(100.0F);
         float widestLine = 0.0F;
         for (FormatLineSplit.Line line : lines) {
-            Formatter formatter = new Formatter();
-            formatter.set(line.format, nextAlarmTime);
-            String linePattern = formatter.time12;
-            if (linePattern.isEmpty() && line.format.contains("%<")) continue;
+            DateCommandFormat.FormattedPattern converted =
+                    DateCommandFormat.toTextClockPatternWithTimeRanges(
+                            line.format, nextAlarmTime);
+            if (converted.pattern.isEmpty() && line.format.contains("%<")) continue;
 
-            String renderedText = DateFormat.format(
-                    linePattern, System.currentTimeMillis()).toString();
-            float textWidth = measurePaint.measureText(renderedText);
+            SpannableStringBuilder linePattern =
+                    new SpannableStringBuilder(converted.pattern);
+            if (m_sevenSegmentTypeface != null) {
+                for (DateCommandFormat.PatternRange range : converted.timeRanges) {
+                    linePattern.setSpan(
+                            new TypefaceMetricSpan(m_sevenSegmentTypeface),
+                            range.start, range.end,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            CharSequence renderedText = DateFormat.format(
+                    linePattern, System.currentTimeMillis());
+            float textWidth = measureStyledTextWidth(renderedText, measurePaint);
             widestLine = Math.max(widestLine, textWidth);
             renderedLines.add(new AdvancedPatternLine(
                     linePattern, line.emphasized, textWidth));
@@ -539,12 +541,63 @@ class ClockView extends LinearLayout implements SensorEventListener {
         return pattern;
     }
 
+    private static float measureStyledTextWidth(CharSequence text, TextPaint paint) {
+        if (!(text instanceof Spanned) || text.length() == 0) {
+            return paint.measureText(text.toString());
+        }
+
+        Spanned styledText = (Spanned) text;
+        Typeface originalTypeface = paint.getTypeface();
+        List<Integer> boundaries = new ArrayList<>();
+        boundaries.add(0);
+        boundaries.add(text.length());
+        TypefaceMetricSpan[] spans = styledText.getSpans(
+                0, text.length(), TypefaceMetricSpan.class);
+        for (TypefaceMetricSpan span : spans) {
+            int start = styledText.getSpanStart(span);
+            int end = styledText.getSpanEnd(span);
+            if (start > 0 && start < text.length()) boundaries.add(start);
+            if (end > 0 && end < text.length()) boundaries.add(end);
+        }
+        Collections.sort(boundaries);
+
+        float width = 0.0F;
+        int previous = -1;
+        for (int boundaryIndex = 0; boundaryIndex < boundaries.size(); ++boundaryIndex) {
+            int start = boundaries.get(boundaryIndex);
+            if (start == previous) continue;
+            previous = start;
+            int nextIndex = boundaryIndex + 1;
+            while (nextIndex < boundaries.size()
+                    && boundaries.get(nextIndex) == start) {
+                ++nextIndex;
+            }
+            if (nextIndex >= boundaries.size()) break;
+            int end = boundaries.get(nextIndex);
+
+            boolean hasTypefaceSpan = false;
+            for (TypefaceMetricSpan span : spans) {
+                if (styledText.getSpanStart(span) <= start
+                        && styledText.getSpanEnd(span) >= end) {
+                    span.updateMeasureState(paint);
+                    hasTypefaceSpan = true;
+                    break;
+                }
+            }
+            if (!hasTypefaceSpan) paint.setTypeface(originalTypeface);
+            width += paint.measureText(text.toString(), start, end);
+        }
+        paint.setTypeface(originalTypeface);
+        return width;
+    }
+
     private static final class AdvancedPatternLine {
-        final String pattern;
+        final CharSequence pattern;
         final boolean emphasized;
         final float textWidth;
 
-        AdvancedPatternLine(String pattern, boolean emphasized, float textWidth) {
+        AdvancedPatternLine(
+                CharSequence pattern, boolean emphasized, float textWidth) {
             this.pattern = pattern;
             this.emphasized = emphasized;
             this.textWidth = textWidth;
@@ -559,17 +612,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
         return result;
     }
 
-    private static void setCustomClockFormat(
-            TextClock clock, Formatter formatter) {
-        clock.setFormat12Hour(formatter.time12);
-        clock.setFormat24Hour(formatter.time24);
-        clock.setLines(formatter.lines);
-    }
-
-    private TextClock makeCustomClock(Typeface font, int colour) {
+    private TextClock makeCustomClock(int colour) {
         TextClock clock = new TextClock(m_owner);
         clock.setGravity(Gravity.CENTER);
-        clock.setTypeface(font);
+        clock.setTypeface(Typeface.DEFAULT);
         clock.setTextColor(colour);
         clock.setAutoSizeTextTypeUniformWithConfiguration(
                 10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
@@ -644,7 +690,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
         if (advancedFormatMode) {
-            m_customClockView = makeCustomClock(font, m_fgcolour);
+            m_customClockView = makeCustomClock(m_fgcolour);
             updateCustomClockFormat();
             addView(m_customClockView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
