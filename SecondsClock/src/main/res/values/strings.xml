@@ -104,6 +104,8 @@
     <string name="clock_format_guide_title">Build your full-screen clock text</string>
     <string name="clock_format_guide_hint">Tap tokens to insert them. Select a tab to edit that format. Sync shares one format; Portrait and Landscape are selected automatically by screen orientation and can be edited separately. New orientation formats start from Sync.</string>
     <string name="clock_format_seconds_help" formatted="false">In advanced mode, include or omit %S in the format to control seconds. The separate seconds-size slider applies in checkbox mode.</string>
+    <string name="format_token_large_line" formatted="false">Emphasize line (%L)</string>
+    <string name="clock_format_landscape_emphasis_hint" formatted="false">In Advanced mode, put %L at the start of any line in the format profile where you want it emphasized; the marker is not displayed. Both %n and a real newline separate lines. Emphasized lines share extra space; other lines keep room for details.</string>
     <string name="clock_alarm_prefix">ALM:</string>
     <string name="widget_format_label">Widget text format</string>
     <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>

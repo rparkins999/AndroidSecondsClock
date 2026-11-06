@@ -288,6 +288,11 @@ public class ClockConfigureActivity extends ConfigureActivity
         addClockTokenRow(guide,
                 R.string.format_token_newline, "%n",
                 R.string.format_token_percent, "%%");
+        addClockTokenSection(guide, R.string.widget_format_other_section);
+        addClockTokenRow(guide, R.string.format_token_large_line, "%L", 2);
+        TextView landscapeHint = new TextView(this);
+        landscapeHint.setText(R.string.clock_format_landscape_emphasis_hint);
+        guide.addView(landscapeHint, lpMatchWrap);
         addClockTokenSection(guide, R.string.widget_format_alarm_section);
         addClockTokenRow(guide, R.string.format_token_alarm, "%<%>", 2);
         TextView alarmHint = new TextView(this);
