@@ -473,7 +473,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_prefs.getBoolean("CformatSyncEnabled", true),
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
         Formatter formatter = new Formatter();
-        formatter.set(format, Formatter.getNextAlarmTime(m_owner));
+        formatter.set(format, Formatter.getNextAlarmTime(m_owner),
+                m_prefs.getBoolean("CtextStyleEmoji", false));
         m_customClockView.setFormat12Hour(formatter.time12);
         m_customClockView.setFormat24Hour(formatter.time24);
         m_customClockView.setLines(formatter.lines);

@@ -197,7 +197,13 @@ class Formatter {
     }
 
     public void set(String format, Long nextAlarmTime) {
-        String pattern = DateCommandFormat.toTextClockPattern(format, nextAlarmTime);
+        set(format, nextAlarmTime, false);
+    }
+
+    public void set(
+            String format, Long nextAlarmTime, boolean preferTextStyleEmoji) {
+        String pattern = DateCommandFormat.toTextClockPattern(
+                format, nextAlarmTime, preferTextStyleEmoji);
         time12 = pattern;
         time24 = pattern;
         rest = "";

@@ -70,6 +70,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     .putString("widgetIds", widgetIds)
                     .putBoolean(key + "formatSyncEnabled",
                             prefs.getBoolean("WformatSyncEnabled", true))
+                    .putBoolean(key + "textStyleEmoji",
+                            prefs.getBoolean("WtextStyleEmoji", false))
                     .putBoolean(key + "advancedFormatMode",
                             defaultAdvancedFormatMode)
                     .putInt(key + "showTime", prefs.getInt("WshowTime", 2))
@@ -130,7 +132,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     prefs.getString(key + "formatVertical", null),
                     prefs.getBoolean(key + "formatSyncEnabled", true),
                     FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
-            f.set(format, nextAlarmTime);
+            f.set(format, nextAlarmTime,
+                    prefs.getBoolean(key + "textStyleEmoji", false));
         } else {
             f.setCheckboxes(context, minWidth, maxHeight,
                     prefs.getInt(key + "showTime", 2),

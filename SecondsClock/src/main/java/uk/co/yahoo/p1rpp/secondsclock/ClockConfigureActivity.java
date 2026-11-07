@@ -84,6 +84,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int FORMATPROFILE_LANDSCAPE = FORMATPROFILE_PORTRAIT + 1;
     private static final int FORMATFIELD = FORMATPROFILE_LANDSCAPE + 1;
     private static final int SHOW_NEXT_ALARM = FORMATFIELD + 1;
+    private static final int TEXT_STYLE_EMOJI = SHOW_NEXT_ALARM + 1;
 
     // Conversion between threshold slider and numeric value
     private int m_fgcolour;
@@ -243,6 +244,12 @@ public class ClockConfigureActivity extends ConfigureActivity
         editor.addView(hint, lpMatchWrap);
         editor.addView(makeClockFormatProfiles(), lpMatchWrap);
         editor.addView(m_formatInput, lpMatchWrap);
+        CheckBox textStyleEmoji = new CheckBox(this);
+        textStyleEmoji.setId(TEXT_STYLE_EMOJI);
+        textStyleEmoji.setText(R.string.text_style_emoji);
+        textStyleEmoji.setChecked(m_prefs.getBoolean("CtextStyleEmoji", false));
+        textStyleEmoji.setOnCheckedChangeListener(this);
+        editor.addView(textStyleEmoji, lpWrapWrap);
         editor.addView(makeClockFormatGuide(), lpMatchWrap);
         return editor;
     }
@@ -533,6 +540,10 @@ public class ClockConfigureActivity extends ConfigureActivity
                 break;
             case SHOW_NEXT_ALARM:
                 m_prefs.edit().putBoolean("CshowNextAlarm", isChecked).commit();
+                m_clockView.updateLayout();
+                break;
+            case TEXT_STYLE_EMOJI:
+                m_prefs.edit().putBoolean("CtextStyleEmoji", isChecked).apply();
                 m_clockView.updateLayout();
                 break;
             default: super.onCheckedChanged(buttonView, isChecked);
