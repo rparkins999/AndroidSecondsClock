@@ -49,6 +49,13 @@ final class TextStyleEmoji {
             String text, int offset, int nextOffset, int codePoint, int next) {
         int previous = offset > 0 ? text.codePointBefore(offset) : -1;
         if (previous == ZERO_WIDTH_JOINER || next == ZERO_WIDTH_JOINER) return true;
+        if (isEmojiCandidate(codePoint) && next == EMOJI_PRESENTATION) {
+            int afterSelector = nextOffset + Character.charCount(next);
+            if (afterSelector < text.length()
+                    && text.codePointAt(afterSelector) == ZERO_WIDTH_JOINER) {
+                return true;
+            }
+        }
         if (isRegionalIndicator(codePoint) || isSkinToneModifier(codePoint)) {
             return true;
         }
