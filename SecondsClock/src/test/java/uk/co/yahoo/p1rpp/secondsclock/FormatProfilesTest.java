@@ -68,9 +68,9 @@ public class FormatProfilesTest {
 
     @Test
     public void tickerUsesSecondsWhenSecondsSizeIsNotConfigured() {
-        assertEquals(750L, ClockView.millisecondsUntilNextTick(
-                1_250L, ClockView.DEFAULT_SECONDS_SIZE));
-        assertEquals(58_750L, ClockView.millisecondsUntilNextTick(
+        assertEquals(750L, ClockTickDelay.millisecondsUntilNextTick(
+                1_250L, 255));
+        assertEquals(58_750L, ClockTickDelay.millisecondsUntilNextTick(
                 1_250L, 0));
     }
 }

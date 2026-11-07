@@ -452,17 +452,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
             long now = next.getTimeInMillis();
             int secondsSize = m_prefs.getInt(
                     "CsecondsSize", DEFAULT_SECONDS_SIZE);
-            long offset = millisecondsUntilNextTick(now, secondsSize);
+            long offset = ClockTickDelay.millisecondsUntilNextTick(
+                    now, secondsSize);
             adjustColour();
             m_handler.postDelayed(this, offset);
         }
     };
-
-    static long millisecondsUntilNextTick(long now, int secondsSize) {
-        long interval = secondsSize > 0 ? 1000L : 60_000L;
-        long remainder = now % interval;
-        return remainder == 0 ? interval : interval - remainder;
-    }
 
     public void setHeight (int height) { m_height = height; }
 
