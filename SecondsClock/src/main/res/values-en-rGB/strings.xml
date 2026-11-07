@@ -7,64 +7,22 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="setbgcolour">Set widget background colour</string>
-    <string name="setbgcolourhelp">Touch this button to show a colour
-        chooser screen for the background colour and opacity of the widget.</string>
+    <string name="setbgcolourhelp">Choose the widget background colour and opacity.</string>
     <string name="setfgcolour">Set %1s text colour</string>
-    <string name="setfgcolourhelp">Touch this button to show a colour
-        chooser screen for the text colour of the %1s.</string>
-    <string name="bgcolourhelp">This screen provides sliders
-        to set the hue, saturation, value, red, green, blue, and opacity values
-        of the colour of the widget\'s background. You can also type in values
-        for any of these except the hue.</string>
-    <string name="fgcolourhelp">This screen provides sliders
-        to set the hue, saturation, value, red, green, and blue values
-        of the colour of the %1s\'s text. You can also type in values
-        for any of these except the hue.</string>
-    <string name="huesliderhelp">Move the thumb on this slider to set the hue
-        of the %1s. This will not modify the value or saturation.
-        Black, white and grayscale colours have a saturation of zero,
-        so changing their hue will have no effect.</string>
-    <string name="saturationsliderhelp">Move the thumb on this slider to set the
-        saturation of the %1s. This will not modify the hue or the value.
-        Decreasing the saturation increases the amount of white in the colour:
-        pale pink is unsaturated, while pure red is saturated.</string>
-    <string name="saturationvaluehelp">This number shows the saturation
-        of the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
-    <string name="valuesliderhelp">Move the thumb on this slider to set the
-        value of the %1s. This will not modify the hue or the saturation.
-        The value is approximately the brightness of the colour,
-        but we use different names for some low-value colours:
-        for example low-value red is brown.</string>
-    <string name="valuevaluehelp">This number shows the value
-        of the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
-    <string name="redsliderhelp">Move the thumb on this slider
-        to adjust the amount of red in the colour of the %1s.</string>
-    <string name="redvaluehelp">This number shows the actual amount of red
-        in the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
-    <string name="greensliderhelp">Move the thumb on this slider
-        to adjust the amount of green in the colour of the %1s.</string>
-    <string name="greenvaluehelp">This number shows the actual amount of green
-        in the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
-    <string name="bluesliderhelp">Move the thumb on this slider
-        to adjust the amount of blue in the colour of the %1s.</string>
-    <string name="bluevaluehelp">This number shows the actual amount of blue
-        in the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="setfgcolourhelp">Choose the %1s text colour.</string>
+    <string name="bgcolourhelp">Adjust background hue, saturation, value, RGB, and opacity. Type values except hue.</string>
+    <string name="fgcolourhelp">Adjust hue, saturation, value, or RGB. Type values except hue.</string>
+    <string name="huesliderhelp">Set the hue of the %1s. Grayscale colours have no hue.</string>
+    <string name="saturationsliderhelp">Set saturation for %1s. Lower values make it less vivid.</string>
+    <string name="saturationvaluehelp">Saturation: 0–255. Tap to edit; double-tap to select all.</string>
+    <string name="valuesliderhelp">Set brightness (value) for %1s.</string>
+    <string name="valuevaluehelp">Value: 0–255. Tap to edit; double-tap to select all.</string>
+    <string name="redsliderhelp">Set red in %1s.</string>
+    <string name="redvaluehelp">Red: 0–255. Tap to edit; double-tap to select all.</string>
+    <string name="greensliderhelp">Set green in %1s.</string>
+    <string name="greenvaluehelp">Green: 0–255. Tap to edit; double-tap to select all.</string>
+    <string name="bluesliderhelp">Set blue in %1s.</string>
+    <string name="bluevaluehelp">Blue: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="setclockcolour">Set full screen clock colour</string>
-    <string name="setclockcolourhelp">Touch this button to show a colour
-        chooser screen for the colour of the full screen clock.</string>
+    <string name="setclockcolourhelp">Choose the full-screen clock colour.</string>
 </resources>

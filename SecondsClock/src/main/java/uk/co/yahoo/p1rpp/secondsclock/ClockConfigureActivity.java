@@ -239,10 +239,10 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_formatLabel = label;
         updateClockFormatLabel();
         editor.addView(label, lpMatchWrap);
-        TextView hint = new TextView(this);
-        hint.setText(R.string.clock_format_caption);
-        editor.addView(hint, lpMatchWrap);
         editor.addView(makeClockFormatProfiles(), lpMatchWrap);
+        TextView hint = new TextView(this);
+        hint.setText(R.string.clock_format_input_hint);
+        editor.addView(hint, lpMatchWrap);
         editor.addView(m_formatInput, lpMatchWrap);
         CheckBox textStyleEmoji = new CheckBox(this);
         textStyleEmoji.setId(TEXT_STYLE_EMOJI);

@@ -245,13 +245,9 @@ public class MainActivity extends Activity_common
             PackageManager pm = getPackageManager();
             PackageInfo pi = pm.getPackageInfo(getPackageName (), 0);
             s = getString(R.string.app_name) + " " + pi.versionName
-                + " built " + getString(R.string.build_time) + "\n";
+                + " · " + getString(R.string.build_time) + "\n";
         } catch (PackageManager.NameNotFoundException ignore) {}
-        m_helptext.setText(s
-            + getString(R.string.build_git1) + "\n"
-            + getString(R.string.build_git2) + "\n"
-            + getString(R.string.build_git3) + "\n"
-            + getString(R.string.longpresshoriz));
+        m_helptext.setText(s + getString(R.string.longpresshoriz));
         m_helptext.setId(LONGPRESSHELP);
         m_helptext.setOnLongClickListener(this);
         lmain.addView(m_helptext);
