@@ -9,117 +9,76 @@
     <string name="clock">clock</string>
     <string name="app_name">SecondsClock</string>
     <string name="app_label">Seconds Clock</string>
-    <string name="nosysclock">Cannot find system clock app.</string>
-    <string name="noclockpermission">Cannot launch system clock:
-        try giving SecondsClock permission SET_ALARMS.</string>
+    <string name="nosysclock">System clock app not found.</string>
+    <string name="noclockpermission">Cannot open the system clock. Allow SET_ALARM permission.</string>
     <string name="gosysclock">Go to system clock app</string>
-    <string name="helpgosysclock">Touch this button to go to the device\'s
-        default clock app.</string>
-    <string name="helptouchsysclock">Check this box to make a touch on the
-        widget go to the device\'s default clock app.</string>
+    <string name="helpgosysclock">Opens the device\'s default clock app.</string>
+    <string name="helptouchsysclock">Touching the widget opens the default clock app.</string>
     <string name="gosecondsclock">Go to SecondsClock app</string>
-    <string name="helptouchsecondsclock">Check this box to make a touch on the
-        widget go to this app (SecondsClock).</string>
+    <string name="helptouchsecondsclock">Touching the widget opens Seconds Clock.</string>
     <string name="confignewwidget">Configure new widget</string>
-    <string name="helpconfignewwidget">Touch this button to set the configuration
-        for new widgets. To create a new widget, long press in an empty
-        space in your home screen.</string>
+    <string name="helpconfignewwidget">Sets defaults for new widgets. Add one from your home screen.</string>
     <string name="configoldwwidget">Configure existing widget</string>
-    <string name="helpoldwidget">Touch this button to configure a widget that
-        you have created previously: you will be sent back to your home screen
-        and the first widget (from this app) that you touch will take you
-        to the widget configure page for that widget. Note that this
-        temporarily overrides the normal touch action for all of this
-        app\'s widgets.</string>
-    <string name="actionoldwidget">When you see your home screen, if necessary
-        move to the appropriate page, and touch the widget that you want
-        to configure.</string>
+    <string name="helpoldwidget">Choose a widget to edit. Its normal touch action is temporarily disabled.</string>
+    <string name="actionoldwidget">On the home screen, tap the widget you want to edit.</string>
     <string name="configwidget">Configure this widget</string>
-    <string name="helpconfigthis">Touch this button to configure the
-        widget that you touched.</string>
-    <string name="helpconfigwidget">Check this box to make a touch on the
-        widget go to the configuration page to reconfigure it.</string>
+    <string name="helpconfigthis">Edits the widget you opened.</string>
+    <string name="helpconfigwidget">Touching the widget opens its settings.</string>
     <string name="confignightclock">Configure full screen clock</string>
-    <string name="helpconfignightclock">Touch this button to configure the
-        full screen clock.</string>
-    <string name="touchconfignightclock">Check this box to make a touch on the
-        widget go to the configuration page for the full screen clock.</string>
+    <string name="helpconfignightclock">Opens full-screen clock settings.</string>
+    <string name="touchconfignightclock">Touching the widget opens full-screen clock settings.</string>
     <string name="runnightclock">Run full screen clock</string>
-    <string name="helprunnightclock">Touch this button to run
-        the full screen clock.</string>
-    <string name="touchrunnightclock">Check this box to make a touch on the
-        widget run the full screen clock.</string>
-    <string name="chooseaction">Go to action menu when touched</string>
-    <string name="touchchooseaction">Check this box to make a touch on the
-        widget go to the top level menu for the app to choose what to
-        do next.</string>
+    <string name="helprunnightclock">Starts the full-screen clock.</string>
+    <string name="touchrunnightclock">Touching the widget starts the full-screen clock.</string>
+    <string name="chooseaction">Choose action when touched</string>
+    <string name="touchchooseaction">Touching the widget opens the action menu.</string>
     <string name="exit">Exit</string>
-    <string name="exithelp">Touch this button to exit the app.
-    Home screen widgets will continue to run.</string>
+    <string name="exithelp">Exits the app; home-screen widgets keep running.</string>
     <string name="appwidget_text">Clock</string>
     <string name="app_widget_description">1x1 seconds clock</string>
-    <string name="demohelp">This shows what the widget looks like.
-        If there is currently no home screen widget, the size may not be correct
-        because SecondsClock can\'t find out what size the widget would be:
-        it will use an estimate for the size of a 1x1 widget.
-        If you resize the widget on the home screen to a larger size,
-        the widget will rearrange its layout to use a larger font size.
-        The background pattern shows the effect of the widget background
-        in case it is not transparent.</string>
-    <string name="longpresshoriz">Long press here for help information</string>
-    <string name="longpressvert">Long\npress\nhere\nfor help\ninformation</string>
-    <string name="mainactivityhelp">This page allows you to choose what to do next.
-        Long press on any of the buttons for a longer description of what it does.
-        This could have been a menu, but that would make you do an unnecessary
-        extra click.</string>
-    <string name="widgetconfighelp">This page allows you to configure a widget.
-        If you came here from a particular widget, it reconfigures that:
-        if you came here from the top level page,
-        it sets the configuration for new widgets.
-        You can make multiple widgets with different configurations.
-        Long press on anything for a longer description of what it does.</string>
-    <string name="clockconfighelp">This page allows you to configure
-        the full screen clock.
-        Long press on anything for a longer description of what it does.</string>
-    <string name="show_time">Show time in widget</string>
-    <string name="showtimehelp">If this box is checked, the widget will
-        display the time in locale-appropriate format.</string>
-    <string name="show_seconds">Show time with seconds in widget</string>
-    <string name="showsecondshelp">If this box is checked, the widget will
-        display the time in locale-appropriate format including seconds.
-        This will increase battery drain since the widget has to update itself
-        every second.</string>
-    <string name="show_next_alarm_any_app">Show next alarm (any alarm app)</string>
-    <string name="next_alarm_source_help">Android reports the next alarm-clock alarm from any app, not necessarily your default clock app. Checkbox mode displays it as ALM: Mon, 3:30.</string>
-    <string name="advanced_format_mode">Advanced formatting mode</string>
-    <string name="text_style_emoji">Prefer text-style emoji (monochrome where supported)</string>
+    <string name="demohelp">Preview estimates 1×1 without a widget. Resize one to see scaling; the pattern shows its background.</string>
+    <string name="longpresshoriz">Hold for help</string>
+    <string name="longpressvert">Hold\nfor\nhelp</string>
+    <string name="mainactivityhelp">Choose an action. Hold a button for details.</string>
+    <string name="widgetconfighelp">Edit this widget or set defaults for new ones. Hold a control for details.</string>
+    <string name="clockconfighelp">Configure the full-screen clock. Hold a control for details.</string>
+    <string name="show_time">Show time</string>
+    <string name="showtimehelp">Shows local time.</string>
+    <string name="show_seconds">Show seconds</string>
+    <string name="showsecondshelp">Adds seconds; the widget updates every second and uses more battery.</string>
+    <string name="show_next_alarm_any_app">Show next alarm (any app)</string>
+    <string name="next_alarm_source_help">Checkbox mode shows it as ALM: Mon, 3:30.</string>
+    <string name="advanced_format_mode">Advanced mode</string>
+    <string name="text_style_emoji">Prefer monochrome emoji (if supported)</string>
     <string name="checkbox_mode">Checkbox mode</string>
     <string name="format_profile_sync">Sync</string>
     <string name="format_profile_horizontal">Horizontal</string>
     <string name="format_profile_vertical">Vertical</string>
     <string name="format_profile_portrait">Portrait</string>
     <string name="format_profile_landscape">Landscape</string>
-    <string name="widget_format_profile_hint">Select a tab to edit that format. Sync uses one format for both shapes; Horizontal and Vertical are selected automatically from the widget\'s reported dimensions. New shape formats start from Sync. You control line breaks; the text still scales to fit.</string>
+    <string name="widget_format_profile_hint">Sync shares one format; otherwise size picks Horizontal/Vertical. Breaks stay fixed; text scales.</string>
     <string name="clock_format_label">Full-screen clock format</string>
-    <string name="clock_format_caption">Custom format is optional; checkbox mode keeps the automatic layout. Tap the format field to open the keyboard and type plain text. Use the token buttons below for date and time fields.</string>
-    <string name="clock_format_guide_title">Build your full-screen clock text</string>
-    <string name="clock_format_guide_hint">Tap tokens to insert them. Select a tab to edit that format. Sync shares one format; Portrait and Landscape are selected automatically by screen orientation and can be edited separately. New orientation formats start from Sync.</string>
-    <string name="clock_format_seconds_help" formatted="false">In advanced mode, include or omit %S in the format to control seconds. The separate seconds-size slider applies in checkbox mode.</string>
+    <string name="clock_format_caption">Advanced mode accepts tokens; checkbox mode keeps the automatic layout.</string>
+    <string name="clock_format_profile_hint">Sync shares one format; otherwise orientation selects Portrait or Landscape.</string>
+    <string name="clock_format_input_hint">Tap the box below to type.</string>
+    <string name="clock_format_guide_title">Date and time tokens</string>
+    <string name="clock_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
+    <string name="clock_format_seconds_help" formatted="false">Advanced formats use %S to show seconds; the slider affects checkbox mode only.</string>
     <string name="format_token_large_line" formatted="false">Emphasize line (%L)</string>
-    <string name="clock_format_landscape_emphasis_hint" formatted="false">In Advanced mode, put %L at the start of any line in the format profile where you want it emphasized; the marker is not displayed. Both %n and a real newline separate lines. Emphasized lines share extra space; other lines keep room for details.</string>
+    <string name="clock_format_landscape_emphasis_hint" formatted="false">Put %L before a line to enlarge it; the marker stays hidden. Other lines keep room for details.</string>
     <string name="clock_alarm_prefix">ALM:</string>
     <string name="widget_format_label">Widget text format</string>
     <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
-    <string name="widget_format_caption">Tap the format field to open the keyboard and type plain text. Use the buttons below to insert date-style tokens; press Enter to add a line.</string>
-    <string name="widget_format_help" formatted="false">Enter a date-command-style format. Type a real newline to start another line. Common conversions: %a/%A weekday name, %b/%B month name, %d day, %m month number, %Y year, %F ISO date, %H 24-hour, %I 12-hour, %M minute, %S second, %p AM/PM, %x localized date, %X localized time, %n newline, and %% a literal percent.\n\n%&lt; starts an optional alarm section; %&gt; ends it. The section is shown only when Android reports a next alarm-clock alarm. It can be from any alarm app. Conversions inside it use the alarm time; conversions outside use the current time.</string>
-    <string name="widget_format_guide_title">Build your own widget text</string>
-    <string name="widget_format_guide_hint">Tap a token to insert it at the cursor. Press Enter to add a line. Tokens are case-sensitive.</string>
+    <string name="widget_format_caption">Tap the box below to type.</string>
+    <string name="widget_format_help" formatted="false">Use the token buttons below. %&lt;...%&gt; shows only when an alarm is set; tokens inside use alarm time.</string>
+    <string name="widget_format_guide_title">Date and time tokens</string>
+    <string name="widget_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
     <string name="widget_format_time_section">Time</string>
     <string name="widget_format_date_section">Date</string>
     <string name="widget_format_other_section">Other</string>
     <string name="widget_format_alarm_section">Alarm</string>
-    <string name="format_token_hour24" formatted="false">24-hour hour (%H)</string>
-    <string name="format_token_hour12" formatted="false">12-hour hour (%I)</string>
+    <string name="format_token_hour24" formatted="false">Hour (24-hour, %H)</string>
+    <string name="format_token_hour12" formatted="false">Hour (12-hour, %I)</string>
     <string name="format_token_minute" formatted="false">Minute (%M)</string>
     <string name="format_token_second" formatted="false">Second (%S)</string>
     <string name="format_token_ampm" formatted="false">AM/PM (%p)</string>
@@ -128,226 +87,100 @@
     <string name="format_token_short_month" formatted="false">Short month (%b)</string>
     <string name="format_token_full_month" formatted="false">Full month (%B)</string>
     <string name="format_token_day" formatted="false">Day, zero-padded (%d)</string>
-    <string name="format_token_day_unpadded" formatted="false">Day, unpadded (%e)</string>
+    <string name="format_token_day_unpadded" formatted="false">Day, no leading zero (%e)</string>
     <string name="format_token_month" formatted="false">Month number (%m)</string>
     <string name="format_token_year" formatted="false">Year (%Y)</string>
     <string name="format_token_iso_date" formatted="false">ISO date (%F)</string>
     <string name="format_token_local_date" formatted="false">Localized date (%x)</string>
     <string name="format_token_local_time" formatted="false">Localized time (%X)</string>
-    <string name="format_token_newline" formatted="false">Newline (%n)</string>
-    <string name="format_token_percent" formatted="false">Literal percent (%%)</string>
-    <string name="format_token_alarm" formatted="false">Insert alarm block (%&lt;…%&gt;)</string>
-    <string name="widget_format_alarm_hint">The alarm block appears only when Android reports a next alarm-clock alarm. It can come from any alarm app, not only your default clock app. Tokens inside it use that alarm time. Put line breaks inside the markers.</string>
-    <string name="show_short_weekday">Show abbreviated day name
-        in %1s.</string>
-    <string name="showshortweekdayhelp">If this box is checked, the %1s will
-        display the locale-appropriate abbreviation for the day of the
-        week.</string>
-    <string name="show_long_weekday">Show full day name in %1s.</string>
-    <string name="showlongweekdayhelp">If this box is checked, the %1s will
-        display the locale-appropriate full name for the day of the
-        week.</string>
-    <string name="show_short_date">Show numeric date in %1s.</string>
-    <string name="showshortdatehelp">If this box is checked, the %1s will
-        display the locale-appropriate numeric date. If the numeric date
-        is shown, the full date cannot be shown as well.</string>
-    <string name="show_month_day">Show day of month in %1s.</string>
-    <string name="showmonthdayhelp">If this box is checked, the %1s will
-        display the day of the month.</string>
-    <string name="show_short_month">Show abbreviated month name in %1s.</string>
-    <string name="showshortmonthhelp">If this box is checked, the %1s will
-        display the locale-appropriate abbreviation for the month.</string>
-    <string name="show_long_month">Show full month name in %1s.</string>
-    <string name="showlongmonthhelp">If this box is checked, the %1s will
-        display the locale-appropriate full name for the month.</string>
-    <string name="show_year">Show year in %1s.</string>
-    <string name="showyearhelp">If this box is checked, the %1s will
-        display the (Gregorian) year.</string>
+    <string name="format_token_newline" formatted="false">New line (%n)</string>
+    <string name="format_token_percent" formatted="false">Literal % (%%)</string>
+    <string name="format_token_alarm" formatted="false">Alarm block (%&lt;…%&gt;)</string>
+    <string name="widget_format_alarm_hint">Shown when any app reports a next alarm. Tokens use its time; keep breaks inside markers.</string>
+    <string name="show_short_weekday">Short weekday</string>
+    <string name="showshortweekdayhelp">Shows the localized short weekday in %1s.</string>
+    <string name="show_long_weekday">Full weekday</string>
+    <string name="showlongweekdayhelp">Shows the localized full weekday in %1s.</string>
+    <string name="show_short_date">Numeric date</string>
+    <string name="showshortdatehelp">Shows the localized numeric date in %1s; it replaces the full date.</string>
+    <string name="show_month_day">Day of month</string>
+    <string name="showmonthdayhelp">Shows the day of the month in %1s.</string>
+    <string name="show_short_month">Short month</string>
+    <string name="showshortmonthhelp">Shows the localized short month name in %1s.</string>
+    <string name="show_long_month">Full month</string>
+    <string name="showlongmonthhelp">Shows the localized full month name in %1s.</string>
+    <string name="show_year">Year</string>
+    <string name="showyearhelp">Shows the Gregorian year in %1s.</string>
     <string name="setbgcolour">Set widget background colour</string>
-    <string name="setbgcolourhelp">Touch this button to show a colour
-        chooser page for the background colour and opacity of the widget.
-    </string>
+    <string name="setbgcolourhelp">Choose the widget background colour and opacity.</string>
     <string name="setfgcolour">Set %1s text colour</string>
-    <string name="setfgcolourhelp">Touch this button to show a colour
-        chooser page for the text colour of the %1s.</string>
-    <string name="fgcolourhelp">This page provides sliders
-        to set the hue, saturation, value, red, green, and blue values
-        of the colour of the %1s\'s text. You can also type in values
-        for any of these except the hue.</string>
-    <string name="bgcolourhelp">This page provides sliders
-        to set the hue, saturation, value, red, green, blue, and opacity values
-        of the colour of the widget\'s background. You can also type in values
-        for any of these except the hue.</string>
+    <string name="setfgcolourhelp">Choose the %1s text colour.</string>
+    <string name="fgcolourhelp">Adjust hue, saturation, value, or RGB. Type values except hue.</string>
+    <string name="bgcolourhelp">Adjust background hue, saturation, value, RGB, and opacity. Type values except hue.</string>
     <string name="setaction">Set widget touch action</string>
-    <string name="setactionhelp">Touch this button to configure
-        the action that will be performed when the widget is touched</string>
-    <string name="actionhelp">This page provides buttons to select what action
-        will be taken when the widget is touched. Long click on a button
-        for a longer description of what it makes the widget do.</string>
-    <string name="actionpage">ACTION WHEN\nWIDGET TOUCHED</string>
+    <string name="setactionhelp">Choose what a widget tap does.</string>
+    <string name="actionhelp">Choose an action. Hold a button for details.</string>
+    <string name="actionpage">WIDGET TOUCH ACTION</string>
     <string name="huelabel">Hue</string>
-    <string name="huesliderhelp">Move the thumb on this slider to set the hue
-        of the %1s. This will not modify the value or saturation.
-        Black, white and grayscale colours have a saturation of zero,
-        so changing their hue will have no effect.</string>
+    <string name="huesliderhelp">Set the hue of the %1s. Grayscale colours have no hue.</string>
     <string name="saturationlabel">Saturation</string>
-    <string name="saturationsliderhelp">Move the thumb on this slider to set the
-        saturation of the %1s. This will not modify the hue or the value.
-        Decreasing the saturation increases the amount of white in the colour:
-        pale pink is unsaturated, while pure red is saturated.</string>
-    <string name="saturationvaluehelp">This number shows the saturation
-        of the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="saturationsliderhelp">Set saturation for %1s. Lower values make it less vivid.</string>
+    <string name="saturationvaluehelp">Saturation: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="valuelabel">Value</string>
-    <string name="valuesliderhelp">Move the thumb on this slider to set the
-        value of the %1s. This will not modify the hue or the saturation.
-        The value is approximately the brightness of the colour,
-        but we use different names for some low-value colours:
-        for example low-value red is brown.</string>
-    <string name="valuevaluehelp">This number shows the value
-        of the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="valuesliderhelp">Set brightness (value) for %1s.</string>
+    <string name="valuevaluehelp">Value: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="redlabel">Red</string>
-    <string name="redsliderhelp">Move the thumb on this slider
-        to adjust the amount of red in the colour of the %1s.</string>
-    <string name="redvaluehelp">This number shows the actual amount of red
-        in the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="redsliderhelp">Set red in %1s.</string>
+    <string name="redvaluehelp">Red: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="greenlabel">Green</string>
-    <string name="greensliderhelp">Move the thumb on this slider
-        to adjust the amount of green in the colour of the %1s.</string>
-    <string name="greenvaluehelp">This number shows the actual amount of green
-        in the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="greensliderhelp">Set green in %1s.</string>
+    <string name="greenvaluehelp">Green: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="bluelabel">Blue</string>
-    <string name="bluesliderhelp">Move the thumb on this slider
-        to adjust the amount of blue in the colour of the %1s.</string>
-    <string name="bluevaluehelp">This number shows the actual amount of blue
-        in the colour on a scale from 0 to 255. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="bluesliderhelp">Set blue in %1s.</string>
+    <string name="bluevaluehelp">Blue: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="alphalabel">Opacity</string>
-    <string name="alphasliderhelp">Move the thumb on this slider
-        to adjust the opacity of the widget background:
-        zero is transparent and 255 is fully opaque.</string>
-    <string name="alphavaluehelp">This number shows the opacity of the background
-        on a scale from 0 (transparent) to 255 (opaque). You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="alphasliderhelp">Set background opacity: 0 is transparent; 255 is opaque.</string>
+    <string name="alphavaluehelp">Opacity: 0–255. Tap to edit; double-tap to select all.</string>
     <string name="done">Done</string>
-    <string name="donehelp">Touch this button or the back button to
-        return to the previous page.</string>
-    <string name="nosecondshelp">Touch this end of the slider for a clock
-        with no seconds shown.</string>
-    <string name="smallsecondshelp">Touch in the middle of the slider for a clock
-        with seconds shown at a smaller size.</string>
-    <string name="largesecondshelp">Touch this end of the slider for a clock
-        with seconds shown at the same size as the hours and minutes.</string>
-    <string name="sevensegments">Simulate seven segment LED.</string>
-    <string name="sevensegmentshelp">If you really want to waste your high
-        resolution display simulating a seven segment LED clock,
-        check this box.</string>
-    <string name="clockdemo">This half size demonstration shows what
-        the full screen clock will look like
-        (in %1s orientation at the current ambient light level):
-        touch it to show the full screen clock.</string>
+    <string name="donehelp">Returns to the previous page.</string>
+    <string name="nosecondshelp">Hides seconds.</string>
+    <string name="smallsecondshelp">Shows smaller seconds.</string>
+    <string name="largesecondshelp">Shows seconds at the main time size.</string>
+    <string name="sevensegments">Seven-segment time font</string>
+    <string name="sevensegmentshelp">Use a seven-segment font for time fields.</string>
+    <string name="clockdemo">Half-size %1s preview. Tap to open the full-screen clock.</string>
     <string name="landscape">landscape</string>
     <string name="portrait">portrait</string>
-    <string name="forcevertical">Force vertical time layout</string>
-    <string name="forceverticalhelp">If this box is checked, in portrait orientation
-        the hours minutes, seconds if present, and AM/PM marker if present,
-        are arranged vertically down the screen. Otherwise if any of
-        the numeric date or the full weekday or the full month name
-        are displayed, the time is displayed across the screen.</string>
+    <string name="forcevertical">Stack time vertically</string>
+    <string name="forceverticalhelp">In portrait, stack hours, minutes, seconds, and AM/PM vertically. Otherwise they may fit on one line.</string>
     <string name="setclockcolour">Set full screen clock colour</string>
-    <string name="setclockcolourhelp">Touch this button to show a colour
-        chooser page for the colour of the full screen clock.</string>
-    <string name="setdata">Define data displayed"</string>
-    <string name="setdatahelp">Touch this button to show a page
-        on which you can define what data the full screen clock displays.</string>
-    <string name="setdisplay">Control dimming</string>
-    <string name="setdisplayhelp">Touch this button to show a page on which
-        you can control the size of the seconds display
-        and the dimming at low light levels for the full screen clock.</string>
-    <string name="setdimming">Control dimming</string>
-    <string name="setdimminghelp">Touch this button to show a page on which you can
-        control the dimming at low light levels for the full screen clock.</string>
-    <string name="luxhelp">This shows te current (unsmoothed) lux value,
-        which is the light intensity seen by the front camera.</string>
-    <string name="brighthelp">This shows the current screen brightness as
-        computed by SecondsClock for the full screen clock.</string>
-    <string name="systembrighthelp">This shows the current system brightness
-        when SecondsClock is not overriding the screen brightness
-        for the full screen clock.</string>
-    <string name="opacityhelp">This shows the current opacity as
-        computed by SecondsClock for the full screen clock.
-        This opacity is applied to the demo clock at the top left corner
-        of the screen, but not to the controls.</string>
+    <string name="setclockcolourhelp">Choose the full-screen clock colour.</string>
+    <string name="setdata">Set displayed fields</string>
+    <string name="setdatahelp">Choose what the full-screen clock shows.</string>
+    <string name="setdisplay">Display settings</string>
+    <string name="setdisplayhelp">Set seconds size and low-light dimming.</string>
+    <string name="setdimming">Dimming settings</string>
+    <string name="setdimminghelp">Set low-light dimming.</string>
+    <string name="luxhelp">Ambient light-sensor reading before smoothing.</string>
+    <string name="brighthelp">Clock brightness set by Seconds Clock.</string>
+    <string name="systembrighthelp">System brightness while Seconds Clock is not controlling it.</string>
+    <string name="opacityhelp">Clock opacity; applied to the preview, not controls.</string>
     <string name="secondssizelabel">Seconds size</string>
-    <string name="sshelpland">This slider adjusts the size
-        of the seconds for the full screen clock:
-        all the way to the left shows no seconds at all;
-        intermediate values from left to right show seconds of increasing size;
-        all the way to the right shows seconds the same size as
-        the hours and minutes.</string>
-    <string name="sshelpport">This slider adjusts the size of the seconds
-        for the full screen clock:
-        all the way to the bottom shows no seconds at all;
-        intermediate values from bottom to top show seconds of increasing size;
-        all the way to the top shows seconds the same size as the hours and minutes.
-    </string>
+    <string name="sshelpland">Landscape: drag left to hide seconds; right for full size. Middle positions shrink them.</string>
+    <string name="sshelpport">Portrait: drag down to hide seconds; up for full size. Middle positions shrink them.</string>
     <string name="minbrightlabel">Minimum brightness</string>
-    <string name="minbrightsliderhelp">This slider adjusts the minimum
-        brightness of the full screen clock. See the README.md file for
-        an explanation of how this works.
-    </string>
-    <string name="minbrightvaluehelp">This number shows the minimum brightness
-        of the full screen clock. See the README.md file for
-        an explanation of how this works. You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="minbrightsliderhelp">Sets minimum clock brightness. See README for dimming details.</string>
+    <string name="minbrightvaluehelp">Minimum brightness. Tap to edit; double-tap to select all. See README for details.</string>
     <string name="minalphalabel">Minimum opacity</string>
-    <string name="minalphasliderhelp">This slider adjusts the minimum
-        opacity of the full screen clock. See the README.md file for
-        an explanation of how this works.
-    </string>
-    <string name="minalphavaluehelp">This number shows the minimum opacity
-        of the full screen clock. See the README.md file for
-        an explanation of how this works.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="minalphasliderhelp">Sets minimum clock opacity. See README for dimming details.</string>
+    <string name="minalphavaluehelp">Minimum opacity. Tap to edit; double-tap to select all. See README for details.</string>
     <string name="thresholdlabel">Lux threshold</string>
-    <string name="thresholdsliderhelp">This slider adjusts the ambient level in lux
-        below which the full screen clock will reduce its brightness.
-        The maximum is 255 lux, which is a brightly lit room.
-        Maximumm lux levels in bright sunlight can be much higher
-        but users are unlikely to want to start dimmingin bright sunlight,
-        and a larger range would provide less resolution at values
-        likely to be useful.
-    </string>
-    <string name ="thresholdvaluehelp">This number shows the ambient level in lux
-        below which the full screen clock will reduce its brightness.
-        You can edit the number.
-        A single tap on the number will put the edit cursor where you tap;
-        a double tap on the number will select the whole of it;
-        a long tap on the number will display this message.</string>
+    <string name="thresholdsliderhelp">Dims the clock below this ambient-light level. 255 lux is a bright room.</string>
+    <string name="thresholdvaluehelp">Lux threshold for dimming. Tap to edit; double-tap to select all.</string>
     <string name="onlyopacitylabel">Use only opacity for dimming</string>
-    <string name="onlyopacityhelp">Check this box to use only
-        the opacity for dimming. This saves power on OLED displays.</string>
-    <string name="currentlux">Current Lux level is %d</string>
-    <string name="currentbright">Current clock brightness is %d</string>
-    <string name="systembright">Current system brightness is %d</string>
-    <string name="currentopacity">Current clock opacity is %d</string>
+    <string name="onlyopacityhelp">Dims by opacity only. Best for OLED screens.</string>
+    <string name="currentlux">Ambient light: %d lux</string>
+    <string name="currentbright">Clock brightness: %d</string>
+    <string name="systembright">System brightness: %d</string>
+    <string name="currentopacity">Clock opacity: %d</string>
 </resources>

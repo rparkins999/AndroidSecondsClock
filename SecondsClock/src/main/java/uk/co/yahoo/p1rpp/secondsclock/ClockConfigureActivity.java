@@ -239,10 +239,13 @@ public class ClockConfigureActivity extends ConfigureActivity
         m_formatLabel = label;
         updateClockFormatLabel();
         editor.addView(label, lpMatchWrap);
-        TextView hint = new TextView(this);
-        hint.setText(R.string.clock_format_caption);
-        editor.addView(hint, lpMatchWrap);
+        TextView profileHint = new TextView(this);
+        profileHint.setText(R.string.clock_format_profile_hint);
+        editor.addView(profileHint, lpMatchWrap);
         editor.addView(makeClockFormatProfiles(), lpMatchWrap);
+        TextView hint = new TextView(this);
+        hint.setText(R.string.clock_format_input_hint);
+        editor.addView(hint, lpMatchWrap);
         editor.addView(m_formatInput, lpMatchWrap);
         CheckBox textStyleEmoji = new CheckBox(this);
         textStyleEmoji.setId(TEXT_STYLE_EMOJI);
@@ -303,7 +306,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         addClockTokenSection(guide, R.string.widget_format_alarm_section);
         addClockTokenRow(guide, R.string.format_token_alarm, "%<%>", 2);
         TextView alarmHint = new TextView(this);
-        alarmHint.setText(R.string.next_alarm_source_help);
+        alarmHint.setText(R.string.widget_format_alarm_hint);
         guide.addView(alarmHint, lpMatchWrap);
         return guide;
     }
