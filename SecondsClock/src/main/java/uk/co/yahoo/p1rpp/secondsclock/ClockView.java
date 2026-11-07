@@ -484,6 +484,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_prefs.getString("CformatLandscape", null),
                 m_prefs.getBoolean("CformatSyncEnabled", true),
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
+        if (m_prefs.getBoolean("CtextStyleEmoji", false)) {
+            format = TextStyleEmoji.preferTextPresentation(format);
+        }
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
         List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
         boolean legacyLargeLandscapeTime =
@@ -496,7 +499,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_customClockView.setFormat24Hour(pattern);
         m_customClockView.setLines(countLines(pattern));
     }
-
     private SpannableStringBuilder makeAdvancedPattern(
             List<FormatLineSplit.Line> lines, Long nextAlarmTime) {
         List<AdvancedPatternLine> renderedLines = new ArrayList<>();

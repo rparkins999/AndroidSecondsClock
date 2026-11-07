@@ -22,6 +22,15 @@ final class DateCommandFormat {
     private DateCommandFormat() {}
 
     static String toTextClockPattern(String format, Long nextAlarmTime) {
+        return toTextClockPattern(format, nextAlarmTime, false);
+    }
+
+    static String toTextClockPattern(
+            String format, Long nextAlarmTime, boolean preferTextStyleEmoji) {
+        if (format == null || format.isEmpty()) return "";
+        if (preferTextStyleEmoji) {
+            format = TextStyleEmoji.preferTextPresentation(format);
+        }
         return toTextClockPatternWithTimeRanges(format, nextAlarmTime).pattern;
     }
 

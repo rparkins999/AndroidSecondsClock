@@ -44,6 +44,8 @@ Alarm: %H:%M%>
 That block appears only when Android reports a next alarm-clock alarm, from any app. Date/time
 conversions inside it use that alarm's time, while conversions outside use the current time. Seconds
 continue to update through Android's `TextClock`. Android does not expose the app's alarm label.
+Advanced format mode can prefer text-style emoji, which may render supported symbols in monochrome;
+the result depends on the device's fonts. This option does not change checkbox mode.
 
 Checkbox mode also has a **Show next alarm (any alarm app)** option. It displays the next alarm-clock
 alarm Android reports, not necessarily an alarm from the default clock app.
@@ -57,6 +59,7 @@ include `%S` to show seconds; the separate seconds-size setting applies to check
 In Advanced mode, put `%L` at the start of each line in any format profile that you want emphasized;
 the marker is not displayed. Both a real newline and `%n` split lines. Emphasized lines auto-size
 across the width and share extra height, while unmarked lines retain space for details.
+The advanced editor also offers the text-style emoji preference for supported symbols.
 Full-screen checkbox mode also has a **Show next alarm (any alarm app)** option, displayed as
 `ALM: Mon, 3:30`. The seven-segment font applies to the time portion, not the `ALM:` label or
 weekday.
