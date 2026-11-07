@@ -1,210 +1,174 @@
-SecondsClock
-------------
+# SecondsClock
 
-This app provides a seconds clock for Android.
+SecondsClock is an Android clock that runs as a home-screen widget or a full-screen night clock.
+You can add multiple widgets and configure each one independently.
 
-This is version 2.5.
+This is version 2.6.
 
-It can be used to create home screen widgets and as a full screen night clock.
+## Choose a setup
 
-If you report a problem or request a change, please say whether you are referring to the widget
-or the full screen clock. Although some of the setup code is common to both, the mechanism used
-to display them is quite different, so the things that are easy or hard to change are also different.
+### Easy setup: Checkbox mode
 
-Each widget (there can be more than one), and the night clock, can be configured to display any combination of the following:-
+Choose what to show with checkboxes. SecondsClock formats the date and time for your device's
+locale and arranges the selected information automatically. You don't need to know format tokens.
 
-1. the time in 12-or 24-hour format in accordance with the device's preference, with or without seconds,
+### Custom setup: Advanced mode
 
-2. the day of the week in short or long locale-appropriate format.
+Use Advanced mode when you want specific text or a particular layout. Type plain text and insert
+date/time tokens. Tokens are case-sensitive. Press Enter or use `%n` to start a line. Text scales
+to fit, but line breaks stay where you put them, so a resized widget may need adjustment.
 
-3. the date in numeric locale-appropriate format, or any combination of the following:-
+The options differ slightly between home-screen widgets and the full-screen clock; details follow.
 
-    1. the day of the month,
-    2. the month name in short or long locale-appropriate format,
-    3. the (Gregorian) year number
+## Home-screen widgets
 
-## Widget format
+### Checkbox mode
 
-Checkbox mode keeps the automatic layout. Optional advanced formatting accepts a multiline,
-`date`-style format string. Common conversions include
-`%H` (24-hour), `%I` (12-hour), `%M` (minute), `%S` (second), `%p` (AM/PM), `%a`/`%A` (weekday),
-`%b`/`%B` (month), `%d` (day), `%m` (month number), `%Y` (year), `%F` (ISO date), `%x` (localized
-date), `%X` (localized time), `%n` (newline), and `%%` (literal `%`). Actual newlines can also be
-entered directly. Sync uses the same format for both widget shapes; Horizontal and Vertical formats
-can be edited separately and are selected using the widget's reported dimensions. The text still
-scales to fit, but custom line breaks stay where entered and may need adjustment after resizing.
+Choose whether to show the time, seconds, weekday, date, and next alarm. You can use a numeric date
+or choose the day, month, and year separately. Time uses the device's 12- or 24-hour preference.
+The layout adapts to the widget's size.
 
-Use `%<` and `%>` to bracket optional alarm text. For example:
+### Advanced mode
+
+Enter a custom format using date/time tokens. **Sync** shares one format between widget shapes.
+Otherwise, the **Horizontal** and **Vertical** profiles are selected from the widget's reported
+dimensions. New profiles start from Sync.
+
+Common tokens:
+
+| Token | Displays |
+| --- | --- |
+| `%H` | 24-hour clock hour |
+| `%I` | 12-hour clock hour |
+| `%M`, `%S`, `%p` | Minute, second, AM/PM |
+| `%a`, `%A` | Short or full weekday |
+| `%b`, `%B` | Short or full month name |
+| `%d`, `%e` | Zero-padded or unpadded day |
+| `%m`, `%Y` | Month number or year |
+| `%F` | ISO date |
+| `%x`, `%X` | Localized date or time |
+| `%n`, `%%` | New line or literal percent sign |
+
+### Optional alarm text
+
+Use `%<` and `%>` to mark an alarm block. Inside it, `%|` separates the text shown when an alarm
+is set from an optional fallback shown when none is set:
 
 ```text
-%S%<
-Alarm: %H:%M%>
+%<Alarm: %H:%M%|%nNO ALARM%>
 ```
 
-That block appears only when Android reports a next alarm-clock alarm, from any app. Date/time
-conversions inside it use that alarm's time, while conversions outside use the current time. Seconds
-continue to update through Android's `TextClock`. Android does not expose the app's alarm label.
-Advanced format mode can prefer text-style emoji, which may render supported symbols in monochrome;
-the result depends on the device's fonts. This option does not change checkbox mode.
+When Android reports a next alarm-clock alarm from any app, the text before `%|` appears and its
+tokens use the alarm time. Without an alarm, the text after `%|` appears and its tokens use the
+current time. Without `%|`, the block is hidden when no alarm is set; the fallback can also be
+empty. Android does not expose the alarm's label.
 
-Checkbox mode also has a **Show next alarm (any alarm app)** option. It displays the next alarm-clock
-alarm Android reports, not necessarily an alarm from the default clock app.
+The checkbox **Show next alarm (any alarm app)** option displays the next alarm Android reports,
+not necessarily one from the default clock app.
 
-## Full-screen clock format
+## Full-screen night clock
 
-The full-screen clock keeps its automatic checkbox layout and also offers optional advanced
-formatting. Sync shares one format across orientations; Portrait and Landscape can be customized
-separately. The same date-style tokens and optional next-alarm block are available. In advanced mode,
-include `%S` to show seconds; the separate seconds-size setting applies to checkbox mode.
-In Advanced mode, put `%L` at the start of each line in any format profile that you want emphasized;
-the marker is not displayed. Both a real newline and `%n` split lines. Emphasized lines auto-size
-across the width and share extra height, while unmarked lines retain space for details.
-The advanced editor also offers the text-style emoji preference for supported symbols.
-Full-screen checkbox mode also has a **Show next alarm (any alarm app)** option, displayed as
-`ALM: Mon, 3:30`. The seven-segment font applies to the time portion, not the `ALM:` label or
-weekday.
+### Checkbox mode
 
-## Launcher icon
+Choose the time, seconds size, weekday, date, and next-alarm options. The clock arranges the
+selected information automatically. Its checkbox-mode alarm is shown as `ALM: Mon, 3:30`.
 
-The editable artwork is `SecondsClock/seconds-clock-icon.svg`. When
-`rsvg-convert` is available on `PATH`, Gradle renders a timestamped launcher
-icon for debug and release APKs. Otherwise, builds use the checked-in
-`SecondsClock/src/main/res/drawable/ic_launcher.png` fallback and need no extra
-rasterizer. The 144×144 F-Droid metadata icon remains a static rasterization
-of the SVG.
+### Advanced mode
 
-Displaying the seconds in a widget will increase battery drain because the widget has to update itself
-every second, but it doesn't update when the widget isn't visible. The night clock is intended
-to be run with the device connected to a charger and will keep the screen on if it is.
+The same date/time tokens and optional alarm block are available. **Sync** shares a format across
+screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. Include `%S`
+to show seconds; the separate seconds-size control applies only in Checkbox mode.
 
-In checkbox mode, the time, day of the week, and long date fit into a 1x1 widget with a fairly small
-text size. The widget and full-screen clock automatically arrange checkbox-selected information to
-make effective use of available space. Advanced formats instead use the user's explicit line layout
-and scale the text to fit.
+To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines share extra height
+and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.
+For compatibility, multiline Landscape formats without a `%L` marker emphasize the first non-empty
+line by default.
+The advanced editor also offers a text-style emoji preference; monochrome rendering depends on the
+device's fonts. The seven-segment font applies to time fields, not the alarm label or weekday.
 
-On some devices tthe widget doesn't make as good a job of reformatting itself in landscape orientation,
-because Android doesn't require a home screen launcher to notify the widget provider
-when the screen is rotated between portrait and landscape orientation.
-If the widget provider does get notified (as it does on my Samsung Galaxy S21)
-it will reformat the widget.
+## Other settings
 
-You can also configure the text colour of both the widget and the night clock,
-and the colour and transparency of the widget's background.
-The night clock's background is always black.
-The default for the widget of white text on a transparent background works well
-unless you have a very light or very complex wallpaper on your home screen.
-If you have complex wallpaper you probably want an opaque background.
+You can change the widget's text colour, background colour, and background opacity. The full-screen
+clock's background is always black, but its text colour is configurable. Widget touch actions can
+open the system clock, SecondsClock, its settings, or the full-screen clock. You can place multiple
+widgets with different settings on the same or different home-screen pages.
 
-You can also configure what happens when you touch a widget.
+### Seconds and battery
 
-You can have multiple widgets with different configurations on the same
-or different pages of your home screen.
+A widget showing seconds updates every second while it is visible, which uses more battery. It
+doesn't update while hidden. The full-screen night clock keeps the screen on, so it is intended to
+be used while the device is charging. Its seconds size can be adjusted separately.
 
-For the night clock you can also configure the the relative size of the seconds
-and the dimming in low ambient light levels.
+### Widget orientation
 
-Currently it has a problem running on some versions of Android 12 (API 31).
-Its toasts get truncated to two lines. Since I use toasts to display help information,
-this makes it a bit harder to use, but it should be fairly apparent how the configurators work.
+Some launchers don't notify widgets when the screen rotates. On those devices, a widget's layout may
+not adapt to landscape until the launcher updates it or the widget is resized.
 
-Truncating toasts is documented behaviour for applications which *target* Android 12,
-but SecondsClock doesn't do so, so IMHO it's a bug in Android, not in SecondsClock.
-If I find a workaround, I'll apply it,
-but for the time being I'm not willing to rewrite all my help information.
+## Installation and compatibility
 
-It works on Android 8.0 API 26 or later.
+SecondsClock works on Android 8.0 (API 26) or later. On some Android 12 devices, help toasts may be
+truncated to two lines, making the built-in guidance harder to read.
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/uk.co.yahoo.p1rpp.secondsclock/)
 
-# Dimming
-The full screen night clock can dim itself in low light levels. This is a bit complicated
-because on at least some devices the actual brightness of the display is not set
-directly by the software brightness control. Instead a complex algorithm is used
-controlled by some OEM resources which a non-system app like SecondsClock is not able to read.
-The situation is further complicated by the auto-dimming option on some devices
-which adjusts the display brightness according to the ambient light level.
-Reading the system display brightness can give you the value before or after
-auto-dimming adjustment depending on the device and the OS version.
-Setting a zero screen brightness does not necessarily make the screen dark enough
-for a bedside night clock in a dark bedroom. So SecondsClock can use the opacity
-of the clock itself to dim it further, right down to zero intensity if you want.
+## Launcher icon
 
-There are four controls available to help you to get it right for your device (and your eyesight).
-The lux threshold determines when SecondsClock tries to dim the screen.
-The maximum value is 255, which corresponds to a room reasonably well lit by artificial lighting.
-Although the actual measured lux value can go up to several thousands in direct sunlight,
-in practice you aren't likely to want to dim the clock display unless the ambient light level
-is less than in a well-lit room.
+The editable artwork is `SecondsClock/seconds-clock-icon.svg`. When `rsvg-convert` is available on
+`PATH`, Gradle creates a timestamped launcher icon for debug and release APKs. Otherwise, builds
+use the checked-in `SecondsClock/src/main/res/drawable/ic_launcher.png`. The 144×144 F-Droid metadata
+icon is a static rasterization of the SVG.
 
-If the ambient lux level is above the threshold SecondsClock doesn't dim the screen,
-and if the ambient lux level goes below the threshold it smoothly reduces its idea
-of what brightness you want (the wanted brightness) from the system display brightness
-down to zero when the lux level is zero.
-This automatically disables auto-dimming. If you see a step change in screen brightness
-as the ambient lux level drops past the threshold, this is either
-because your device reports the system display brightness before auto-dimming adjustment,
-or possibly because setting the screen brightness in software doesn't give the same effect
-as setting the system display brightness manually to the same value using the settings page.
-There isn't much that I can do about that because SecondsClock can't find the parameters
-of the device's dimming logic.
+## Night clock dimming
 
-Two other controls are the minimum brightness and the minimum opacity.
-The minimum brightness range only goes up to 100 (rather than 255)
-because larger values aren't likely to be useful
-and you need plenty of resolution at the low end of the scale.
+SecondsClock can dim the full-screen clock in low ambient light. Display brightness varies by
+device: an OEM may apply its own brightness curve or auto-dimming, and Android may report brightness
+before or after that adjustment. As a result, setting software brightness to zero may still leave
+the display too bright for a dark room. SecondsClock can also reduce clock opacity, down to invisible.
 
-If the minimum opacity is set to 255, the range of wanted brightness
-from zero to the system brightness is mapped linearly onto the range
-from the minimum brightness to the system brightness,
-and the result used to set the screen brightness.
-SecondsClock won't make the screen brightness bigger than the system brightness.
-This option works well unless setting the screen brightness to zero
-results in a display which is too bright for a dark room with zero lux.
+### Dimming controls
 
-If the minimum opacity is less than 255, it uses a different algorithm.
-The range of wanted brightness from the minimum brightness to the system brightness
-is mapped linearly onto the range from zero to the system brightness,
-and the result used to set the screen brightness.
-If the wanted brightness is less than the minimum brightness,
-the screen brightness is zet to zero and the range of wanted brightness
-from zero to the minimum brightness is mapped onto the range of opacity values
-from the minimum opacity to 255,
-and the result is used to set the opacity of the clock display.
-This will allow the display to be dimmed right down to invisible (zero opacity).
-The opacity of the status bar isn't modified,
-but the status bar is quite small and doesn't emit much light.
+- **Lux threshold:** Above this ambient-light level, SecondsClock doesn't dim the clock. Below it,
+  the requested brightness falls toward zero as the measured light reaches zero. The threshold's
+  maximum is 255 lux, about a brightly lit room; direct sunlight can be much higher.
+- **Minimum brightness:** The control ranges up to 100 to give more precision at low brightness.
+- **Minimum opacity:** At 255, opacity stays unchanged and screen brightness dims only as far as the
+  minimum-brightness setting. Below 255, once brightness reaches that minimum, the clock stays at
+  minimum brightness while opacity fades toward the selected minimum. Set it to zero to let the
+  clock disappear completely.
+- **Use only opacity:** Dims the clock using opacity while setting its window brightness to Android's
+  reported system brightness. Depending on the device, this can interact with or override
+  auto-dimming. Opacity dimming can save power on OLED screens, but not on backlit displays.
 
-There is also a check box to only use the opacity and not interfere with the screen brightne at all.
-This works well with an OLED display, but doesn't save any power with a backlit display.
-I haven't found a way of getting Android to tell me which kind of display it has.
+Device-specific brightness processing can cause a visible step when dimming begins. SecondsClock
+can't read each device's OEM brightness parameters, so the exact result may need tuning on your
+device.
 
-# Permissions
-SecondsClock requests SET_ALARM permission although it doesn't actually set any alarms.
-For some strange reason on some phones this permission is required
-to go to the phone's built-in clock app when you touch the widget.
-If you deny SecondsClock SET_ALARM permission,
-the app can't go to the device's clock app if your device requires SET_ALARM permission to do so.
-Currently Android automatically grants SET_ALARM permission for any app which requests it,
-so you shouldn't see a problem unless you explicitly deny SET_ALARM permission.
+## Permissions
 
-# Licensing
-One file (Slider.java) is licensed under the Apache license 2.0 because it is derived from an Android source file which uses that licence. Everything else was written by me and is licensed under GPL V3 or later. If you're puzzled by the apparently inconsistent spelling of "licen{s|c}e", in the UK English spelling the verb is license, but the noun is licence. There is also a noun license in UK English, but it means something different.
+SecondsClock requests Android's `SET_ALARM` permission, but it doesn't set alarms. Some phones
+require this permission to open the built-in clock app when you tap a widget. Denying it prevents
+that action on affected devices; other widget actions continue to work.
 
-# Building
-Android now requires all applications to be signed. If you build your own version,
-you need to sign it - I'm not giving you my signing key.
-`build.gradle` expects to find a `keystore.properties` file in the
-subdirectory `keys` of the parent directory of the project's top level directory
-(the one you cloned into). If you keep yours somewhere else, edit `build.gradle`.
-The `keystore.properties` file should look something like this:-
+## Licensing
 
-`keyAlias=`<i>your user name</i><br>
-`keyPassword=`<i>password for your key</i><br>
-`storeFile=`<i>full pathname of key file</i><br>
-`storePassword=`<i>password for your keystore (may be different)</i>
+`Slider.java` is licensed under Apache License 2.0 because it derives from an Android source file.
+The rest of SecondsClock is licensed under GPL v3 or later.
 
-You should also be aware that if you debug your own version with Android Studio, it will sign it with a
-debug key, and Android will not let you install a version of an app signed with a different key unless
-you delete the old version first. Unfortunately this throws away all the stored peferences.
+## Building
+
+Debug and release APKs use the configured signing key; the project doesn't include one. The build
+looks for `Keys/keystore.properties` (capital K) in the parent directory of the project. If you store
+it elsewhere, update `build.gradle`. The file contains:
+
+```properties
+keyAlias=your-user-name
+keyPassword=your-key-password
+storeFile=/path/to/your/keystore
+storePassword=your-keystore-password
+```
+
+Debug APKs have a `.debug` application ID suffix but use the same configured key. Android won't
+install an APK over an installed version signed with a different key. Uninstalling the existing app
+first allows installation, but deletes its saved settings.
