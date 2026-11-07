@@ -6,6 +6,86 @@ plugins {
     id 'com.android.application'
 }
 
+def buildTimestamp = new Date()
+def generatedIconDir = layout.buildDirectory.dir("generated/launcherIconRes")
+def launcherIconSvg = file("seconds-clock-icon.svg")
+
+tasks.register("generateLauncherIcon") {
+    inputs.file(launcherIconSvg)
+    inputs.property("buildTimestamp", buildTimestamp.time)
+    outputs.file(generatedIconDir.map { it.file("drawable/ic_launcher.png") })
+    doLast {
+        def fallbackIcon = file("src/main/res/drawable/ic_launcher.png")
+        def output = generatedIconDir.get().file("drawable/ic_launcher.png").asFile
+        def converterAvailable = false
+        try {
+            def versionOutput = new ByteArrayOutputStream()
+            def versionCheck = project.exec {
+                executable "rsvg-convert"
+                args "--version"
+                standardOutput = versionOutput
+                errorOutput = versionOutput
+                ignoreExitValue = true
+            }
+            converterAvailable = versionCheck.exitValue == 0
+        } catch (Exception ignored) {
+            converterAvailable = false
+        }
+        if (!converterAvailable) {
+            if (!fallbackIcon.isFile()) {
+                throw new GradleException(
+                        "rsvg-convert is unavailable and the checked-in launcher icon is missing")
+            }
+            if (output.exists() && !output.delete()) {
+                throw new GradleException(
+                        "Could not remove a stale generated launcher icon")
+            }
+            logger.lifecycle(
+                    "rsvg-convert is unavailable; using the checked-in launcher icon")
+            return
+        }
+
+        def svg = launcherIconSvg.getText("UTF-8")
+        def timeText = new java.text.SimpleDateFormat(
+                "HH:mm:ss", java.util.Locale.ENGLISH).format(buildTimestamp)
+        def dateText = new java.text.SimpleDateFormat(
+                "EEE · dd.MM.yyyy", java.util.Locale.ENGLISH)
+                .format(buildTimestamp).toUpperCase(java.util.Locale.ENGLISH)
+
+        def replaceText = { String source, String elementId, String value ->
+            def pattern = java.util.regex.Pattern.compile(
+                    "(?s)(<text\\s+id=\"" + elementId + "\"[^>]*>).*?(</text>)")
+            def matcher = pattern.matcher(source)
+            if (!matcher.find()) {
+                throw new GradleException(
+                        "SVG is missing the build-time text element '${elementId}'")
+            }
+            matcher.replaceFirst(java.util.regex.Matcher.quoteReplacement(
+                    matcher.group(1) + value + matcher.group(2)))
+        }
+        svg = replaceText(svg, "build-time", timeText)
+        svg = replaceText(svg, "build-date", dateText)
+
+        output.parentFile.mkdirs()
+        def generatedSvg = new File(temporaryDir, "seconds-clock-icon.svg")
+        generatedSvg.setText(svg, "UTF-8")
+        try {
+            project.exec {
+                executable "rsvg-convert"
+                args "--width", "512", "--height", "512",
+                        "--output", output.absolutePath, generatedSvg.absolutePath
+            }
+        } catch (Exception exception) {
+            throw new GradleException(
+                    "Could not regenerate the launcher icon. Install rsvg-convert and retry.",
+                    exception)
+        }
+        if (!output.isFile() || output.length() == 0) {
+            throw new GradleException("rsvg-convert did not create the launcher PNG")
+        }
+    }
+}
+
 // git data for timestamp in code
 def gitdata1 = new ByteArrayOutputStream()
 def gitdata2 = new ByteArrayOutputStream()
@@ -27,8 +107,8 @@ exec {
     standardOutput = gitdata3
 }
 
-// Launcher icon is checked in at src/main/res/drawable/ic_launcher.png and
-// rasterized from seconds-clock-icon.svg in this module directory.
+// When rsvg-convert is available, the timestamped SVG overrides the checked-in
+// fallback PNG. Standard Android/F-Droid builds can use the fallback as-is.
 
 // Update these three to make new version
 def VERSIONCODE = 9
@@ -55,6 +135,11 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 android {
     compileSdkVersion 28
 
+    sourceSets {
+        debug.res.srcDir(generatedIconDir)
+        release.res.srcDir(generatedIconDir)
+    }
+
     signingConfigs {
         config {
             keyAlias keystoreProperties['keyAlias']
@@ -77,7 +162,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             signingConfig signingConfigs.config
             delete("build/intermediates/incremental/mergeReleaseResources/merger.xml")
-            resValue("string", 'build_time', "${(new Date()).toString()}")
+            resValue("string", 'build_time', "${buildTimestamp.toString()}")
             resValue("string", 'build_git1', "${gitdata1.toString()}")
             resValue("string", 'build_git2', "${gitdata2.toString()}")
             resValue("string", 'build_git3',
@@ -86,7 +171,7 @@ android {
         debug {
             signingConfig signingConfigs.config
             delete("build/intermediates/incremental/mergeDebugResources/merger.xml")
-            resValue("string", 'build_time', "${(new Date()).toString()}")
+            resValue("string", 'build_time', "${buildTimestamp.toString()}")
             resValue("string", 'build_git1', "${gitdata1.toString()}")
             resValue("string", 'build_git2', "${gitdata2.toString()}")
             resValue("string", 'build_git3',
@@ -99,6 +184,10 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     namespace 'uk.co.yahoo.p1rpp.secondsclock'
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(tasks.named("generateLauncherIcon"))
 }
 
 dependencies {
