@@ -177,4 +177,12 @@ public class FormatProfilesTest {
         assertEquals("😀\uFE0E" + tagLetter,
                 TextStyleEmoji.preferTextPresentation("😀" + tagLetter));
     }
+
+    @Test
+    public void textStyleEmojiPreservesVariationSelectorBeforeJoiner() {
+        String rainbowFlag = "🏳️‍🌈";
+
+        assertEquals(rainbowFlag,
+                TextStyleEmoji.preferTextPresentation(rainbowFlag));
+    }
 }
