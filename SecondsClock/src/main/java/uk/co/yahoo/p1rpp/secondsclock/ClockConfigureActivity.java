@@ -302,8 +302,9 @@ public class ClockConfigureActivity extends ConfigureActivity
         guide.addView(landscapeHint, lpMatchWrap);
         addClockTokenSection(guide, R.string.widget_format_alarm_section);
         addClockTokenRow(guide, R.string.format_token_alarm, "%<%>", 2);
+        addClockTokenRow(guide, R.string.format_token_alarm_alternative, "%|", 2);
         TextView alarmHint = new TextView(this);
-        alarmHint.setText(R.string.next_alarm_source_help);
+        alarmHint.setText(R.string.widget_format_alarm_hint);
         guide.addView(alarmHint, lpMatchWrap);
         return guide;
     }
