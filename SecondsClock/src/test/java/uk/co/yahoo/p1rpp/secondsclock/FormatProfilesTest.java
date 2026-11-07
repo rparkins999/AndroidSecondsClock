@@ -75,6 +75,43 @@ public class FormatProfilesTest {
     }
 
     @Test
+    public void legacyLandscapeEmphasisMovesToTheFirstNonEmptyLine() {
+        List<FormatLineSplit.Line> lines =
+                FormatLineSplit.applyLegacyFirstLineEmphasis(
+                        FormatLineSplit.splitLines("\n%H:%M\n%A"), true);
+
+        assertEquals(3, lines.size());
+        assertFalse(lines.get(0).emphasized);
+        assertTrue(lines.get(1).emphasized);
+        assertFalse(lines.get(2).emphasized);
+    }
+
+    @Test
+    public void explicitEmphasisOverridesLegacyFirstLineSetting() {
+        List<FormatLineSplit.Line> lines =
+                FormatLineSplit.applyLegacyFirstLineEmphasis(
+                        FormatLineSplit.splitLines("header\n%L%H:%M"), true);
+
+        assertFalse(lines.get(0).emphasized);
+        assertTrue(lines.get(1).emphasized);
+    }
+
+    @Test
+    public void legacyLandscapeEmphasisDoesNotChangeSingleLineFormats() {
+        List<FormatLineSplit.Line> lines =
+                FormatLineSplit.applyLegacyFirstLineEmphasis(
+                        FormatLineSplit.splitLines("%H:%M"), true);
+
+        assertFalse(lines.get(0).emphasized);
+    }
+
+    @Test
+    public void shortEmphasizedLinesCanScaleBeyondFourTimes() {
+        assertEquals(340.0F,
+                FormatLineSizing.relativeScale(5.0F, 1_000.0F), 0.01F);
+    }
+
+    @Test
     public void alarmBlockUsesReportedAlarmTimeAndDisappearsWithoutOne() {
         long alarmTime = 1_700_000_000_000L;
         String formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault())

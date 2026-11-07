@@ -94,6 +94,34 @@ final class FormatLineSplit {
         return lines;
     }
 
+    /** Keeps the old landscape first-line emphasis for formats without %L. */
+    static List<Line> applyLegacyFirstLineEmphasis(
+            List<Line> lines, boolean enabled) {
+        if (!enabled || lines.size() < 2) return lines;
+        for (Line line : lines) {
+            if (line.emphasized) return lines;
+        }
+
+        boolean hasFollowingContent = false;
+        for (int index = 1; index < lines.size(); ++index) {
+            if (!lines.get(index).format.isEmpty()) {
+                hasFollowingContent = true;
+                break;
+            }
+        }
+        if (!hasFollowingContent) return lines;
+
+        List<Line> result = new ArrayList<>(lines);
+        for (int index = 0; index < result.size(); ++index) {
+            Line line = result.get(index);
+            if (!line.format.isEmpty()) {
+                result.set(index, new Line(line.format, true));
+                break;
+            }
+        }
+        return result;
+    }
+
     static String stripEmphasisMarkers(String format) {
         if (format == null || format.isEmpty()) return "";
         StringBuilder result = new StringBuilder(format.length());

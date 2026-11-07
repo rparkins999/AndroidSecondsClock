@@ -486,6 +486,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
         List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
+        boolean legacyLargeLandscapeTime =
+                config.orientation == Configuration.ORIENTATION_LANDSCAPE
+                && m_prefs.getBoolean("CadvancedLargeTime", true);
+        lines = FormatLineSplit.applyLegacyFirstLineEmphasis(
+                lines, legacyLargeLandscapeTime);
         SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
         m_customClockView.setFormat12Hour(pattern);
         m_customClockView.setFormat24Hour(pattern);
@@ -531,9 +536,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
             pattern.append(line.pattern);
             int end = pattern.length();
             if (line.emphasized && end > start) {
-                float widthRatio = line.textWidth > 0.0F && widestLine > 0.0F
-                        ? widestLine / line.textWidth : 1.0F;
-                float scale = Math.min(1.7F * widthRatio, 4.0F);
+                float scale = FormatLineSizing.relativeScale(
+                        line.textWidth, widestLine);
                 pattern.setSpan(new RelativeSizeSpan(scale), start, end,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
