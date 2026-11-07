@@ -232,10 +232,22 @@ final class DateCommandFormat {
             StringBuilder output, List<PatternRange> outputTimeRanges,
             FormattedPattern addition) {
         int offset = output.length();
-        output.append(addition.pattern);
+        int rangeOffset = 0;
+        if (output.length() > 0 && addition.pattern.length() > 0
+                && output.charAt(output.length() - 1) == '\''
+                && addition.pattern.charAt(0) == '\'') {
+            // Join adjacent quoted literals; otherwise SimpleDateFormat treats
+            // the two quote delimiters as a literal apostrophe.
+            output.setLength(output.length() - 1);
+            output.append(addition.pattern, 1, addition.pattern.length());
+            rangeOffset = -2;
+        } else {
+            output.append(addition.pattern);
+        }
         for (PatternRange range : addition.timeRanges) {
             outputTimeRanges.add(new PatternRange(
-                    offset + range.start, offset + range.end));
+                    offset + range.start + rangeOffset,
+                    offset + range.end + rangeOffset));
         }
     }
 

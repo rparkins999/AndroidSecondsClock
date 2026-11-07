@@ -66,10 +66,12 @@ weekday.
 
 ## Launcher icon
 
-The editable artwork is `SecondsClock/seconds-clock-icon.svg`. The Android
-launcher PNG (`SecondsClock/src/main/res/drawable/ic_launcher.png`) and the
-144×144 F-Droid metadata icon are rasterized from it with `rsvg-convert`. The
-checked-in PNG is used directly; Gradle does not regenerate it.
+The editable artwork is `SecondsClock/seconds-clock-icon.svg`. When
+`rsvg-convert` is available on `PATH`, Gradle renders a timestamped launcher
+icon for debug and release APKs. Otherwise, builds use the checked-in
+`SecondsClock/src/main/res/drawable/ic_launcher.png` fallback and need no extra
+rasterizer. The 144×144 F-Droid metadata icon remains a static rasterization
+of the SVG.
 
 Displaying the seconds in a widget will increase battery drain because the widget has to update itself
 every second, but it doesn't update when the widget isn't visible. The night clock is intended
