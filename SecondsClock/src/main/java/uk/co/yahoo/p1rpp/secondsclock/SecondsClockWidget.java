@@ -70,6 +70,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     .putString("widgetIds", widgetIds)
                     .putBoolean(key + "formatSyncEnabled",
                             prefs.getBoolean("WformatSyncEnabled", true))
+                    .putBoolean(key + "textStyleEmoji",
+                            prefs.getBoolean("WtextStyleEmoji", false))
                     .putBoolean(key + "advancedFormatMode",
                             defaultAdvancedFormatMode)
                     .putInt(key + "showTime", prefs.getInt("WshowTime", 2))

@@ -10,6 +10,7 @@ final class TextStyleEmoji {
     private static final int EMOJI_PRESENTATION = 0xFE0F;
     private static final int ZERO_WIDTH_JOINER = 0x200D;
     private static final int KEYCAP = 0x20E3;
+    private static final int BLACK_FLAG = 0x1F3F4;
     private static final int TAG_START = 0xE0020;
     private static final int TAG_END = 0xE007F;
 
@@ -51,8 +52,8 @@ final class TextStyleEmoji {
         if (isRegionalIndicator(codePoint) || isSkinToneModifier(codePoint)) {
             return true;
         }
-        if (isEmojiCandidate(codePoint)
-                && (isSkinToneModifier(next) || isEmojiTag(next))) return true;
+        if (isEmojiCandidate(codePoint) && isSkinToneModifier(next)) return true;
+        if (codePoint == BLACK_FLAG && isEmojiTagCharacter(next)) return true;
 
         // Do not turn a keycap sequence (for example, 1️⃣) into text.
         int selectorOffset = next == EMOJI_PRESENTATION
@@ -69,8 +70,8 @@ final class TextStyleEmoji {
         return codePoint >= 0x1F3FB && codePoint <= 0x1F3FF;
     }
 
-    private static boolean isEmojiTag(int codePoint) {
-        return codePoint >= TAG_START && codePoint <= TAG_END;
+    private static boolean isEmojiTagCharacter(int codePoint) {
+        return codePoint >= TAG_START && codePoint < TAG_END;
     }
 
     private static boolean isEmojiCandidate(int codePoint) {

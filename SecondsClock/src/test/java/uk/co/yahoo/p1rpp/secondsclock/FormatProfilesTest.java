@@ -77,4 +77,12 @@ public class FormatProfilesTest {
         assertEquals(subdivisionFlag,
                 TextStyleEmoji.preferTextPresentation(subdivisionFlag));
     }
+
+    @Test
+    public void textStyleEmojiDoesNotTreatTagsAfterOtherEmojiAsAFlag() {
+        String tagLetter = new String(Character.toChars(0xE0067));
+
+        assertEquals("😀\uFE0E" + tagLetter,
+                TextStyleEmoji.preferTextPresentation("😀" + tagLetter));
+    }
 }
