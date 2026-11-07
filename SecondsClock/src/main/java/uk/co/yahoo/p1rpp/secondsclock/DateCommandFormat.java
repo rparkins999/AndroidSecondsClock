@@ -17,6 +17,7 @@ import java.util.Locale;
 
 final class DateCommandFormat {
     private static final String ALARM_START = "%<";
+    private static final String ALARM_SEPARATOR = "%|";
     private static final String ALARM_END = "%>";
 
     private DateCommandFormat() {}
@@ -70,20 +71,41 @@ final class DateCommandFormat {
                 int contentStart = index + ALARM_START.length();
                 int end = format.indexOf(ALARM_END, contentStart);
                 if (end >= 0) {
+                    int separator = alarmSeparatorIndex(format, contentStart, end);
+                    int selectedStart;
+                    int selectedEnd;
+                    Date referenceDate;
                     if (nextAlarmTime != null) {
-                        Date alarmDate = new Date(nextAlarmTime);
-                        FormattedPattern alarmFormat = toDatePatternWithTimeRanges(
-                                format.substring(contentStart, end), alarmDate);
-                        AttributedCharacterIterator alarmText =
-                                new SimpleDateFormat(alarmFormat.pattern,
-                                        Locale.getDefault())
-                                        .formatToCharacterIterator(alarmDate);
-                        int[] outputPositions = appendLiteralWithMapping(
-                                result, iteratorText(alarmText));
-                        for (PatternRange range : attributedTimeRanges(alarmText)) {
-                            timeRanges.add(new PatternRange(
-                                    outputPositions[range.start],
-                                    outputPositions[range.end]));
+                        selectedStart = contentStart;
+                        selectedEnd = separator < 0 ? end : separator;
+                        referenceDate = new Date(nextAlarmTime);
+                    } else if (separator >= 0) {
+                        selectedStart = separator + ALARM_SEPARATOR.length();
+                        selectedEnd = end;
+                        referenceDate = now;
+                    } else {
+                        selectedStart = end;
+                        selectedEnd = end;
+                        referenceDate = now;
+                    }
+                    if (selectedStart < selectedEnd) {
+                        FormattedPattern selectedFormat = toDatePatternWithTimeRanges(
+                                format.substring(selectedStart, selectedEnd),
+                                referenceDate);
+                        if (nextAlarmTime == null) {
+                            appendPattern(result, timeRanges, selectedFormat);
+                        } else {
+                            AttributedCharacterIterator alarmText =
+                                    new SimpleDateFormat(selectedFormat.pattern,
+                                            Locale.getDefault())
+                                            .formatToCharacterIterator(referenceDate);
+                            int[] outputPositions = appendLiteralWithMapping(
+                                    result, iteratorText(alarmText));
+                            for (PatternRange range : attributedTimeRanges(alarmText)) {
+                                timeRanges.add(new PatternRange(
+                                        outputPositions[range.start],
+                                        outputPositions[range.end]));
+                            }
                         }
                     }
                     index = end + ALARM_END.length();
@@ -111,6 +133,19 @@ final class DateCommandFormat {
         String pattern = result.toString();
         return new FormattedPattern(
                 pattern, mergeTimeRanges(pattern, timeRanges, true));
+    }
+
+    private static int alarmSeparatorIndex(String format, int start, int end) {
+        for (int index = start; index < end;) {
+            if (format.startsWith("%%", index)) {
+                index += 2;
+            } else if (format.startsWith(ALARM_SEPARATOR, index)) {
+                return index;
+            } else {
+                ++index;
+            }
+        }
+        return -1;
     }
 
     private static int nextTagIndex(String format, int fromIndex) {

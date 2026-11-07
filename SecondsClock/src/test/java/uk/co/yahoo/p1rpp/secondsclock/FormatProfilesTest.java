@@ -125,6 +125,72 @@ public class FormatProfilesTest {
     }
 
     @Test
+    public void alarmBlockUsesAlternativeOnlyWhenNoAlarmIsSet() {
+        long alarmTime = 1_700_000_000_000L;
+        String formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault())
+                .format(new Date(alarmTime));
+        String format = "%<Alarm: %H:%M%|NO ALARM%>";
+
+        assertEquals(DateCommandFormat.literalPattern("Alarm: " + formattedTime),
+                DateCommandFormat.toTextClockPattern(format, alarmTime));
+        assertEquals(DateCommandFormat.literalPattern("NO ALARM"),
+                DateCommandFormat.toTextClockPattern(format, null));
+    }
+
+    @Test
+    public void alarmBlockAllowsAnEmptyNoAlarmAlternative() {
+        assertEquals("", DateCommandFormat.toTextClockPattern(
+                "%<Alarm: %H:%M%|%>", null));
+    }
+
+    @Test
+    public void noAlarmAlternativeSupportsNewlineAndCurrentTimeTokens() {
+        Date currentTime = new Date(1_700_000_000_000L);
+        String pattern = DateCommandFormat.toTextClockPattern(
+                "%<Alarm: %H:%M%|%nNO ALARM %H:%M%>", null);
+        String rendered = new SimpleDateFormat(pattern, Locale.getDefault())
+                .format(currentTime);
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+
+        assertEquals("\nNO ALARM " + timeFormat.format(currentTime), rendered);
+    }
+
+    @Test
+    public void noAlarmAlternativeKeepsCurrentTimeRanges() {
+        DateCommandFormat.FormattedPattern formatted =
+                DateCommandFormat.toTextClockPatternWithTimeRanges(
+                        "%<ALARM%|NO ALARM %H:%M%>", null);
+
+        assertEquals(1, formatted.timeRanges.size());
+        DateCommandFormat.PatternRange time = formatted.timeRanges.get(0);
+        String timePattern = formatted.pattern.substring(time.start, time.end);
+        assertTrue(timePattern.contains("HH"));
+        assertTrue(timePattern.contains("mm"));
+    }
+
+    @Test
+    public void alarmAlternativeRemainsAvailableOnLinesAfterTheSeparator() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "%<Alarm: %H:%M%|%nNO ALARM%>");
+
+        assertEquals(2, lines.size());
+        assertEquals("%<Alarm: %H:%M%|%>", lines.get(0).format);
+        assertEquals("%<%|NO ALARM%>", lines.get(1).format);
+        assertEquals("", DateCommandFormat.toTextClockPattern(
+                lines.get(0).format, null));
+        assertEquals(DateCommandFormat.literalPattern("NO ALARM"),
+                DateCommandFormat.toTextClockPattern(lines.get(1).format, null));
+    }
+
+    @Test
+    public void escapedAlarmSeparatorRemainsLiteralText() {
+        long alarmTime = 1_700_000_000_000L;
+        assertEquals(DateCommandFormat.literalPattern("Alarm %| text"),
+                DateCommandFormat.toTextClockPattern(
+                        "%<Alarm %%| text%>", alarmTime));
+    }
+
+    @Test
     public void textAfterAlarmBlockDoesNotGainAnApostrophe() {
         long alarmTime = 1_700_000_000_000L;
         String formattedAlarm = new SimpleDateFormat("HH:mm", Locale.getDefault())

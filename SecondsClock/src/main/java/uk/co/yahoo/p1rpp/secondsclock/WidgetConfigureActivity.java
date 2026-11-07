@@ -646,6 +646,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         addGuideSection(guide, R.string.widget_format_alarm_section);
         addFormatTokenRow(guide,
                 new FormatToken(R.string.format_token_alarm, "%<%>", 2), null);
+        addFormatTokenRow(guide,
+                new FormatToken(R.string.format_token_alarm_alternative, "%|", 2), null);
         TextView alarmHint = new TextView(this);
         alarmHint.setText(R.string.widget_format_alarm_hint);
         guide.addView(alarmHint, lpMatchWrap);

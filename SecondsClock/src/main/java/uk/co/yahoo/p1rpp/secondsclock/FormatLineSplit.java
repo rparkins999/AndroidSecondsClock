@@ -10,6 +10,7 @@ import java.util.List;
 /** Splits a full-screen format into lines and removes %L layout markers. */
 final class FormatLineSplit {
     private static final String ALARM_START = "%<";
+    private static final String ALARM_SEPARATOR = "%|";
     private static final String ALARM_END = "%>";
     private static final String EMPHASIS = "%L";
 
@@ -35,11 +36,15 @@ final class FormatLineSplit {
         StringBuilder line = new StringBuilder();
         boolean emphasized = false;
         boolean insideAlarm = false;
+        boolean insideAlarmFallback = false;
         for (int index = 0; index < format.length();) {
             if (format.charAt(index) == '\n') {
                 addLine(lines, line, emphasized, insideAlarm);
                 line.setLength(0);
-                if (insideAlarm) line.append(ALARM_START);
+                if (insideAlarm) {
+                    line.append(ALARM_START);
+                    if (insideAlarmFallback) line.append(ALARM_SEPARATOR);
+                }
                 emphasized = false;
                 ++index;
                 continue;
@@ -57,6 +62,7 @@ final class FormatLineSplit {
                 } else {
                     line.append(ALARM_START);
                     insideAlarm = true;
+                    insideAlarmFallback = false;
                 }
                 index += ALARM_START.length();
                 continue;
@@ -64,7 +70,15 @@ final class FormatLineSplit {
             if (format.startsWith(ALARM_END, index)) {
                 line.append(ALARM_END);
                 insideAlarm = false;
+                insideAlarmFallback = false;
                 index += ALARM_END.length();
+                continue;
+            }
+
+            if (insideAlarm && format.startsWith(ALARM_SEPARATOR, index)) {
+                line.append(ALARM_SEPARATOR);
+                insideAlarmFallback = true;
+                index += ALARM_SEPARATOR.length();
                 continue;
             }
 
@@ -75,7 +89,10 @@ final class FormatLineSplit {
             } else if (conversion == 'n') {
                 addLine(lines, line, emphasized, insideAlarm);
                 line.setLength(0);
-                if (insideAlarm) line.append(ALARM_START);
+                if (insideAlarm) {
+                    line.append(ALARM_START);
+                    if (insideAlarmFallback) line.append(ALARM_SEPARATOR);
+                }
                 emphasized = false;
                 index += 2;
             } else if (format.startsWith(EMPHASIS, index)) {

@@ -68,9 +68,9 @@
     <string name="clock_format_landscape_emphasis_hint" formatted="false">Put %L before a line to enlarge it; the marker stays hidden. Other lines keep room for details.</string>
     <string name="clock_alarm_prefix">ALM:</string>
     <string name="widget_format_label">Widget text format</string>
-    <string name="widget_format_hint" formatted="false">Example: %S%&lt;\nAlarm: %H:%M%&gt;</string>
+    <string name="widget_format_hint" formatted="false">Example: %&lt;ALARM %H:%M%|%nNO ALARM%&gt;</string>
     <string name="widget_format_caption">Tap the box below to type.</string>
-    <string name="widget_format_help" formatted="false">Use the token buttons below. %&lt;...%&gt; shows only when an alarm is set; tokens inside use alarm time.</string>
+    <string name="widget_format_help" formatted="false">%&lt; starts an alarm block; %&gt; ends it. %| separates alarm text from the no-alarm fallback. Alarm tokens use alarm time; fallback tokens use current time.</string>
     <string name="widget_format_guide_title">Date and time tokens</string>
     <string name="widget_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
     <string name="widget_format_time_section">Time</string>
@@ -96,7 +96,8 @@
     <string name="format_token_newline" formatted="false">New line (%n)</string>
     <string name="format_token_percent" formatted="false">Literal % (%%)</string>
     <string name="format_token_alarm" formatted="false">Alarm block (%&lt;…%&gt;)</string>
-    <string name="widget_format_alarm_hint">Shown when any app reports a next alarm. Tokens use its time; keep breaks inside markers.</string>
+    <string name="format_token_alarm_alternative" formatted="false">No-alarm text (%|)</string>
+    <string name="widget_format_alarm_hint" formatted="false">The next alarm from any app selects text before %|. Text after %| is the no-alarm fallback. Keep line breaks inside the markers.</string>
     <string name="show_short_weekday">Short weekday</string>
     <string name="showshortweekdayhelp">Shows the localized short weekday in %1s.</string>
     <string name="show_long_weekday">Full weekday</string>
