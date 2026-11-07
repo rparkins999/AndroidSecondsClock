@@ -59,6 +59,7 @@
     <string name="widget_format_profile_hint">Sync shares one format; otherwise size picks Horizontal/Vertical. Breaks stay fixed; text scales.</string>
     <string name="clock_format_label">Full-screen clock format</string>
     <string name="clock_format_caption">Advanced mode accepts tokens; checkbox mode keeps the automatic layout.</string>
+    <string name="clock_format_profile_hint">Sync shares one format; otherwise orientation selects Portrait or Landscape.</string>
     <string name="clock_format_input_hint">Tap the box below to type.</string>
     <string name="clock_format_guide_title">Date and time tokens</string>
     <string name="clock_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
