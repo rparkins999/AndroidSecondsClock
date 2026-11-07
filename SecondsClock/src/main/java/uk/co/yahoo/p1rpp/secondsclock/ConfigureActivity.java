@@ -433,14 +433,12 @@ abstract class ConfigureActivity extends Activity_common
         showShortWeekDayCheckBox = new CheckBox(this);
         showShortWeekDayCheckBox.setId(SHORTWEEKDAY);
         showShortWeekDayCheckBox.setChecked(showWeekDay == 1);
-        showShortWeekDayCheckBox.setText(
-            getString(R.string.show_short_weekday, m_CorW));
+        showShortWeekDayCheckBox.setText(getString(R.string.show_short_weekday));
         showShortWeekDayCheckBox.setOnCheckedChangeListener(this);
         showShortWeekDayCheckBox.setOnLongClickListener(this);
         showLongWeekDayCheckBox = new CheckBox(this);
         showLongWeekDayCheckBox.setId(LONGWEEKDAY);
-        showLongWeekDayCheckBox.setText(
-            getString(R.string.show_long_weekday, m_CorW));
+        showLongWeekDayCheckBox.setText(getString(R.string.show_long_weekday));
         showLongWeekDayCheckBox.setChecked(showWeekDay == 2);
         showLongWeekDayCheckBox.setOnCheckedChangeListener(this);
         showLongWeekDayCheckBox.setOnLongClickListener(this);
@@ -448,35 +446,31 @@ abstract class ConfigureActivity extends Activity_common
         showShortDateCheckBox.setId(SHORTDATE);
         showShortDateCheckBox.setChecked(showShortDate != 0);
         showShortDateCheckBox.setOnCheckedChangeListener(this);
-        showShortDateCheckBox.setText(
-            getString(R.string.show_short_date, m_CorW));
+        showShortDateCheckBox.setText(getString(R.string.show_short_date));
         showShortDateCheckBox.setOnLongClickListener(this);
         showMonthDayCheckBox = new CheckBox(this);
         showMonthDayCheckBox.setId(MONTHDAY);
         showMonthDayCheckBox.setChecked(showMonthDay != 0);
         showMonthDayCheckBox.setOnCheckedChangeListener(this);
-        showMonthDayCheckBox.setText(
-            getString(R.string.show_month_day, m_CorW));
+        showMonthDayCheckBox.setText(getString(R.string.show_month_day));
         showMonthDayCheckBox.setOnLongClickListener(this);
         showShortMonthCheckBox = new CheckBox(this);
         showShortMonthCheckBox.setId(SHORTMONTH);
         showShortMonthCheckBox.setChecked(showMonth == 1);
         showShortMonthCheckBox.setOnCheckedChangeListener(this);
-        showShortMonthCheckBox.setText(
-            getString(R.string.show_short_month, m_CorW));
+        showShortMonthCheckBox.setText(getString(R.string.show_short_month));
         showShortMonthCheckBox.setOnLongClickListener(this);
         showLongMonthCheckBox = new CheckBox(this);
         showLongMonthCheckBox.setId(LONGMONTH);
         showLongMonthCheckBox.setChecked(showMonth == 2);
         showLongMonthCheckBox.setOnCheckedChangeListener(this);
-        showLongMonthCheckBox.setText(
-            getString(R.string.show_long_month, m_CorW));
+        showLongMonthCheckBox.setText(getString(R.string.show_long_month));
         showLongMonthCheckBox.setOnLongClickListener(this);
         showYearCheckBox = new CheckBox(this);
         showYearCheckBox.setId(SHOWYEAR);
         showYearCheckBox.setChecked(showYear != 0);
         showYearCheckBox.setOnCheckedChangeListener(this);
-        showYearCheckBox.setText(getString(R.string.show_year, m_CorW));
+        showYearCheckBox.setText(getString(R.string.show_year));
         showYearCheckBox.setOnLongClickListener(this);
         if (showShortDate != 0) {
             showMonthDayCheckBox.setVisibility(View.GONE);
