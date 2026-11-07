@@ -39,10 +39,12 @@ import android.os.BatteryManager;
 import android.os.Handler;
 import android.provider.Settings;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.format.DateFormat;
 import android.text.style.MetricAffectingSpan;
+import android.text.style.RelativeSizeSpan;
 import android.util.IntProperty;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -55,8 +57,11 @@ import android.widget.LinearLayout;
 import android.widget.TextClock;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -472,12 +477,149 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 m_prefs.getString("CformatLandscape", null),
                 m_prefs.getBoolean("CformatSyncEnabled", true),
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE);
-        Formatter formatter = new Formatter();
-        formatter.set(format, Formatter.getNextAlarmTime(m_owner),
-                m_prefs.getBoolean("CtextStyleEmoji", false));
-        m_customClockView.setFormat12Hour(formatter.time12);
-        m_customClockView.setFormat24Hour(formatter.time24);
-        m_customClockView.setLines(formatter.lines);
+        if (m_prefs.getBoolean("CtextStyleEmoji", false)) {
+            format = TextStyleEmoji.preferTextPresentation(format);
+        }
+        Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
+        boolean legacyLargeLandscapeTime =
+                config.orientation == Configuration.ORIENTATION_LANDSCAPE
+                && m_prefs.getBoolean("CadvancedLargeTime", true);
+        lines = FormatLineSplit.applyLegacyFirstLineEmphasis(
+                lines, legacyLargeLandscapeTime);
+        SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
+        m_customClockView.setFormat12Hour(pattern);
+        m_customClockView.setFormat24Hour(pattern);
+        m_customClockView.setLines(countLines(pattern));
+    }
+    private SpannableStringBuilder makeAdvancedPattern(
+            List<FormatLineSplit.Line> lines, Long nextAlarmTime) {
+        List<AdvancedPatternLine> renderedLines = new ArrayList<>();
+        TextPaint measurePaint = new TextPaint(m_customClockView.getPaint());
+        measurePaint.setTextSize(100.0F);
+        float widestLine = 0.0F;
+        for (FormatLineSplit.Line line : lines) {
+            DateCommandFormat.FormattedPattern converted =
+                    DateCommandFormat.toTextClockPatternWithTimeRanges(
+                            line.format, nextAlarmTime);
+            if (converted.pattern.isEmpty() && line.format.contains("%<")) continue;
+
+            SpannableStringBuilder linePattern =
+                    new SpannableStringBuilder(converted.pattern);
+            if (m_sevenSegmentTypeface != null) {
+                for (DateCommandFormat.PatternRange range : converted.timeRanges) {
+                    linePattern.setSpan(
+                            new TypefaceMetricSpan(m_sevenSegmentTypeface),
+                            range.start, range.end,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            CharSequence renderedText = DateFormat.format(
+                    linePattern, System.currentTimeMillis());
+            float textWidth = measureStyledTextWidth(renderedText, measurePaint);
+            widestLine = Math.max(widestLine, textWidth);
+            renderedLines.add(new AdvancedPatternLine(
+                    linePattern, line.emphasized, textWidth));
+        }
+
+        SpannableStringBuilder pattern = new SpannableStringBuilder();
+        for (int i = 0; i < renderedLines.size(); ++i) {
+            if (i > 0) pattern.append('\n');
+            AdvancedPatternLine line = renderedLines.get(i);
+            int start = pattern.length();
+            pattern.append(line.pattern);
+            int end = pattern.length();
+            if (line.emphasized && end > start) {
+                float scale = FormatLineSizing.relativeScale(
+                        line.textWidth, widestLine);
+                pattern.setSpan(new RelativeSizeSpan(scale), start, end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        return pattern;
+    }
+
+    private static float measureStyledTextWidth(CharSequence text, TextPaint paint) {
+        if (!(text instanceof Spanned) || text.length() == 0) {
+            return paint.measureText(text.toString());
+        }
+
+        Spanned styledText = (Spanned) text;
+        Typeface originalTypeface = paint.getTypeface();
+        List<Integer> boundaries = new ArrayList<>();
+        boundaries.add(0);
+        boundaries.add(text.length());
+        TypefaceMetricSpan[] spans = styledText.getSpans(
+                0, text.length(), TypefaceMetricSpan.class);
+        for (TypefaceMetricSpan span : spans) {
+            int start = styledText.getSpanStart(span);
+            int end = styledText.getSpanEnd(span);
+            if (start > 0 && start < text.length()) boundaries.add(start);
+            if (end > 0 && end < text.length()) boundaries.add(end);
+        }
+        Collections.sort(boundaries);
+
+        float width = 0.0F;
+        int previous = -1;
+        for (int boundaryIndex = 0; boundaryIndex < boundaries.size(); ++boundaryIndex) {
+            int start = boundaries.get(boundaryIndex);
+            if (start == previous) continue;
+            previous = start;
+            int nextIndex = boundaryIndex + 1;
+            while (nextIndex < boundaries.size()
+                    && boundaries.get(nextIndex) == start) {
+                ++nextIndex;
+            }
+            if (nextIndex >= boundaries.size()) break;
+            int end = boundaries.get(nextIndex);
+
+            boolean hasTypefaceSpan = false;
+            for (TypefaceMetricSpan span : spans) {
+                if (styledText.getSpanStart(span) <= start
+                        && styledText.getSpanEnd(span) >= end) {
+                    span.updateMeasureState(paint);
+                    hasTypefaceSpan = true;
+                    break;
+                }
+            }
+            if (!hasTypefaceSpan) paint.setTypeface(originalTypeface);
+            width += paint.measureText(text.toString(), start, end);
+        }
+        paint.setTypeface(originalTypeface);
+        return width;
+    }
+
+    private static final class AdvancedPatternLine {
+        final CharSequence pattern;
+        final boolean emphasized;
+        final float textWidth;
+
+        AdvancedPatternLine(
+                CharSequence pattern, boolean emphasized, float textWidth) {
+            this.pattern = pattern;
+            this.emphasized = emphasized;
+            this.textWidth = textWidth;
+        }
+    }
+
+    private static int countLines(CharSequence pattern) {
+        int result = 1;
+        for (int i = 0; i < pattern.length(); ++i) {
+            if (pattern.charAt(i) == '\n') ++result;
+        }
+        return result;
+    }
+
+    private TextClock makeCustomClock(int colour) {
+        TextClock clock = new TextClock(m_owner);
+        clock.setGravity(Gravity.CENTER);
+        clock.setTypeface(Typeface.DEFAULT);
+        clock.setTextColor(colour);
+        clock.setAutoSizeTextTypeUniformWithConfiguration(
+                10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
+        clock.setSingleLine(false);
+        return clock;
     }
 
     // recursive version
@@ -548,13 +690,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
         setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
         if (advancedFormatMode) {
-            m_customClockView = new TextClock(m_owner);
-            m_customClockView.setGravity(Gravity.CENTER);
-            m_customClockView.setTypeface(font);
-            m_customClockView.setTextColor(m_fgcolour);
-            m_customClockView.setAutoSizeTextTypeUniformWithConfiguration(
-                    10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
-            m_customClockView.setSingleLine(false);
+            m_customClockView = makeCustomClock(m_fgcolour);
             updateCustomClockFormat();
             addView(m_customClockView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,

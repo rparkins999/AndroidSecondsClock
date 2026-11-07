@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
@@ -38,6 +39,76 @@ public class FormatProfilesTest {
                 "same", "portrait", "landscape", false, false));
         assertEquals("landscape", FormatProfiles.clockFormat(
                 "same", "portrait", "landscape", false, true));
+    }
+
+    @Test
+    public void landscapeEmphasisCanAppearOnAnyLineAndKeepsSecondsToken() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "header%n%L%H:%M:%S\n%L%S\n%%L literal %S");
+
+        assertEquals(4, lines.size());
+        assertEquals("header", lines.get(0).format);
+        assertFalse(lines.get(0).emphasized);
+        assertEquals("%H:%M:%S", lines.get(1).format);
+        assertTrue(lines.get(1).emphasized);
+        assertEquals("%S", lines.get(2).format);
+        assertTrue(lines.get(2).emphasized);
+        assertEquals("%%L literal %S", lines.get(3).format);
+        assertFalse(lines.get(3).emphasized);
+        assertEquals("", FormatLineSplit.stripEmphasisMarkers("%L"));
+        assertEquals("%%L", FormatLineSplit.stripEmphasisMarkers("%%L"));
+        assertEquals(DateCommandFormat.toTextClockPattern("%H:%M:%S", null),
+                DateCommandFormat.toTextClockPattern(
+                        FormatLineSplit.stripEmphasisMarkers("%L%H:%M:%S"), null));
+    }
+
+    @Test
+    public void landscapeEmphasisKeepsAlarmBlocksValidAcrossLineBreaks() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "%<Alarm:\n%L%H:%M%>");
+
+        assertEquals(2, lines.size());
+        assertEquals("%<Alarm:%>", lines.get(0).format);
+        assertFalse(lines.get(0).emphasized);
+        assertEquals("%<%H:%M%>", lines.get(1).format);
+        assertTrue(lines.get(1).emphasized);
+    }
+
+    @Test
+    public void legacyLandscapeEmphasisMovesToTheFirstNonEmptyLine() {
+        List<FormatLineSplit.Line> lines =
+                FormatLineSplit.applyLegacyFirstLineEmphasis(
+                        FormatLineSplit.splitLines("\n%H:%M\n%A"), true);
+
+        assertEquals(3, lines.size());
+        assertFalse(lines.get(0).emphasized);
+        assertTrue(lines.get(1).emphasized);
+        assertFalse(lines.get(2).emphasized);
+    }
+
+    @Test
+    public void explicitEmphasisOverridesLegacyFirstLineSetting() {
+        List<FormatLineSplit.Line> lines =
+                FormatLineSplit.applyLegacyFirstLineEmphasis(
+                        FormatLineSplit.splitLines("header\n%L%H:%M"), true);
+
+        assertFalse(lines.get(0).emphasized);
+        assertTrue(lines.get(1).emphasized);
+    }
+
+    @Test
+    public void legacyLandscapeEmphasisDoesNotChangeSingleLineFormats() {
+        List<FormatLineSplit.Line> lines =
+                FormatLineSplit.applyLegacyFirstLineEmphasis(
+                        FormatLineSplit.splitLines("%H:%M"), true);
+
+        assertFalse(lines.get(0).emphasized);
+    }
+
+    @Test
+    public void shortEmphasizedLinesCanScaleBeyondFourTimes() {
+        assertEquals(340.0F,
+                FormatLineSizing.relativeScale(5.0F, 1_000.0F), 0.01F);
     }
 
     @Test
