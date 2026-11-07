@@ -81,6 +81,8 @@ to show seconds; the separate seconds-size control applies only in Checkbox mode
 
 To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines share extra height
 and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.
+For compatibility, multiline Landscape formats without a `%L` marker emphasize the first non-empty
+line by default.
 The advanced editor also offers a text-style emoji preference; monochrome rendering depends on the
 device's fonts. The seven-segment font applies to time fields, not the alarm label or weekday.
 
@@ -131,12 +133,13 @@ the display too bright for a dark room. SecondsClock can also reduce clock opaci
   the requested brightness falls toward zero as the measured light reaches zero. The threshold's
   maximum is 255 lux, about a brightly lit room; direct sunlight can be much higher.
 - **Minimum brightness:** The control ranges up to 100 to give more precision at low brightness.
-- **Minimum opacity:** At 255, the clock stays fully opaque and dimming uses screen brightness down
-  to the minimum brightness. Below 255, screen brightness can reach zero and opacity fades from
-  fully visible to the selected minimum. Set it to zero to let the clock disappear completely.
-- **Use only opacity:** Leaves system screen brightness alone and dims the clock by opacity. This
-  can save power on OLED screens, but not on backlit displays. Android doesn't report which display
-  type is in use.
+- **Minimum opacity:** At 255, opacity stays unchanged and screen brightness dims only as far as the
+  minimum-brightness setting. Below 255, once brightness reaches that minimum, the clock stays at
+  minimum brightness while opacity fades toward the selected minimum. Set it to zero to let the
+  clock disappear completely.
+- **Use only opacity:** Dims the clock using opacity while setting its window brightness to Android's
+  reported system brightness. Depending on the device, this can interact with or override
+  auto-dimming. Opacity dimming can save power on OLED screens, but not on backlit displays.
 
 Device-specific brightness processing can cause a visible step when dimming begins. SecondsClock
 can't read each device's OEM brightness parameters, so the exact result may need tuning on your
@@ -155,9 +158,9 @@ The rest of SecondsClock is licensed under GPL v3 or later.
 
 ## Building
 
-Release APKs must be signed with your own key; the project doesn't include a signing key. The build
-looks for `keys/keystore.properties` in the parent directory of the project. If you store it
-elsewhere, update `build.gradle`. It contains:
+Debug and release APKs use the configured signing key; the project doesn't include one. The build
+looks for `Keys/keystore.properties` (capital K) in the parent directory of the project. If you store
+it elsewhere, update `build.gradle`. The file contains:
 
 ```properties
 keyAlias=your-user-name
@@ -166,6 +169,6 @@ storeFile=/path/to/your/keystore
 storePassword=your-keystore-password
 ```
 
-Debug builds use a debug key. Android won't install an APK over an installed version signed with a
-different key. Uninstalling the existing app first allows installation, but deletes its saved
-settings.
+Debug APKs have a `.debug` application ID suffix but use the same configured key. Android won't
+install an APK over an installed version signed with a different key. Uninstalling the existing app
+first allows installation, but deletes its saved settings.
