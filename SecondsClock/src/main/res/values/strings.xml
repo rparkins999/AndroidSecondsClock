@@ -92,6 +92,7 @@
     <string name="show_next_alarm_any_app">Show next alarm (any alarm app)</string>
     <string name="next_alarm_source_help">Android reports the next alarm-clock alarm from any app, not necessarily your default clock app. Checkbox mode displays it as ALM: Mon, 3:30.</string>
     <string name="advanced_format_mode">Advanced formatting mode</string>
+    <string name="text_style_emoji">Prefer text-style emoji (monochrome where supported)</string>
     <string name="checkbox_mode">Checkbox mode</string>
     <string name="format_profile_sync">Sync</string>
     <string name="format_profile_horizontal">Horizontal</string>
