@@ -63,7 +63,7 @@ final class DateCommandFormat {
 
             int nextTag = nextTagIndex(format, index);
             int segmentEnd = nextTag < 0 ? format.length() : nextTag;
-            result.append(toDatePattern(
+            appendPattern(result, toDatePattern(
                     format.substring(index, segmentEnd), now));
             index = segmentEnd;
         }
@@ -78,6 +78,19 @@ final class DateCommandFormat {
             if (found >= 0 && (result < 0 || found < result)) result = found;
         }
         return result;
+    }
+
+    private static void appendPattern(StringBuilder pattern, String part) {
+        if (pattern.length() > 0 && part.length() > 0
+                && pattern.charAt(pattern.length() - 1) == '\''
+                && part.charAt(0) == '\'') {
+            // Merge adjacent quoted literals. SimpleDateFormat treats adjacent
+            // quote delimiters as a literal apostrophe instead of a boundary.
+            pattern.setLength(pattern.length() - 1);
+            pattern.append(part, 1, part.length());
+        } else {
+            pattern.append(part);
+        }
     }
 
     private static String toDatePattern(String format, Date referenceDate) {

@@ -62,6 +62,8 @@ import java.util.TimeZone;
 
 @SuppressLint("ViewConstructor")
 class ClockView extends LinearLayout implements SensorEventListener {
+    static final int DEFAULT_SECONDS_SIZE = 255;
+
     public String m_dateFormat = " ";
     public String m_hoursFormat = " ";
     public String m_monthFormat = " ";
@@ -448,19 +450,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
             m_handler.removeCallbacks(this);
             Calendar next = updateTime();
             long now = next.getTimeInMillis();
-            int secondsSize = m_prefs.getInt("CsecondsSize", 0);
-            if (secondsSize > 0) {
-                next.add(Calendar.SECOND, 1);
-            } else {
-                next.add(Calendar.MINUTE, 1);
-                next.set(Calendar.SECOND, 0);
-            }
-            next.set(Calendar.MILLISECOND, 0);
-            long offset = next.getTimeInMillis() - now;
-            if (offset <= 0) {
-                // should be impossible, but set 1 second just in case
-                offset = 1000;
-            }
+            int secondsSize = m_prefs.getInt(
+                    "CsecondsSize", DEFAULT_SECONDS_SIZE);
+            long offset = ClockTickDelay.millisecondsUntilNextTick(
+                    now, secondsSize);
             adjustColour();
             m_handler.postDelayed(this, offset);
         }
@@ -517,7 +510,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_customClockView = null;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
-        int m_secondsSize = m_prefs.getInt("CsecondsSize", 255);
+        int m_secondsSize = m_prefs.getInt(
+                "CsecondsSize", DEFAULT_SECONDS_SIZE);
         int showMonth = m_prefs.getInt("CshowMonth", 2); // long format
         int showMonthDay = m_prefs.getInt("CshowMonthDay",1);
         int showShortDate = m_prefs.getInt("CshowShortDate",0);
