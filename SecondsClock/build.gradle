@@ -15,6 +15,36 @@ tasks.register("generateLauncherIcon") {
     inputs.property("buildTimestamp", buildTimestamp.time)
     outputs.file(generatedIconDir.map { it.file("drawable/ic_launcher.png") })
     doLast {
+        def fallbackIcon = file("src/main/res/drawable/ic_launcher.png")
+        def output = generatedIconDir.get().file("drawable/ic_launcher.png").asFile
+        def converterAvailable = false
+        try {
+            def versionOutput = new ByteArrayOutputStream()
+            def versionCheck = project.exec {
+                executable "rsvg-convert"
+                args "--version"
+                standardOutput = versionOutput
+                errorOutput = versionOutput
+                ignoreExitValue = true
+            }
+            converterAvailable = versionCheck.exitValue == 0
+        } catch (Exception ignored) {
+            converterAvailable = false
+        }
+        if (!converterAvailable) {
+            if (!fallbackIcon.isFile()) {
+                throw new GradleException(
+                        "rsvg-convert is unavailable and the checked-in launcher icon is missing")
+            }
+            if (output.exists() && !output.delete()) {
+                throw new GradleException(
+                        "Could not remove a stale generated launcher icon")
+            }
+            logger.lifecycle(
+                    "rsvg-convert is unavailable; using the checked-in launcher icon")
+            return
+        }
+
         def svg = launcherIconSvg.getText("UTF-8")
         def timeText = new java.text.SimpleDateFormat(
                 "HH:mm:ss", java.util.Locale.ENGLISH).format(buildTimestamp)
@@ -36,7 +66,6 @@ tasks.register("generateLauncherIcon") {
         svg = replaceText(svg, "build-time", timeText)
         svg = replaceText(svg, "build-date", dateText)
 
-        def output = generatedIconDir.get().file("drawable/ic_launcher.png").asFile
         output.parentFile.mkdirs()
         def generatedSvg = new File(temporaryDir, "seconds-clock-icon.svg")
         generatedSvg.setText(svg, "UTF-8")
@@ -78,8 +107,8 @@ exec {
     standardOutput = gitdata3
 }
 
-// Each build renders the SVG with the current build time/date into a generated
-// build-type resource, which overrides the checked-in fallback PNG.
+// When rsvg-convert is available, the timestamped SVG overrides the checked-in
+// fallback PNG. Standard Android/F-Droid builds can use the fallback as-is.
 
 // Update these three to make new version
 def VERSIONCODE = 9
