@@ -201,13 +201,17 @@ public class SecondsClockWidget extends AppWidgetProvider {
         SharedPreferences prefs = context.getSharedPreferences(
             "SecondsClock", Context.MODE_PRIVATE);
         String widgetIds = prefs.getString("widgetIds", "");
+        SharedPreferences.Editor edit = prefs.edit();
         for (int i: appWidgetIds) {
             String thisWidget = "[" + String.valueOf(i) + "]";
             if (Objects.requireNonNull(widgetIds).contains(thisWidget)) {
                 widgetIds = widgetIds.replace(thisWidget, "");
             }
+            // Widget IDs can be reused; don't carry a deleted widget's name
+            // over to a newly created widget with the same ID.
+            edit.remove("W" + i + "name");
         }
-        prefs.edit() .putString("widgetIds", widgetIds).commit();
+        edit.putString("widgetIds", widgetIds).commit();
     }
 
     @Override

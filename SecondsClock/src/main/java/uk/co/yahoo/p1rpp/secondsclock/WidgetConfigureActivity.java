@@ -11,6 +11,7 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import static android.text.InputType.TYPE_CLASS_NUMBER;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -43,6 +44,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private static final int FORMATPROFILE_HORIZONTAL = FORMATPROFILE_SYNC + 1;
     private static final int FORMATPROFILE_VERTICAL = FORMATPROFILE_HORIZONTAL + 1;
     private static final int TEXT_STYLE_EMOJI = FORMATPROFILE_VERTICAL + 1;
+    private static final int WIDGET_NAME = TEXT_STYLE_EMOJI + 1;
 
     private int widgetId;
     private int maxHeight = 121;
@@ -61,6 +63,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private EditText formatInput;
     private TextView formatLabel;
     private Button formatModeButton;
+    private Button widgetNameButton;
     private Button syncFormatButton;
     private Button horizontalFormatButton;
     private Button verticalFormatButton;
@@ -116,6 +119,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case FORMATHELP: doToast(R.string.widget_format_help); return true;
             case NEXTALARM: doToast(R.string.next_alarm_source_help); return true;
             case FORMATMODE: doToast(R.string.widgetconfighelp); return true;
+            case WIDGET_NAME: doToast(R.string.widget_name_help); return true;
             case DONEBUTTON: doToast(R.string.donehelp); return true;
             case SETTEXTCOLOUR: doToast(R.string.setfgcolourhelp); return true;
             case SETBACKGROUNDCOLOUR: doToast(R.string.setbgcolourhelp); return true;
@@ -485,6 +489,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         ScrollView lscroll = new ScrollView(this);
         lscroll.setScrollbarFadingEnabled(false);
         LinearLayout l1 = new LinearLayout(this);
+        Button widgetNameButton = widgetNameButton();
         LinearLayout settingsEditor = advancedFormatMode
                 ? makeFormatEditor() : makeCheckboxEditor();
         formatModeButton.setText(advancedFormatMode
@@ -516,11 +521,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l1.addView(l3, lpWrapWrap);
             LinearLayout page = new LinearLayout(this);
             page.setOrientation(LinearLayout.VERTICAL);
+            if (widgetNameButton != null) page.addView(widgetNameButton, lpMatchWrap);
             page.addView(l1, lpMatchWrap);
             if (advancedFormatMode) page.addView(makeFormatGuide(), lpMatchWrap);
             lscroll.addView(page);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
+            if (widgetNameButton != null) l1.addView(widgetNameButton, lpMatchWrap);
             demoboxbox.setLayoutParams(lpMatchWrap);
             demoboxbox.setOrientation(LinearLayout.VERTICAL);
             demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -543,6 +550,47 @@ public class WidgetConfigureActivity extends ConfigureActivity
             lscroll.addView(l1);
         }
         m_topLayout.addView(lscroll);
+    }
+
+    private Button widgetNameButton() {
+        if (widgetId < 0) return null;
+        Button button = new Button(this);
+        widgetNameButton = button;
+        button.setId(WIDGET_NAME);
+        String name = SettingsStore.widgetName(m_prefs, widgetId);
+        if (name.isEmpty()) button.setText(R.string.set_widget_name);
+        else button.setText(getString(R.string.widget_name_label, name));
+        button.setAllCaps(false);
+        button.setOnClickListener(v -> promptWidgetName());
+        button.setOnLongClickListener(this);
+        return button;
+    }
+
+    private void promptWidgetName() {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint(R.string.widget_name_hint);
+        input.setText(SettingsStore.widgetName(m_prefs, widgetId));
+        input.setSelection(0, input.length());
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.rename_widget)
+                .setView(input)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!SettingsStore.isWidgetNameAvailable(m_prefs,
+                            appWidgetManager, secondsClockWidget, widgetId, name)) {
+                        doToast(R.string.widget_name_in_use);
+                        return;
+                    }
+                    SettingsStore.renameWidget(m_prefs, widgetId, name);
+                    if (name.isEmpty()) {
+                        widgetNameButton.setText(R.string.set_widget_name);
+                    } else {
+                        widgetNameButton.setText(
+                                getString(R.string.widget_name_label, name));
+                    }
+                }).show();
     }
 
     private LinearLayout makeCheckboxEditor() {

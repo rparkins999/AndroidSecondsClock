@@ -75,6 +75,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="uk.co.yahoo.p1rpp.secondsclock.SettingsManagerActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="false" />
+
         <meta-data
             android:name="com.samsung.android.icon_container.has_icon_container"
             android:value="true"/>
