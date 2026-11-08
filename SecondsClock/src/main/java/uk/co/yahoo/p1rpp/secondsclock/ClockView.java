@@ -129,6 +129,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (m_customClockView != null) m_customClockView.setTextColor(colour);
     }
 
+    // Update the displayed RGB colour without resetting its dimming opacity.
+    public void setPreviewColour(int colour) {
+        m_fgcolour = (m_fgcolour & 0xFF000000) | (colour & 0x00FFFFFF);
+        setColour(m_fgcolour);
+    }
+
     private void setLp (int value) {
         Window w = m_owner.getWindow();
         WindowManager.LayoutParams lp = w.getAttributes();
