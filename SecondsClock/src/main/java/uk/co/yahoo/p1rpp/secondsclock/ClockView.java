@@ -115,6 +115,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     // Set the colour of all of our display objects.
     public void setColour(int colour) {
+        m_fgcolour = colour;
         m_ampmView.setTextColor(colour);
         m_alarmView.setTextColor(colour);
         m_dateView.setTextColor(colour);

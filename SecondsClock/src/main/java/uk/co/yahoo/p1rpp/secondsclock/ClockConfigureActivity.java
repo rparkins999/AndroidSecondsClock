@@ -113,6 +113,11 @@ public class ClockConfigureActivity extends ConfigureActivity
     private Button m_portraitFormatButton;
     private Button m_landscapeFormatButton;
 
+    private void updatePreviewColour() {
+        m_clockView.setColour(m_fgcolour);
+        m_clockView.adjustColour();
+    }
+
     public void updateTexts(float lux, int bright, int alpha) {
         if (m_currentView == DISPLAYBUTTON) {
             m_currentLux.setText(getString(R.string.currentlux, (int) lux));
@@ -432,30 +437,30 @@ public class ClockConfigureActivity extends ConfigureActivity
             case HUESLIDER:
                 m_fgcolour = 0xFF000000 | hueChanged();
                 m_prefs.edit().putInt("Cfgcolour", m_fgcolour).commit();
-                m_clockView.adjustColour();
+                updatePreviewColour();
                 break;
             case SATURATIONSLIDER:
                 m_fgcolour = 0xFF000000 | saturationChanged();
                 m_prefs.edit().putInt("Cfgcolour", m_fgcolour).commit();
-                m_clockView.adjustColour();
+                updatePreviewColour();
                 break;
             case VALUESLIDER:
                 m_fgcolour = 0xFF000000 | valueChanged();
                 m_prefs.edit().putInt("Cfgcolour", m_fgcolour).commit();
-                m_clockView.adjustColour();
+                updatePreviewColour();
                 break;
             case REDSLIDER:
                 m_fgcolour = redSliderChanged(value, m_fgcolour, "Cfgcolour");
-                m_clockView.adjustColour();
+                updatePreviewColour();
                 break;
             case GREENSLIDER:
                 m_fgcolour = greenSliderChanged(
                     value, m_fgcolour, "Cfgcolour");
-                m_clockView.adjustColour();
+                updatePreviewColour();
                 break;
             case BLUESLIDER:
                 m_fgcolour = blueSliderChanged(value, m_fgcolour, "Cfgcolour");
-                m_clockView.adjustColour();
+                updatePreviewColour();
                 break;
             case SECONDSSIZER:
                 m_prefs.edit().putInt("CsecondsSize", value).commit();
@@ -1168,7 +1173,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                     int colour = fixSaturation(s.toString());
                     m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-                    m_clockView.adjustColour();
+                    updatePreviewColour();
                     saturationValue.setSelection(
                         saturationValue.getText().length());
                 }
@@ -1190,7 +1195,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                     int colour = fixValue(s.toString());
                     m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-                    m_clockView.adjustColour();
+                    updatePreviewColour();
                     valueValue.setSelection(valueValue.getText().length());
                 }
             }
@@ -1216,7 +1221,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                     redSlider.setValue(value);
                     m_fgcolour = (value << 16) + (m_fgcolour & 0xFF00FFFF);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-                    m_clockView.adjustColour();
+                    updatePreviewColour();
                     rgbChanged();
                     redValue.setSelection(redValue.getText().length());
                 }
@@ -1243,7 +1248,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                     greenSlider.setValue(val);
                     m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-                    m_clockView.adjustColour();
+                    updatePreviewColour();
                     rgbChanged();
                     greenValue.setSelection(greenValue.getText().length());
                 }
@@ -1271,7 +1276,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                     m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
                     rgbChanged();
-                    m_clockView.adjustColour();
+                    updatePreviewColour();
                     blueValue.setSelection(blueValue.getText().length());
                 }
             }
