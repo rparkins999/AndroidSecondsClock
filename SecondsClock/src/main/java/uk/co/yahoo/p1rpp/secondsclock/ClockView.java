@@ -28,7 +28,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
@@ -692,7 +691,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_alarmView.setTypeface(Typeface.DEFAULT);
         boolean m_haveDate =
             showMonth + showMonthDay + showShortDate + showWeekDay + showYear > 0;
-        setForegroundTintList(ColorStateList.valueOf(m_fgcolour));
+        // The display background is black; don't inherit DayNight text colors.
+        setColour(m_fgcolour);
         if (advancedFormatMode) {
             m_customClockView = makeCustomClock(m_fgcolour);
             updateCustomClockFormat();
