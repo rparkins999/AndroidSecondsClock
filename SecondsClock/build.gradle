@@ -9,10 +9,13 @@ plugins {
 def buildTimestamp = new Date()
 def generatedIconDir = layout.buildDirectory.dir("generated/launcherIconRes")
 def launcherIconSvg = file("seconds-clock-icon.svg")
+def configuredRsvgConvertExecutable = providers.gradleProperty("rsvgConvertExecutable")
+def rsvgConvertExecutable = configuredRsvgConvertExecutable.orElse("rsvg-convert")
 
 tasks.register("generateLauncherIcon") {
     inputs.file(launcherIconSvg)
     inputs.property("buildTimestamp", buildTimestamp.time)
+    inputs.property("rsvgConvertExecutable", rsvgConvertExecutable)
     outputs.file(generatedIconDir.map { it.file("drawable/ic_launcher.png") })
     doLast {
         def fallbackIcon = file("src/main/res/drawable/ic_launcher.png")
@@ -21,7 +24,7 @@ tasks.register("generateLauncherIcon") {
         try {
             def versionOutput = new ByteArrayOutputStream()
             def versionCheck = project.exec {
-                executable "rsvg-convert"
+                executable rsvgConvertExecutable.get()
                 args "--version"
                 standardOutput = versionOutput
                 errorOutput = versionOutput
@@ -32,6 +35,10 @@ tasks.register("generateLauncherIcon") {
             converterAvailable = false
         }
         if (!converterAvailable) {
+            if (configuredRsvgConvertExecutable.isPresent()) {
+                throw new GradleException(
+                        "Configured rsvg-convert executable '${rsvgConvertExecutable.get()}' is unavailable")
+            }
             if (!fallbackIcon.isFile()) {
                 throw new GradleException(
                         "rsvg-convert is unavailable and the checked-in launcher icon is missing")
@@ -41,7 +48,7 @@ tasks.register("generateLauncherIcon") {
                         "Could not remove a stale generated launcher icon")
             }
             logger.lifecycle(
-                    "rsvg-convert is unavailable; using the checked-in launcher icon")
+                    "${rsvgConvertExecutable.get()} is unavailable; using the checked-in launcher icon")
             return
         }
 
@@ -49,8 +56,8 @@ tasks.register("generateLauncherIcon") {
         def timeText = new java.text.SimpleDateFormat(
                 "HH:mm:ss", java.util.Locale.ENGLISH).format(buildTimestamp)
         def dateText = new java.text.SimpleDateFormat(
-                "EEE · dd.MM.yyyy", java.util.Locale.ENGLISH)
-                .format(buildTimestamp).toUpperCase(java.util.Locale.ENGLISH)
+                "dd.MM.yyyy", java.util.Locale.ENGLISH)
+                .format(buildTimestamp)
 
         def replaceText = { String source, String elementId, String value ->
             def pattern = java.util.regex.Pattern.compile(
@@ -67,11 +74,12 @@ tasks.register("generateLauncherIcon") {
         svg = replaceText(svg, "build-date", dateText)
 
         output.parentFile.mkdirs()
+        // This edited SVG is only an intermediate; Android consumes the PNG in generatedIconDir.
         def generatedSvg = new File(temporaryDir, "seconds-clock-icon.svg")
         generatedSvg.setText(svg, "UTF-8")
         try {
             project.exec {
-                executable "rsvg-convert"
+                executable rsvgConvertExecutable.get()
                 args "--width", "512", "--height", "512",
                         "--output", output.absolutePath, generatedSvg.absolutePath
             }
@@ -83,6 +91,7 @@ tasks.register("generateLauncherIcon") {
         if (!output.isFile() || output.length() == 0) {
             throw new GradleException("rsvg-convert did not create the launcher PNG")
         }
+        logger.lifecycle("Generated timestamped launcher icon at ${output}")
     }
 }
 
