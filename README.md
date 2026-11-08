@@ -3,7 +3,7 @@
 SecondsClock is an Android clock that runs as a home-screen widget or a full-screen night clock.
 You can add multiple widgets and configure each one independently.
 
-This is version 2.6.
+This is version 2.6.0.
 
 ## Choose a setup
 
