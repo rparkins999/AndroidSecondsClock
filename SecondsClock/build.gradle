@@ -111,9 +111,9 @@ exec {
 // fallback PNG. Standard Android/F-Droid builds can use the fallback as-is.
 
 // Update these three to make new version
-def VERSIONCODE = 9
-def VERSIONNAME = "2.5"
-def CHANGESTRING = "Make the app icon show its build time and date"
+def VERSIONCODE = 86
+def VERSIONNAME = "2.6.0"
+def CHANGESTRING = "Add settings backup and restore manager"
 
 def CHANGELOGS = "fastlane/metadata/android/en-US/changeLogs/"
 def CHANGEFILE = CHANGELOGS + VERSIONCODE + ".txt"
