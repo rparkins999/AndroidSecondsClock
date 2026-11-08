@@ -147,10 +147,11 @@ truncated to two lines, making the built-in guidance harder to read.
 
 ## Launcher icon
 
-The editable artwork is `SecondsClock/seconds-clock-icon.svg`. When `rsvg-convert` is available on
-`PATH`, Gradle creates a timestamped launcher icon for debug and release APKs. Otherwise, builds
-use the checked-in `SecondsClock/src/main/res/drawable/ic_launcher.png`. The 144×144 F-Droid metadata
-icon is a static rasterization of the SVG.
+The editable artwork is `SecondsClock/seconds-clock-icon.svg`. When `rsvg-convert` is available to
+Gradle (on `PATH`, or specified with `-PrsvgConvertExecutable=/path/to/rsvg-convert`), Gradle creates
+a timestamped launcher icon for debug and release APKs. Otherwise, builds use the checked-in
+`SecondsClock/src/main/res/drawable/ic_launcher.png`. The 144×144 F-Droid metadata icon is a static
+rasterization of the SVG.
 
 ## Night clock dimming
 
