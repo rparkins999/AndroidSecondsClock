@@ -26,6 +26,9 @@ public class MainActivity extends Activity_common
 {
     private int widgetID;
     private static final int CONFIGURE_THIS_WIDGET = GO_EXIT + 1;
+    private static final int EXPORT_SETTINGS = CONFIGURE_THIS_WIDGET + 1;
+    private static final int IMPORT_SETTINGS = EXPORT_SETTINGS + 1;
+    private static final int MANAGE_SETTINGS = IMPORT_SETTINGS + 1;
 
     // Use best efforts to find the system clock app.
     private void goSystemClock() {
@@ -103,6 +106,15 @@ public class MainActivity extends Activity_common
                         .putExtra("widgetID", widgetID));
                 finish();
                 break;
+            case EXPORT_SETTINGS:
+                startSettingsActivity(SettingsManagerActivity.ACTION_EXPORT);
+                break;
+            case IMPORT_SETTINGS:
+                startSettingsActivity(SettingsManagerActivity.ACTION_IMPORT);
+                break;
+            case MANAGE_SETTINGS:
+                startSettingsActivity(SettingsManagerActivity.ACTION_MANAGE);
+                break;
             case CONFIGURE_EXISTING_WIDGET:
                 m_prefs.edit().putInt("Wview", CONFIGURE)
                     .putInt("Wconfiguring", 1).commit();
@@ -144,6 +156,12 @@ public class MainActivity extends Activity_common
                 doToast(R.string.helpconfignewwidget); return true;
             case CONFIGURE_THIS_WIDGET:
                 doToast(R.string.helpconfigthis); return true;
+            case EXPORT_SETTINGS:
+                doToast(R.string.export_settings_help); return true;
+            case IMPORT_SETTINGS:
+                doToast(R.string.import_settings_help); return true;
+            case MANAGE_SETTINGS:
+                doToast(R.string.settings_manager_help); return true;
             case CONFIGURE_EXISTING_WIDGET:
                 doToast(R.string.helpoldwidget); return true;
             case CONFIGURE_NIGHT_CLOCK:
@@ -155,6 +173,11 @@ public class MainActivity extends Activity_common
             default:
                 return false;
         }
+    }
+
+    private void startSettingsActivity(String action) {
+        startActivity(new Intent(this, SettingsManagerActivity.class)
+                .putExtra(SettingsManagerActivity.EXTRA_START_ACTION, action));
     }
 
     @SuppressLint("ApplySharedPref")
@@ -254,6 +277,27 @@ public class MainActivity extends Activity_common
         Button b = new Button(this);
         b.setText(R.string.gosysclock);
         b.setId(GO_SYSTEM_CLOCK);
+        b.setAllCaps(false);
+        b.setOnClickListener(this);
+        b.setOnLongClickListener(this);
+        lmain.addView(b, centreButton);
+        b = new Button(this);
+        b.setText(R.string.export_settings);
+        b.setId(EXPORT_SETTINGS);
+        b.setAllCaps(false);
+        b.setOnClickListener(this);
+        b.setOnLongClickListener(this);
+        lmain.addView(b, centreButton);
+        b = new Button(this);
+        b.setText(R.string.import_settings);
+        b.setId(IMPORT_SETTINGS);
+        b.setAllCaps(false);
+        b.setOnClickListener(this);
+        b.setOnLongClickListener(this);
+        lmain.addView(b, centreButton);
+        b = new Button(this);
+        b.setText(R.string.settings_manager);
+        b.setId(MANAGE_SETTINGS);
         b.setAllCaps(false);
         b.setOnClickListener(this);
         b.setOnLongClickListener(this);
