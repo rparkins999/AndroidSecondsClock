@@ -92,7 +92,8 @@ not adapt to landscape until the launcher updates it or the widget is resized.
 
 ## Full-screen night clock
 
-The full-screen clock's background is always black, but its text colour is configurable.
+The full-screen clock's background is always black, but its text colour is configurable
+in both Light and Dark appearance.
 
 ### Checkbox mode
 
@@ -110,13 +111,28 @@ To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines
 and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.
 For compatibility, multiline Landscape formats without a `%L` marker emphasize the first non-empty
 line by default.
-The advanced editor also offers a text-style emoji preference; monochrome rendering depends on the
-device's fonts. The seven-segment font applies to time fields, not the alarm label or weekday.
+The advanced editor also offers a text-style emoji preference. Joined emoji and flag sequences
+are preserved; monochrome rendering depends on the device's fonts. The seven-segment font applies
+to time fields, not the alarm label or weekday.
 
 ### Charging
 
 The full-screen night clock keeps the screen on while the device is charging in both Checkbox and
 Advanced modes.
+
+## Settings, backup, and presets
+
+From the main menu, **Export settings** saves the current settings and preset library to a JSON
+file using Android's document picker. **Import settings** restores a file: settings for matching
+widgets are updated, while unmatched widget settings are saved as presets. Give widgets unique
+names in their configuration so backups can match them after reinstalling or moving to another
+installation. Export before uninstalling an APK signed with a different key, because uninstalling
+deletes the app's saved settings.
+
+**Settings Manager** copies settings between new-widget defaults, the full-screen clock, individual
+widgets, and presets. You can save a selected component as a preset, apply a preset to a compatible
+component, and rename or delete presets. Resetting a component saves its previous custom settings as
+a preset first.
 
 ## Installation and compatibility
 
