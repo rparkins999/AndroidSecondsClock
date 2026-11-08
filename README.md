@@ -96,8 +96,9 @@ widgets with different settings on the same or different home-screen pages.
 ### Seconds and battery
 
 A widget showing seconds updates every second while it is visible, which uses more battery. It
-doesn't update while hidden. The full-screen night clock keeps the screen on, so it is intended to
-be used while the device is charging. Its seconds size can be adjusted separately.
+doesn't update while hidden. In Checkbox mode, the full-screen night clock keeps the screen on while
+the device is charging. Advanced mode does not currently do this. The seconds size can be adjusted
+separately.
 
 ### Widget orientation
 
@@ -130,8 +131,10 @@ the display too bright for a dark room. SecondsClock can also reduce clock opaci
 ### Dimming controls
 
 - **Lux threshold:** Above this ambient-light level, SecondsClock doesn't dim the clock. Below it,
-  the requested brightness falls toward zero as the measured light reaches zero. The threshold's
-  maximum is 255 lux, about a brightly lit room; direct sunlight can be much higher.
+  the dimming target decreases as ambient light falls. Unless **Use only opacity** is selected,
+  screen brightness bottoms out at the minimum-brightness setting; opacity can provide further
+  dimming. The threshold's maximum is 255 lux, about a brightly lit room; direct sunlight can be
+  much higher.
 - **Minimum brightness:** The control ranges up to 100 to give more precision at low brightness.
 - **Minimum opacity:** At 255, opacity stays unchanged and screen brightness dims only as far as the
   minimum-brightness setting. Below 255, once brightness reaches that minimum, the clock stays at
