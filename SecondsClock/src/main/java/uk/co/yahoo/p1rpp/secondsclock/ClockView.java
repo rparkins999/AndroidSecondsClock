@@ -371,26 +371,30 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_timeView.setText(time);
     }
 
+    private void updateKeepScreenOn() {
+        if (!(m_owner instanceof ClockActivity)) return;
+        // ACTION_BATTERY_CHANGED is a sticky intent
+        Intent battery = m_owner.registerReceiver(
+            null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if ((battery != null) // It should not be null, but lint requires the check.
+                && battery.getIntExtra(
+                        BatteryManager.EXTRA_PLUGGED, 0) != 0) {
+            m_owner.getWindow().addFlags(FLAG_KEEP_SCREEN_ON);
+        } else {
+            m_owner.getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
     private Calendar updateTime() {
         Calendar next = Calendar.getInstance(); // new one in case time zone changed
+        /* Once per minute, we check if we're connected to a charger:
+         * if so, we keep the full-screen clock on.
+         */
+        if ((m_owner instanceof ClockActivity) && next.get(Calendar.SECOND) == 0) {
+            updateKeepScreenOn();
+        }
         if (m_customClockView != null) {
             return next;
-        }
-        /* Once per minute, we check if we're connected to a charger:
-         * if so, we keep the screen on.
-         */
-        if ((m_owner instanceof ClockActivity) && next.get(Calendar.SECOND) == 0)
-        {
-            // ACTION_BATTERY_CHANGED is a sticky intent
-            Intent battery = m_owner.registerReceiver(
-                null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-            if (   (battery != null) // it can't be null, but lint moans if we don't check
-                && (battery.getIntExtra(
-				        BatteryManager.EXTRA_PLUGGED, 0) != 0)) {
-                m_owner.getWindow().addFlags(FLAG_KEEP_SCREEN_ON);
-            } else {
-                m_owner.getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
-            }
         }
         int timeLength = String.valueOf(m_timeView.getText()).length();
         fixLengths(next);
@@ -987,6 +991,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (isVisible != m_visible) {
             m_visible = isVisible;
             if (isVisible) {
+                // Don't wait for the next minute boundary after opening the clock.
+                updateKeepScreenOn();
                 updateLayout();
                 if (m_lightSensor != null) {
                     m_sensorManager.registerListener(
