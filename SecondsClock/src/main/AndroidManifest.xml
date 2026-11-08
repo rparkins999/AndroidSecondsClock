@@ -36,6 +36,10 @@
                 android:resource="@xml/seconds_clock_widget_info" />
         </receiver>
 
+        <receiver
+            android:name="uk.co.yahoo.p1rpp.secondsclock.SystemClockAppSelectionReceiver"
+            android:exported="false" />
+
         <activity
             android:name="uk.co.yahoo.p1rpp.secondsclock.ClockActivity"
             android:screenOrientation="fullSensor"

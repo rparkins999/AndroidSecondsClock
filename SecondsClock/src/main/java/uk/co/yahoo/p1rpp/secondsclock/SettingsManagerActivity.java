@@ -63,6 +63,9 @@ public class SettingsManagerActivity extends Activity_common
     private List<SettingsPreset> presets = new ArrayList<>();
 
     private static final int HELP_ID = 12001;
+    private static final int SYSTEM_CLOCK_HELP_ID = HELP_ID + 3;
+    private static final int SYSTEM_CLOCK_OVERRIDE_ID = HELP_ID + 4;
+    private static final int SYSTEM_CLOCK_RESET_ID = HELP_ID + 5;
 
     private static final class Selection {
         static final int COMPONENT = 1;
@@ -178,7 +181,76 @@ public class SettingsManagerActivity extends Activity_common
             doToast(R.string.settings_manager_help);
             return true;
         }
+        if (view.getId() == SYSTEM_CLOCK_HELP_ID
+                || view.getId() == SYSTEM_CLOCK_OVERRIDE_ID
+                || view.getId() == SYSTEM_CLOCK_RESET_ID) {
+            doToast(R.string.system_clock_settings_help);
+            return true;
+        }
         return false;
+    }
+
+    private void addSystemClockControls(LinearLayout parent) {
+        TextView heading = centredLabel(
+                R.string.system_clock_settings_title, SYSTEM_CLOCK_HELP_ID);
+        parent.addView(heading, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView status = new TextView(this);
+        status.setGravity(Gravity.CENTER_HORIZONTAL);
+        if (SystemClockApp.getOverride(m_prefs) == null) {
+            status.setText(R.string.system_clock_automatic_status);
+        } else {
+            String label = SystemClockApp.getOverrideLabel(m_prefs);
+            status.setText(label.isEmpty()
+                    ? getString(R.string.system_clock_override_unavailable_label)
+                    : getString(R.string.system_clock_override_status, label));
+        }
+        parent.addView(status, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        Button override = new Button(this);
+        override.setText(R.string.system_clock_override_button);
+        override.setId(SYSTEM_CLOCK_OVERRIDE_ID);
+        override.setAllCaps(false);
+        override.setOnClickListener(view -> {
+            try {
+                SystemClockApp.openSelector(this, false);
+            } catch (ActivityNotFoundException exception) {
+                doToast(R.string.system_clock_selector_not_found);
+            }
+        });
+        override.setOnLongClickListener(this);
+        parent.addView(override, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        Button reset = new Button(this);
+        reset.setText(R.string.system_clock_reset_button);
+        reset.setId(SYSTEM_CLOCK_RESET_ID);
+        reset.setAllCaps(false);
+        reset.setEnabled(m_prefs.contains(SystemClockApp.OVERRIDE_KEY)
+                || m_prefs.getBoolean(SystemClockApp.DONT_ASK_KEY, false));
+        reset.setOnClickListener(view -> confirmResetSystemClockSettings());
+        reset.setOnLongClickListener(this);
+        parent.addView(reset, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private void confirmResetSystemClockSettings() {
+        new AlertDialog.Builder(this)
+                .setMessage(R.string.system_clock_reset_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.system_clock_reset_button,
+                        (dialog, which) -> {
+                            SystemClockApp.reset(m_prefs);
+                            renderAgain();
+                            doToast(R.string.system_clock_reset_done);
+                        })
+                .show();
     }
 
     private LinearLayout makeCurrentPanel() {
@@ -191,6 +263,7 @@ public class SettingsManagerActivity extends Activity_common
         currentRows = new LinearLayout(this);
         currentRows.setOrientation(LinearLayout.VERTICAL);
         addComponentRow(currentRows, globalsSelection(), false);
+        addSystemClockControls(currentRows);
         addComponentRow(currentRows, clockSelection(), false);
 
         List<SettingsStore.WidgetRecord> widgets = SettingsStore.activeWidgets(

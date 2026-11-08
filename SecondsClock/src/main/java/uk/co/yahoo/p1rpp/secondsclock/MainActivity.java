@@ -10,13 +10,18 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -25,50 +30,143 @@ public class MainActivity extends Activity_common
     implements View.OnClickListener, View.OnLongClickListener
 {
     private int widgetID;
+    private boolean widgetActionHandled;
+    private boolean systemClockPromptPending;
+    private boolean systemClockPromptPermissionFailure;
     private static final int CONFIGURE_THIS_WIDGET = GO_EXIT + 1;
     private static final int EXPORT_SETTINGS = CONFIGURE_THIS_WIDGET + 1;
     private static final int IMPORT_SETTINGS = EXPORT_SETTINGS + 1;
     private static final int MANAGE_SETTINGS = IMPORT_SETTINGS + 1;
 
-    // Use best efforts to find the system clock app.
-    private void goSystemClock() {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            widgetActionHandled = savedInstanceState.getBoolean(
+                    "widgetActionHandled", false);
+            systemClockPromptPending = savedInstanceState.getBoolean(
+                    "systemClockPromptPending", false);
+            systemClockPromptPermissionFailure = savedInstanceState.getBoolean(
+                    "systemClockPromptPermissionFailure", false);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean("widgetActionHandled", widgetActionHandled);
+        outState.putBoolean("systemClockPromptPending", systemClockPromptPending);
+        outState.putBoolean("systemClockPromptPermissionFailure",
+                systemClockPromptPermissionFailure);
+        super.onSaveInstanceState(outState);
+    }
+
+    private Intent systemClockIntent(String category) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                       | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        // first try some well-known clock app names
+        intent.addCategory(category);
+        return intent;
+    }
+
+    private boolean tryLaunchSystemClock(Intent intent) {
         try {
-            intent.setClassName("com.android.deskclock",
-                "com.android.deskclock.DeskClock");
             startActivity(intent);
             finish();
-            return;
-        } catch (Exception ignore) {}
-        try {
-            intent.setClassName("com.sec.android.app.clockpackage",
-                "com.sec.android.app.clockpackage.Clockpackage");
-            startActivity(intent);
-            finish();
-            return;
-        } catch (Exception ignore) {}
-        intent.removeCategory(Intent.CATEGORY_LAUNCHER);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        try {
-            intent.setClassName("com.android.deskclock",
-                "com.android.deskclock.DeskClock");
-            startActivity(intent);
-            finish();
-            return;
-        } catch (Exception ignore) {}
-        try {
-            intent.setClassName("com.sec.android.app.clockpackage",
-                "com.sec.android.app.clockpackage.Clockpackage");
-            startActivity(intent);
-            finish();
-            return;
-        } catch (Exception ignore) {}
-        // If that didn't work, try a well-known clock action.
-        intent = new Intent("android.intent.action.SHOW_TIMERS");
+            return true;
+        } catch (Exception ignore) {
+            return false;
+        }
+    }
+
+    private boolean runKnownSystemClockAttempts() {
+        String[] packages = {
+            "com.android.deskclock",
+            "com.sec.android.app.clockpackage"
+        };
+        String[] activities = {
+            "com.android.deskclock.DeskClock",
+            "com.sec.android.app.clockpackage.Clockpackage"
+        };
+        for (String category : new String[] {
+                Intent.CATEGORY_LAUNCHER, Intent.CATEGORY_DEFAULT }) {
+            for (int i = 0; i < packages.length; ++i) {
+                Intent intent = systemClockIntent(category)
+                        .setClassName(packages[i], activities[i]);
+                if (tryLaunchSystemClock(intent)) return true;
+            }
+        }
+        return false;
+    }
+
+    private void launchSecondsClockFallback() {
+        doToast(R.string.system_clock_seconds_fallback);
+        startActivity(new Intent(this, ClockActivity.class));
+        finish();
+    }
+
+    private void saveDontAskPreference(boolean dontAsk) {
+        m_prefs.edit().putBoolean(
+                SystemClockApp.DONT_ASK_KEY, dontAsk).apply();
+    }
+
+    private void promptForSystemClockApp(boolean permissionFailure) {
+        systemClockPromptPending = true;
+        systemClockPromptPermissionFailure = permissionFailure;
+        CheckBox dontAsk = new CheckBox(this);
+        dontAsk.setText(R.string.system_clock_dont_ask_again);
+        int padding = Math.round(16 * getResources().getDisplayMetrics().density);
+        dontAsk.setPadding(padding, 0, padding, 0);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.system_clock_not_found_title)
+                .setMessage(permissionFailure
+                        ? R.string.system_clock_permission_message
+                        : R.string.system_clock_not_found_message)
+                .setView(dontAsk)
+                .setPositiveButton(R.string.system_clock_choose_app,
+                        (dialog, which) -> {
+                            systemClockPromptPending = false;
+                            saveDontAskPreference(dontAsk.isChecked());
+                            try {
+                                SystemClockApp.openSelector(this, true);
+                            } catch (ActivityNotFoundException exception) {
+                                doToast(R.string.system_clock_selector_not_found);
+                                launchSecondsClockFallback();
+                            }
+                        })
+                .setNegativeButton(R.string.system_clock_not_now,
+                        (dialog, which) -> {
+                            systemClockPromptPending = false;
+                            saveDontAskPreference(dontAsk.isChecked());
+                            launchSecondsClockFallback();
+                        })
+                .setOnCancelListener(dialog -> systemClockPromptPending = false)
+                .show();
+    }
+
+    private void finishSystemClockFailure(boolean permissionFailure) {
+        if (m_prefs.getBoolean(SystemClockApp.DONT_ASK_KEY, false)) {
+            if (permissionFailure) doToast(R.string.noclockpermission);
+            launchSecondsClockFallback();
+        } else {
+            promptForSystemClockApp(permissionFailure);
+        }
+    }
+
+    // Try a saved override first, then the existing best-effort discovery.
+    private void goSystemClock() {
+        ComponentName override = SystemClockApp.getOverride(m_prefs);
+        if (override != null) {
+            Intent intent = systemClockIntent(Intent.CATEGORY_LAUNCHER)
+                    .setComponent(override);
+            if (tryLaunchSystemClock(intent)) return;
+            // A stale or unavailable component should not block automatic lookup.
+            SystemClockApp.clearOverride(m_prefs);
+        }
+
+        if (runKnownSystemClockAttempts()) return;
+
+        Intent intent = new Intent("android.intent.action.SHOW_TIMERS");
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                       | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
@@ -76,14 +174,10 @@ public class MainActivity extends Activity_common
             startActivity(intent);
             finish();
         } catch (SecurityException ignore) {
-            // we needed permission.SET_ALARM and we don't have it.
-            doToast(R.string.noclockpermission);
+            finishSystemClockFailure(true);
         } catch (Exception ignore) {
-            doToast(R.string.nosysclock);
+            finishSystemClockFailure(false);
         }
-        // We don't call finish here as we do if we can launch the system
-        // clock app. If we can't find it we stay in this activity
-        // so that the user can do something else.
     }
 
     @SuppressLint("ApplySharedPref")
@@ -185,6 +279,8 @@ public class MainActivity extends Activity_common
     protected void onStart() {
         super.onStart();
         Intent intent = getIntent();
+        boolean restoreClockPrompt = systemClockPromptPending;
+        boolean permissionFailure = systemClockPromptPermissionFailure;
         if (intent.hasExtra("widgetID")) {
             // We got here because the user touched one of our widgets.
             widgetID = intent.getIntExtra("widgetID", -1);
@@ -196,7 +292,10 @@ public class MainActivity extends Activity_common
                     new Intent(this, WidgetConfigureActivity.class)
                     .putExtra("widgetID", widgetID));
                 finish();
-            } else {
+            } else if (!widgetActionHandled) {
+                // External clock apps and the app chooser can return here.
+                // Do not repeat a widget action when this Activity resumes.
+                widgetActionHandled = true;
                 // Do the touch action for the widget that called us.
                 String key = "W" + widgetID + "touchaction";
                 switch (m_prefs.getInt(key, CHOOSE_ACTION)) {
@@ -241,6 +340,9 @@ public class MainActivity extends Activity_common
                 intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
                 sendBroadcast(intent);
             }
+        }
+        if (restoreClockPrompt) {
+            promptForSystemClockApp(permissionFailure);
         }
         // CHOOSE_ACTION or GO_SECONDS_CLOCK or we got launched:
         // onResume will set up our screen.

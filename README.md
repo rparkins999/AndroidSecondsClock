@@ -76,9 +76,11 @@ configure; the next widget you touch will open its configuration page regardless
 touch action.
 
 Opening the system clock may not work on every device. The system clock app is OEM-specific, and
-Android doesn't define a standard intent to launch it. SecondsClock tries several possible intents,
-but they may not find the clock app on every device. If the system-clock action doesn't work, report
-the device and, if possible, the name of its clock app so another intent can be considered.
+Android doesn't define a standard intent to launch it. SecondsClock tries several possible intents.
+If they fail, you can choose an installed app in Android's app selector and save it as an override.
+The next system-clock action tries that app first. Choosing **Not now** opens SecondsClock's
+full-screen clock; select **Don't ask me again** to skip the prompt on later failures. The override
+and prompt preference can be changed or reset in **Settings Manager** under **System clock app**.
 
 ### Seconds and battery
 
