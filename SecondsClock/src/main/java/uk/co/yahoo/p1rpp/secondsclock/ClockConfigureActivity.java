@@ -1178,8 +1178,15 @@ public class ClockConfigureActivity extends ConfigureActivity
             @Override
             public void afterTextChanged(Editable s) {
                 if (!recursive && !m_updatingColourControls) {
+                    int saturation = safeParseInt(s.toString());
+                    if (saturation > 255) {
+                        saturation = 255;
+                        recursive = true;
+                        saturationValue.setText("255");
+                        recursive = false;
+                    }
                     m_updatingColourControls = true;
-                    int colour = fixSaturation(s.toString());
+                    int colour = fixSaturation(String.valueOf(saturation));
                     m_updatingColourControls = false;
                     m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
