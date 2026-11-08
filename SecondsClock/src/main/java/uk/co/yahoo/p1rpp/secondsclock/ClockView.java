@@ -373,11 +373,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     private Calendar updateTime() {
         Calendar next = Calendar.getInstance(); // new one in case time zone changed
-        if (m_customClockView != null) {
-            return next;
-        }
         /* Once per minute, we check if we're connected to a charger:
-         * if so, we keep the screen on.
+         * if so, we keep the full-screen clock on.
          */
         if ((m_owner instanceof ClockActivity) && next.get(Calendar.SECOND) == 0)
         {
@@ -391,6 +388,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
             } else {
                 m_owner.getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
             }
+        }
+        if (m_customClockView != null) {
+            return next;
         }
         int timeLength = String.valueOf(m_timeView.getText()).length();
         fixLengths(next);

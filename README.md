@@ -96,8 +96,8 @@ widgets with different settings on the same or different home-screen pages.
 ### Seconds and battery
 
 A widget showing seconds updates every second while it is visible, which uses more battery. It
-doesn't update while hidden. In Checkbox mode, the full-screen night clock keeps the screen on while
-the device is charging. Advanced mode does not currently do this. The seconds size can be adjusted
+doesn't update while hidden. The full-screen night clock keeps the screen on while the device is
+charging, in both Checkbox and Advanced modes. The seconds size can be adjusted
 separately.
 
 ### Widget orientation
