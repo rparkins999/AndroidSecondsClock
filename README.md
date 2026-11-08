@@ -26,7 +26,8 @@ The options differ slightly between home-screen widgets and the full-screen cloc
 
 Choose whether to show the time, seconds, weekday, date, and next alarm. You can use a numeric date
 or choose the day, month, and year separately. Time uses the device's 12- or 24-hour preference.
-The layout adapts to the widget's size.
+The layout adapts to the widget's size. The **Show next alarm (any alarm app)** option displays the
+next alarm Android reports, not necessarily one from the default clock app.
 
 ### Advanced mode
 
@@ -49,7 +50,7 @@ Common tokens:
 | `%x`, `%X` | Localized date or time |
 | `%n`, `%%` | New line or literal percent sign |
 
-### Optional alarm text
+#### Optional alarm text
 
 Use `%<` and `%>` to mark an alarm block. Inside it, `%|` separates the text shown when an alarm
 is set from an optional fallback shown when none is set:
@@ -63,15 +64,41 @@ tokens use the alarm time. Without an alarm, the text after `%|` appears and its
 current time. Without `%|`, the block is hidden when no alarm is set; the fallback can also be
 empty. Android does not expose the alarm's label.
 
-The checkbox **Show next alarm (any alarm app)** option displays the next alarm Android reports,
-not necessarily one from the default clock app.
+### Appearance and touch
+
+You can change the widget's text colour, background colour, and background opacity. Widget touch
+actions can open the system clock, SecondsClock, its settings, or the full-screen clock. You can
+place multiple widgets with different settings on the same or different home-screen pages.
+
+If a widget's touch action doesn't open its configuration page, open SecondsClock from its app icon
+(usually in the apps list), then choose **Configure existing widget**. Touch the widget you want to
+configure; the next widget you touch will open its configuration page regardless of its assigned
+touch action.
+
+Opening the system clock may not work on every device. The system clock app is OEM-specific, and
+Android doesn't define a standard intent to launch it. SecondsClock tries several possible intents,
+but they may not find the clock app on every device. If the system-clock action doesn't work, report
+the device and, if possible, the name of its clock app so another intent can be considered.
+
+### Seconds and battery
+
+A widget showing seconds updates every second while it is visible, which uses more battery. It
+doesn't update while hidden.
+
+### Widget orientation
+
+Some launchers don't notify widgets when the screen rotates. On those devices, a widget's layout may
+not adapt to landscape until the launcher updates it or the widget is resized.
 
 ## Full-screen night clock
+
+The full-screen clock's background is always black, but its text colour is configurable.
 
 ### Checkbox mode
 
 Choose the time, seconds size, weekday, date, and next-alarm options. The clock arranges the
-selected information automatically. Its checkbox-mode alarm is shown as `ALM: Mon, 3:30`.
+selected information automatically. The seconds size can be adjusted separately. Its checkbox-mode
+alarm is shown as `ALM: Mon, 3:30`.
 
 ### Advanced mode
 
@@ -86,24 +113,10 @@ line by default.
 The advanced editor also offers a text-style emoji preference; monochrome rendering depends on the
 device's fonts. The seven-segment font applies to time fields, not the alarm label or weekday.
 
-## Other settings
+### Charging
 
-You can change the widget's text colour, background colour, and background opacity. The full-screen
-clock's background is always black, but its text colour is configurable. Widget touch actions can
-open the system clock, SecondsClock, its settings, or the full-screen clock. You can place multiple
-widgets with different settings on the same or different home-screen pages.
-
-### Seconds and battery
-
-A widget showing seconds updates every second while it is visible, which uses more battery. It
-doesn't update while hidden. In Checkbox mode, the full-screen night clock keeps the screen on while
-the device is charging. Advanced mode does not currently do this. The seconds size can be adjusted
-separately.
-
-### Widget orientation
-
-Some launchers don't notify widgets when the screen rotates. On those devices, a widget's layout may
-not adapt to landscape until the launcher updates it or the widget is resized.
+The full-screen night clock keeps the screen on while the device is charging in both Checkbox and
+Advanced modes.
 
 ## Installation and compatibility
 
