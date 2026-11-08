@@ -115,7 +115,6 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     // Set the colour of all of our display objects.
     public void setColour(int colour) {
-        m_fgcolour = colour;
         m_ampmView.setTextColor(colour);
         m_alarmView.setTextColor(colour);
         m_dateView.setTextColor(colour);
@@ -128,6 +127,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
         if (m_customClockView != null) m_customClockView.setTextColor(colour);
+    }
+
+    // Update the displayed RGB colour without resetting its dimming opacity.
+    public void setPreviewColour(int colour) {
+        m_fgcolour = (m_fgcolour & 0xFF000000) | (colour & 0x00FFFFFF);
+        setColour(m_fgcolour);
     }
 
     private void setLp (int value) {

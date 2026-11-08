@@ -105,6 +105,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private TextView m_currentOpacity;
     private boolean m_advancedFormatMode;
     private boolean m_changingFormatInput;
+    private boolean m_updatingColourControls;
     private int m_formatProfile = FormatProfiles.SYNC;
     private EditText m_formatInput;
     private TextView m_formatLabel;
@@ -114,8 +115,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private Button m_landscapeFormatButton;
 
     private void updatePreviewColour() {
-        m_clockView.setColour(m_fgcolour);
-        m_clockView.adjustColour();
+        m_clockView.setPreviewColour(m_fgcolour);
     }
 
     public void updateTexts(float lux, int bright, int alpha) {
@@ -435,17 +435,23 @@ public class ClockConfigureActivity extends ConfigureActivity
     public void onValueChanged(Slider slider, int value) {
         switch (slider.getId()) {
             case HUESLIDER:
+                m_updatingColourControls = true;
                 m_fgcolour = 0xFF000000 | hueChanged();
+                m_updatingColourControls = false;
                 m_prefs.edit().putInt("Cfgcolour", m_fgcolour).commit();
                 updatePreviewColour();
                 break;
             case SATURATIONSLIDER:
+                m_updatingColourControls = true;
                 m_fgcolour = 0xFF000000 | saturationChanged();
+                m_updatingColourControls = false;
                 m_prefs.edit().putInt("Cfgcolour", m_fgcolour).commit();
                 updatePreviewColour();
                 break;
             case VALUESLIDER:
+                m_updatingColourControls = true;
                 m_fgcolour = 0xFF000000 | valueChanged();
+                m_updatingColourControls = false;
                 m_prefs.edit().putInt("Cfgcolour", m_fgcolour).commit();
                 updatePreviewColour();
                 break;
@@ -915,8 +921,10 @@ public class ClockConfigureActivity extends ConfigureActivity
             gl.addView(scrollView, -1, layoutParams);
         }
         m_topLayout.addView(gl);
-        m_clockView.setColour(m_fgcolour);
+        m_clockView.setPreviewColour(m_fgcolour);
+        m_updatingColourControls = true;
         rgbChanged(m_fgcolour);
+        m_updatingColourControls = false;
     }
 
     @Override
@@ -1169,8 +1177,10 @@ public class ClockConfigureActivity extends ConfigureActivity
             @SuppressLint({"ApplySharedPref", "SetTextI18n"})
             @Override
             public void afterTextChanged(Editable s) {
-                if (!recursive) {
+                if (!recursive && !m_updatingColourControls) {
+                    m_updatingColourControls = true;
                     int colour = fixSaturation(s.toString());
+                    m_updatingColourControls = false;
                     m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
                     updatePreviewColour();
@@ -1191,8 +1201,10 @@ public class ClockConfigureActivity extends ConfigureActivity
             @SuppressLint({"ApplySharedPref", "SetTextI18n"})
             @Override
             public void afterTextChanged(Editable s) {
-                if (!recursive) {
+                if (!recursive && !m_updatingColourControls) {
+                    m_updatingColourControls = true;
                     int colour = fixValue(s.toString());
+                    m_updatingColourControls = false;
                     m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
                     updatePreviewColour();
@@ -1212,7 +1224,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             @SuppressLint({"ApplySharedPref", "SetTextI18n"})
             @Override
             public void afterTextChanged(Editable s) {
-                if (!recursive) {
+                if (!recursive && !m_updatingColourControls) {
                     int value = safeParseInt(s.toString());
                     if (value > 255) {
                         redValue.setText("255");
@@ -1221,8 +1233,10 @@ public class ClockConfigureActivity extends ConfigureActivity
                     redSlider.setValue(value);
                     m_fgcolour = (value << 16) + (m_fgcolour & 0xFF00FFFF);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-                    updatePreviewColour();
+                    m_updatingColourControls = true;
                     rgbChanged();
+                    m_updatingColourControls = false;
+                    updatePreviewColour();
                     redValue.setSelection(redValue.getText().length());
                 }
             }
@@ -1239,7 +1253,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             @SuppressLint({"ApplySharedPref", "SetTextI18n"})
             @Override
             public void afterTextChanged(Editable s) {
-                if (!recursive) {
+                if (!recursive && !m_updatingColourControls) {
                     int val = safeParseInt(s.toString());
                     if (val > 255) {
                         greenValue.setText("255");
@@ -1248,8 +1262,10 @@ public class ClockConfigureActivity extends ConfigureActivity
                     greenSlider.setValue(val);
                     m_fgcolour = (val << 8) + (m_fgcolour & 0xFFFF00FF);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-                    updatePreviewColour();
+                    m_updatingColourControls = true;
                     rgbChanged();
+                    m_updatingColourControls = false;
+                    updatePreviewColour();
                     greenValue.setSelection(greenValue.getText().length());
                 }
             }
@@ -1266,7 +1282,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             @SuppressLint({"ApplySharedPref", "SetTextI18n"})
             @Override
             public void afterTextChanged(Editable s) {
-                if (!recursive) {
+                if (!recursive && !m_updatingColourControls) {
                     int val = safeParseInt(s.toString());
                     if (val > 255) {
                         blueValue.setText("255");
@@ -1275,7 +1291,9 @@ public class ClockConfigureActivity extends ConfigureActivity
                     blueSlider.setValue(val);
                     m_fgcolour = val + (m_fgcolour & 0xFFFFFF00);
                     m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
+                    m_updatingColourControls = true;
                     rgbChanged();
+                    m_updatingColourControls = false;
                     updatePreviewColour();
                     blueValue.setSelection(blueValue.getText().length());
                 }
