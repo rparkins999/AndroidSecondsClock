@@ -193,9 +193,12 @@ The rest of SecondsClock is licensed under GPL v3 or later.
 
 ## Building
 
-Debug and release APKs use the configured signing key; the project doesn't include one. The build
-looks for `Keys/keystore.properties` (capital K) in the parent directory of the project. If you store
-it elsewhere, update `build.gradle`. The file contains:
+The repository does not include a signing key. For local signed builds, put `keystore.properties`
+and its keystore in the ignored `local/` directory, or pass the properties-file path with
+`-PkeystorePropertiesFile=/absolute/path/to/keystore.properties` (the
+`SECONDSCLOCK_KEYSTORE_PROPERTIES` environment variable is also supported). For compatibility, the
+build still checks `../Keys/keystore.properties` if the local file is absent. The properties file
+contains:
 
 ```properties
 keyAlias=your-user-name
@@ -204,6 +207,10 @@ storeFile=/path/to/your/keystore
 storePassword=your-keystore-password
 ```
 
-Debug APKs have a `.debug` application ID suffix but use the same configured key. Android won't
-install an APK over an installed version signed with a different key. Uninstalling the existing app
-first allows installation, but deletes its saved settings.
+When signing properties are present, both variants use that key. Without them, debug uses Android's
+default debug key and release APKs are unsigned, so a clean checkout can build and run CI without
+private credentials. Debug APKs have a `.debug` application ID suffix. Android won't install an APK
+over an installed version signed with a different key. Export settings before uninstalling an
+existing app if you need to switch signing keys.
+
+See [`docs/RELEASING.md`](docs/RELEASING.md) for the release checklist and F-Droid metadata workflow.

@@ -122,24 +122,37 @@ exec {
 // Update these three to make new version
 def VERSIONCODE = 86
 def VERSIONNAME = "2.6.0"
-def CHANGESTRING = "Add settings backup and restore manager"
 
-def CHANGELOGS = "fastlane/metadata/android/en-US/changeLogs/"
-def CHANGEFILE = CHANGELOGS + VERSIONCODE + ".txt"
-exec {
-    commandLine "echo", "${CHANGESTRING.toString()}"
-    standardOutput = new FileOutputStream(rootProject.file(CHANGEFILE))
-}
-exec {
-    commandLine "git", "add", "../" + "${CHANGEFILE.toString()}"
-}
-exec {
-    commandLine "sed", "-i", "/This is version/cThis is version " + VERSIONNAME + ".", "../README.md"
+def explicitKeystorePropertiesPath = findProperty("keystorePropertiesFile")
+        ?: System.getenv("SECONDSCLOCK_KEYSTORE_PROPERTIES")
+File keystorePropertiesFile
+if (explicitKeystorePropertiesPath) {
+    keystorePropertiesFile = file(explicitKeystorePropertiesPath.toString())
+    if (!keystorePropertiesFile.isFile()) {
+        throw new GradleException(
+                "Configured signing properties file does not exist: ${keystorePropertiesFile}")
+    }
+} else {
+    File localKeystorePropertiesFile = rootProject.file("local/keystore.properties")
+    File legacyKeystorePropertiesFile = rootProject.file("../Keys/keystore.properties")
+    keystorePropertiesFile = localKeystorePropertiesFile.isFile()
+            ? localKeystorePropertiesFile : legacyKeystorePropertiesFile
 }
 
-def keystorePropertiesFile = rootProject.file("../Keys/keystore.properties")
 def keystoreProperties = new Properties()
-keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+def hasSigningConfig = keystorePropertiesFile.isFile()
+if (hasSigningConfig) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+    ["keyAlias", "keyPassword", "storeFile", "storePassword"].each { propertyName ->
+        if (!keystoreProperties.getProperty(propertyName)) {
+            throw new GradleException(
+                    "Signing properties file is missing '${propertyName}'")
+        }
+    }
+} else {
+    logger.lifecycle(
+            "No local signing properties found; debug uses the Android debug key and release APKs are unsigned")
+}
 
 android {
     compileSdkVersion 28
@@ -150,11 +163,13 @@ android {
     }
 
     signingConfigs {
-        config {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
+        if (hasSigningConfig) {
+            config {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
         }
     }
     defaultConfig {
@@ -169,7 +184,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-            signingConfig signingConfigs.config
+            if (hasSigningConfig) {
+                signingConfig signingConfigs.config
+            }
             delete("build/intermediates/incremental/mergeReleaseResources/merger.xml")
             resValue("string", 'build_time', "${buildTimestamp.toString()}")
             resValue("string", 'build_git1', "${gitdata1.toString()}")
@@ -178,7 +195,9 @@ android {
                     "${" on branch " + gitdata3.toString()}")
         }
         debug {
-            signingConfig signingConfigs.config
+            if (hasSigningConfig) {
+                signingConfig signingConfigs.config
+            }
             delete("build/intermediates/incremental/mergeDebugResources/merger.xml")
             resValue("string", 'build_time', "${buildTimestamp.toString()}")
             resValue("string", 'build_git1', "${gitdata1.toString()}")

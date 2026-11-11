@@ -1,0 +1,4 @@
+- Added custom date/time formats, alarm alternatives, line emphasis, and emoji styling.
+- Improved format editing/fitting, seconds updates, and full-screen colour and charging behavior.
+- Added Settings Manager presets and JSON import/export, preserving unmatched widget settings.
+- Added system-clock fallback and timestamped launcher icons with a static PNG fallback.
