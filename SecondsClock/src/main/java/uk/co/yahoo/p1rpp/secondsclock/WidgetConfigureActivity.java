@@ -24,6 +24,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AnalogClock;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -45,17 +46,21 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private static final int FORMATPROFILE_VERTICAL = FORMATPROFILE_HORIZONTAL + 1;
     private static final int TEXT_STYLE_EMOJI = FORMATPROFILE_VERTICAL + 1;
     private static final int WIDGET_NAME = TEXT_STYLE_EMOJI + 1;
+    private static final int ANALOG_MODE = WIDGET_NAME + 1;
 
     private int widgetId;
     private int maxHeight = 121;
     private int minWidth = 93;
     private int m_bgcolour;
     private TextClock demo;
+    @SuppressWarnings("deprecation") // AnalogClock remains supported in RemoteViews widgets.
+    private AnalogClock analogDemo;
     private int m_fgcolour;
     private String widgetFormat;
     private int showTime;
     private int formatProfile = FormatProfiles.SYNC;
     private boolean advancedFormatMode;
+    private boolean analogMode;
     private boolean changingFormatInput;
     private boolean changingTimeChecks;
     private LinearLayout demobox;
@@ -70,6 +75,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private CheckBox showTimeCheckBox;
     private CheckBox showSecondsCheckBox;
     private CheckBox showNextAlarmCheckBox;
+    private CheckBox analogModeCheckBox;
+    private TextView analogModeNote;
     private Button bgButton;
     private Button fgButton;
     private Button chooseButton;
@@ -104,7 +111,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     case CONFIGURE: doToast(R.string.widgetconfighelp); return true;
                     case SETBACKGROUNDCOLOUR: doToast(R.string.bgcolourhelp); return true;
                     case SETTEXTCOLOUR:
-                        doToast(R.string.fgcolourhelp, m_CorW); return true;
+                        doToast(R.string.widget_digital_text_colour_help); return true;
                     case CHOOSE_ACTION: doToast(R.string.actionhelp); return true;
                 }
                 break;
@@ -118,10 +125,12 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case SHOWSECONDS: doToast(R.string.showsecondshelp); return true;
             case FORMATHELP: doToast(R.string.widget_format_help); return true;
             case NEXTALARM: doToast(R.string.next_alarm_source_help); return true;
+            case ANALOG_MODE: doToast(R.string.widget_analog_mode_help); return true;
             case FORMATMODE: doToast(R.string.widgetconfighelp); return true;
             case WIDGET_NAME: doToast(R.string.widget_name_help); return true;
             case DONEBUTTON: doToast(R.string.donehelp); return true;
-            case SETTEXTCOLOUR: doToast(R.string.setfgcolourhelp); return true;
+            case SETTEXTCOLOUR:
+                doToast(R.string.widget_digital_text_colour_help); return true;
             case SETBACKGROUNDCOLOUR: doToast(R.string.setbgcolourhelp); return true;
             case GO_SYSTEM_CLOCK:
                 doToast(R.string.helptouchsysclock);
@@ -164,6 +173,14 @@ public class WidgetConfigureActivity extends ConfigureActivity
     @SuppressLint("ApplySharedPref")
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (buttonView.getId() == ANALOG_MODE) {
+            analogMode = isChecked;
+            m_prefs.edit().putBoolean(m_key + "analogMode", analogMode).apply();
+            updateDemo();
+            updateWidget();
+            if (m_currentView == CONFIGURE) doMainLayout();
+            return;
+        }
         if (buttonView.getId() == NEXTALARM) {
             m_prefs.edit().putBoolean(m_key + "showNextAlarm", isChecked).apply();
             updateFromCheckBox();
@@ -194,6 +211,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     }
 
     private void updateWidget() {
+        if (demo != null && analogDemo != null) setDemoBackgroundColor();
         int[] widgetIds;
         if (widgetId == -1) {
             widgetIds = appWidgetManager.getAppWidgetIds(secondsClockWidget);
@@ -232,7 +250,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (m_currentView == SETBACKGROUNDCOLOUR) {
             m_bgcolour = colour | (m_bgcolour & 0xFF000000);
             m_prefs.edit().putInt(m_key + "bgcolour", colour).commit();
-            demo.setBackgroundColor(m_bgcolour);
+            setDemoBackgroundColor();
             setAlphaSliderBackground();
         } else { // SETTEXTCOLOUR
             m_fgcolour = colour | (m_fgcolour & 0xFF000000);
@@ -260,7 +278,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 if (m_currentView == SETBACKGROUNDCOLOUR) {
                     m_bgcolour = redSliderChanged(
                         value, m_bgcolour, m_key + "bgcolour");
-                    demo.setBackgroundColor(m_bgcolour);
+                    setDemoBackgroundColor();
                     setAlphaSliderBackground();
                 } else {
                     m_fgcolour = redSliderChanged(
@@ -273,7 +291,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 if (m_currentView == SETBACKGROUNDCOLOUR) {
                     m_bgcolour = greenSliderChanged(
                         value, m_bgcolour, m_key + "bgcolour");
-                    demo.setBackgroundColor(m_bgcolour);
+                    setDemoBackgroundColor();
                     setAlphaSliderBackground();
                 } else {
                     m_fgcolour = greenSliderChanged(
@@ -286,7 +304,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 if (m_currentView == SETBACKGROUNDCOLOUR) {
                     m_bgcolour = blueSliderChanged(
                         value, m_bgcolour, m_key + "bgcolour");
-                    demo.setBackgroundColor(m_bgcolour);
+                    setDemoBackgroundColor();
                     setAlphaSliderBackground();
                 } else {
                     m_fgcolour = blueSliderChanged(
@@ -302,7 +320,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     recursive = false;
                 }
                 m_bgcolour = (value << 24) | (m_bgcolour & 0xFFFFFF);
-                demo.setBackgroundColor(m_bgcolour);
+                setDemoBackgroundColor();
                 m_prefs.edit().putInt(m_key + "bgcolour", m_bgcolour).commit();
                 setAlphaSliderBackground();
                 break;
@@ -456,15 +474,20 @@ public class WidgetConfigureActivity extends ConfigureActivity
 
     void updateDemo() {
         Formatter f = new Formatter();
-        Long nextAlarm = Formatter.getNextAlarmTime(this);
-        if (advancedFormatMode) {
-            f.set(getFormatForProfile(formatProfile), nextAlarm,
-                    m_prefs.getBoolean(m_key + "textStyleEmoji", false));
-        } else {
-            f.setCheckboxes(this, minWidth, maxHeight, showTime,
-                    showWeekDay, showShortDate, showMonthDay, showMonth,
-                    showYear, showNextAlarmCheckBox != null
-                            && showNextAlarmCheckBox.isChecked(), nextAlarm);
+        if (!analogMode) {
+            Long nextAlarm = Formatter.getNextAlarmTime(this);
+            if (advancedFormatMode) {
+                f.set(getFormatForProfile(formatProfile), nextAlarm,
+                        m_prefs.getBoolean(m_key + "textStyleEmoji", false));
+            } else {
+                f.setCheckboxes(this, minWidth, maxHeight, showTime,
+                        showWeekDay, showShortDate, showMonthDay, showMonth,
+                        showYear, showNextAlarmCheckBox != null
+                                && showNextAlarmCheckBox.isChecked(), nextAlarm);
+            }
+            demo.setFormat12Hour(f.time12 + f.rest);
+            demo.setFormat24Hour(f.time24 + f.rest);
+            demo.setLines(f.lines);
         }
         int width = (int)(minWidth * m_density);
         int height = (int)(maxHeight * m_density);
@@ -472,19 +495,41 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setMaxWidth(width);
         demo.setMinimumHeight(height);
         demo.setMaxHeight(height);
-        demo.setFormat12Hour(f.time12 + f.rest);
-        demo.setFormat24Hour(f.time24 + f.rest);
-        demo.setLines(f.lines);
         demo.setAutoSizeTextTypeUniformWithConfiguration(
             10, 3000,
             3, TypedValue.COMPLEX_UNIT_PX);
+        analogDemo.setMinimumWidth(width);
+        analogDemo.setMinimumHeight(height);
+        analogDemo.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+        showPreview();
+    }
+
+    private void showPreview() {
+        if (demobox == null || demo == null || analogDemo == null) return;
+        demobox.removeAllViews();
+        demobox.addView(analogMode ? analogDemo : demo);
+    }
+
+    private void setDemoBackgroundColor() {
+        demo.setBackgroundColor(m_bgcolour);
+        analogDemo.setBackgroundColor(m_bgcolour);
+    }
+
+    private LinearLayout makeDisplayModeControls() {
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.VERTICAL);
+        analogModeCheckBox.setChecked(analogMode);
+        controls.addView(analogModeCheckBox, lpWrapWrap);
+        analogModeNote.setVisibility(analogMode ? View.VISIBLE : View.GONE);
+        controls.addView(analogModeNote, lpMatchWrap);
+        return controls;
     }
 
     @SuppressLint("SetTextI18n")
     private void doMainLayout() {
         removeAllViews(m_topLayout);
         m_ColourType = "";
-        demobox.addView(demo);
+        showPreview();
         demoboxbox.addView(demobox);
         ScrollView lscroll = new ScrollView(this);
         lscroll.setScrollbarFadingEnabled(false);
@@ -492,8 +537,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
         Button widgetNameButton = widgetNameButton();
         LinearLayout settingsEditor = advancedFormatMode
                 ? makeFormatEditor() : makeCheckboxEditor();
+        LinearLayout displayModeControls = makeDisplayModeControls();
+        settingsEditor.setVisibility(analogMode ? View.GONE : View.VISIBLE);
         formatModeButton.setText(advancedFormatMode
                 ? R.string.checkbox_mode : R.string.advanced_format_mode);
+        formatModeButton.setVisibility(analogMode ? View.GONE : View.VISIBLE);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
@@ -509,6 +557,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l1.addView(l2);
             LinearLayout l3 = new LinearLayout(this);
             l3.setOrientation(LinearLayout.VERTICAL);
+            l3.addView(displayModeControls, lpMatchWrap);
             l3.addView(settingsEditor, lpMatchWrap);
             LinearLayout l8 = new LinearLayout(this);
             // default orientation is HORIZONTAL
@@ -523,7 +572,9 @@ public class WidgetConfigureActivity extends ConfigureActivity
             page.setOrientation(LinearLayout.VERTICAL);
             if (widgetNameButton != null) page.addView(widgetNameButton, lpMatchWrap);
             page.addView(l1, lpMatchWrap);
-            if (advancedFormatMode) page.addView(makeFormatGuide(), lpMatchWrap);
+            if (advancedFormatMode && !analogMode) {
+                page.addView(makeFormatGuide(), lpMatchWrap);
+            }
             lscroll.addView(page);
         } else { // assume Portrait
             l1.setOrientation(LinearLayout.VERTICAL);
@@ -535,6 +586,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             m_helptext.setText(R.string.longpresshoriz);
             m_helptext.setGravity(Gravity.NO_GRAVITY);
             l1.addView(m_helptext);
+            l1.addView(displayModeControls, lpMatchWrap);
             l1.addView(settingsEditor, lpMatchWrap);
             LinearLayout l2 = new LinearLayout(this);
             l2.setLayoutParams(lpMatchWrap);
@@ -545,7 +597,9 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l2.addView(chooseButton, lpWrapWrap);
             l2.addView(formatModeButton, lpWrapWrap);
             l2.addView(m_okButton, lpWrapWrap);
-            if (advancedFormatMode) l2.addView(makeFormatGuide(), lpMatchWrap);
+            if (advancedFormatMode && !analogMode) {
+                l2.addView(makeFormatGuide(), lpMatchWrap);
+            }
             l1.addView(l2);
             lscroll.addView(l1);
         }
@@ -754,7 +808,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         LinearLayout lc = makeChooser();
         int pad = (int)(5 * m_density);
         LinearLayout l1 = new LinearLayout(this);
-        demobox.addView(demo);
+        showPreview();
         demoboxbox.setLayoutParams(lpMatchWrap);
         demoboxbox.setOrientation(LinearLayout.VERTICAL);
         demoboxbox.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -869,7 +923,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         switch (m_currentView) {
             case SETBACKGROUNDCOLOUR:
                 m_ColourType = "widget background";
-                demo.setBackgroundColor(m_bgcolour);
+                setDemoBackgroundColor();
                 int val = (m_bgcolour >> 24) & 0xFF;
                 if (!recursive) {
                     recursive = true;
@@ -892,7 +946,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
 
     protected void doActionLayout() {
         removeAllViews(m_topLayout);
-        demobox.addView(demo);
+        showPreview();
         demoboxbox.addView(demobox);
         LinearLayout lbuttons = new LinearLayout(this);
         lbuttons.setOrientation(LinearLayout.VERTICAL);
@@ -960,6 +1014,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
 
     @Override
     @SuppressLint({"ApplySharedPref", "RtlHardcoded", "SetTextI18n"})
+    @SuppressWarnings("deprecation")
     protected void resume() {
         Intent intent;
         int[] widgetIds
@@ -1005,6 +1060,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         showTime = m_prefs.getInt(m_key + "showTime", 2);
         advancedFormatMode = m_prefs.getBoolean(
                 m_key + "advancedFormatMode", m_prefs.contains(m_key + "format"));
+        analogMode = m_prefs.getBoolean(m_key + "analogMode", false);
         formatProfile = m_prefs.getInt(
                 m_key + "formatProfile", FormatProfiles.SYNC);
         if (formatProfile < FormatProfiles.SYNC
@@ -1065,6 +1121,15 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 m_prefs.getBoolean(m_key + "showNextAlarm", false));
         showNextAlarmCheckBox.setOnCheckedChangeListener(this);
         showNextAlarmCheckBox.setOnLongClickListener(this);
+        analogModeCheckBox = new CheckBox(this);
+        analogModeCheckBox.setId(ANALOG_MODE);
+        analogModeCheckBox.setText(R.string.widget_analog_mode);
+        analogModeCheckBox.setChecked(analogMode);
+        analogModeCheckBox.setOnCheckedChangeListener(this);
+        analogModeCheckBox.setOnLongClickListener(this);
+        analogModeNote = new TextView(this);
+        analogModeNote.setText(R.string.widget_analog_mode_note);
+        analogModeNote.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         formatInput = new EditText(this);
         formatInput.setId(FORMATFIELD);
         formatInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT
@@ -1109,6 +1174,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setBackgroundColor(m_bgcolour);
         demo.setTextColor(m_fgcolour);
         demo.setOnLongClickListener(this);
+        analogDemo = new AnalogClock(this);
+        analogDemo.setId(WIDGETDEMO);
+        analogDemo.setBackgroundColor(m_bgcolour);
+        analogDemo.setOnLongClickListener(this);
         demobox = new LinearLayout(this);
         demobox.setLayoutParams(lpWrapWrap);
         demobox.setBackgroundResource(R.drawable.background);
@@ -1123,7 +1192,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         fgButton = new Button(this);
         fgButton.setId(SETTEXTCOLOUR);
         fgButton.setAllCaps(false);
-        fgButton.setText(getString(R.string.setfgcolour, "widget"));
+        fgButton.setText(R.string.widget_digital_text_colour);
         fgButton.setOnClickListener(this);
         fgButton.setOnLongClickListener(this);
         chooseButton = new Button(this);

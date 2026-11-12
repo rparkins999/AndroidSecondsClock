@@ -92,4 +92,18 @@ public class SettingsTransferRulesTest {
         assertEquals(2, result.get("showTime"));
         assertEquals(0xFFFFFFFF, result.get("fgcolour"));
     }
+
+    @Test
+    public void analogModeTransfersBetweenWidgetSettingsButNotToFullScreenClock() {
+        Map<String, Object> source = new LinkedHashMap<>();
+        source.put("analogMode", true);
+
+        Map<String, Object> widget = SettingsTransferRules.forTarget(
+                SettingsTransferRules.WIDGET, SettingsTransferRules.WIDGET, source);
+        Map<String, Object> clock = SettingsTransferRules.forTarget(
+                SettingsTransferRules.WIDGET, SettingsTransferRules.CLOCK, source);
+
+        assertTrue((Boolean) widget.get("analogMode"));
+        assertFalse(clock.containsKey("analogMode"));
+    }
 }

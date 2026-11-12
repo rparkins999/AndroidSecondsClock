@@ -13,6 +13,7 @@
  * The widget is fully programmable from its app settings page.
  *
  * Users should be aware that displaying seconds can increase battery drain.
+ * Widgets can alternatively use Android's built-in hour/minute analog clock.
  */
 
 package uk.co.yahoo.p1rpp.secondsclock;
@@ -44,6 +45,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
         int bgcolour;
         int fgcolour;
         int touchaction;
+        boolean analogMode;
         String key = "W" + appWidgetId;
         SharedPreferences prefs = context.getSharedPreferences(
             "SecondsClock", Context.MODE_PRIVATE);
@@ -53,11 +55,13 @@ public class SecondsClockWidget extends AppWidgetProvider {
             bgcolour = prefs.getInt(key + "bgcolour", 0x00000000);
             fgcolour = prefs.getInt(key + "fgcolour",0xFFFFFFFF);
             touchaction = prefs.getInt(key + "touchaction", 0);
+            analogMode = prefs.getBoolean(key + "analogMode", false);
         } else {
             // New widget: copy the new-widget defaults into its own preferences.
             bgcolour = prefs.getInt("Wbgcolour", 0x00000000);
             fgcolour = prefs.getInt("Wfgcolour",0xFFFFFFFF);
             touchaction = prefs.getInt("Wtouchaction", 0);
+            analogMode = prefs.getBoolean("WanalogMode", false);
             widgetIds += thisWidget;
             boolean defaultAdvancedFormatMode = prefs.getBoolean(
                     "WadvancedFormatMode", prefs.contains("Wformat"));
@@ -84,7 +88,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                             prefs.getBoolean("WshowNextAlarm", false))
                     .putInt(key + "bgcolour", bgcolour)
                     .putInt(key + "fgcolour", fgcolour)
-                    .putInt(key + "touchaction", touchaction);
+                    .putInt(key + "touchaction", touchaction)
+                    .putBoolean(key + "analogMode", analogMode);
             if (defaultFormat != null) {
                 edit.putString(key + "format", defaultFormat);
             }
@@ -120,55 +125,55 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Toast.makeText(context, s, Toast.LENGTH_LONG).show();
         // */
 
-        Long nextAlarmTime = Formatter.getNextAlarmTime(context);
-        Formatter f = new Formatter();
-        boolean advancedFormatMode = prefs.getBoolean(
-                key + "advancedFormatMode", prefs.contains(key + "format"));
-        if (advancedFormatMode) {
-            String syncFormat = prefs.getString(key + "format", "");
-            String format = FormatProfiles.widgetFormat(
-                    syncFormat,
-                    prefs.getString(key + "formatHorizontal", null),
-                    prefs.getString(key + "formatVertical", null),
-                    prefs.getBoolean(key + "formatSyncEnabled", true),
-                    FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
-            f.set(format, nextAlarmTime,
-                    prefs.getBoolean(key + "textStyleEmoji", false));
-        } else {
-            f.setCheckboxes(context, minWidth, maxHeight,
-                    prefs.getInt(key + "showTime", 2),
-                    prefs.getInt(key + "showWeekDay", 2),
-                    prefs.getInt(key + "showShortDate", 0),
-                    prefs.getInt(key + "showMonthDay", 1),
-                    prefs.getInt(key + "showMonth", 2),
-                    prefs.getInt(key + "showYear", 1),
-                    prefs.getBoolean(key + "showNextAlarm", false),
-                    nextAlarmTime);
-        }
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews
             (context.getPackageName(), R.layout.seconds_clock_widget);
-        views.setInt(R.id.appwidget_textclock,
-            "setBackgroundColor", bgcolour);
-        views.setTextColor(R.id.appwidget_textclock, fgcolour);
-        views.setCharSequence(R.id.appwidget_textclock,
-            "setFormat12Hour", f.time12 + f.rest);
-        views.setCharSequence(R.id.appwidget_textclock,
-            "setFormat24Hour", f.time24 + f.rest);
-        views.setInt(R.id.appwidget_textclock,"setLines",f.lines);
+        views.setInt(R.id.appwidget_root, "setBackgroundColor", bgcolour);
+        views.setViewVisibility(R.id.appwidget_analogclock,
+                analogMode ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_textclock,
+                analogMode ? android.view.View.GONE : android.view.View.VISIBLE);
+        if (!analogMode) {
+            Long nextAlarmTime = Formatter.getNextAlarmTime(context);
+            Formatter f = new Formatter();
+            boolean advancedFormatMode = prefs.getBoolean(
+                    key + "advancedFormatMode", prefs.contains(key + "format"));
+            if (advancedFormatMode) {
+                String syncFormat = prefs.getString(key + "format", "");
+                String format = FormatProfiles.widgetFormat(
+                        syncFormat,
+                        prefs.getString(key + "formatHorizontal", null),
+                        prefs.getString(key + "formatVertical", null),
+                        prefs.getBoolean(key + "formatSyncEnabled", true),
+                        FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
+                f.set(format, nextAlarmTime,
+                        prefs.getBoolean(key + "textStyleEmoji", false));
+            } else {
+                f.setCheckboxes(context, minWidth, maxHeight,
+                        prefs.getInt(key + "showTime", 2),
+                        prefs.getInt(key + "showWeekDay", 2),
+                        prefs.getInt(key + "showShortDate", 0),
+                        prefs.getInt(key + "showMonthDay", 1),
+                        prefs.getInt(key + "showMonth", 2),
+                        prefs.getInt(key + "showYear", 1),
+                        prefs.getBoolean(key + "showNextAlarm", false),
+                        nextAlarmTime);
+            }
+            views.setTextColor(R.id.appwidget_textclock, fgcolour);
+            views.setCharSequence(R.id.appwidget_textclock,
+                    "setFormat12Hour", f.time12 + f.rest);
+            views.setCharSequence(R.id.appwidget_textclock,
+                    "setFormat24Hour", f.time24 + f.rest);
+            views.setInt(R.id.appwidget_textclock, "setLines", f.lines);
+        }
 
-        // For analogue clock,
-        // views.setImageViewBitmap(int viewId, Bitmap bitmap)
-        // but we need to find a way to force updates every second,
-        // but only when the widget is visible.
-
-        // Make a click on the widget go to the switch in MainActivity.
+        // Make a click anywhere on the widget go to the switch in MainActivity.
         Intent ai = new Intent(context,
             uk.co.yahoo.p1rpp.secondsclock.MainActivity.class);
         ai.putExtra("widgetID", appWidgetId);
         PendingIntent pi = PendingIntent.getActivity(
             context, appWidgetId, ai, PendingIntent.FLAG_IMMUTABLE);
-        views.setOnClickPendingIntent(R.id.appwidget_textclock, pi);
+        views.setOnClickPendingIntent(R.id.appwidget_root, pi);
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);

@@ -39,7 +39,8 @@ final class SettingsStore {
     static final String PRESETS_KEY = "settingsPresets";
 
     private static final String[] WIDGET_SETTING_SUFFIXES = {
-            "bgcolour", "fgcolour", "touchaction", "formatSyncEnabled",
+            "bgcolour", "fgcolour", "touchaction", "analogMode",
+            "formatSyncEnabled",
             "textStyleEmoji", "advancedFormatMode", "showTime",
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
             "showYear", "showNextAlarm", "format", "formatHorizontal",
@@ -56,7 +57,8 @@ final class SettingsStore {
             "formatPortrait", "formatLandscape"};
     private static final String[] BOOLEAN_SETTINGS = {
             "formatSyncEnabled", "textStyleEmoji", "advancedFormatMode",
-            "showNextAlarm", "7seg", "forcevertical", "advancedLargeTime"};
+            "showNextAlarm", "analogMode", "7seg", "forcevertical",
+            "advancedLargeTime"};
 
     private SettingsStore() {}
 
@@ -412,6 +414,7 @@ final class SettingsStore {
         putDefault(values, "bgcolour", 0x00000000);
         putDefault(values, "fgcolour", 0xFFFFFFFF);
         putDefault(values, "touchaction", 0);
+        putDefault(values, "analogMode", false);
         putDefault(values, "formatSyncEnabled", true);
         putDefault(values, "textStyleEmoji", false);
         putDefault(values, "advancedFormatMode", values.containsKey("format"));
