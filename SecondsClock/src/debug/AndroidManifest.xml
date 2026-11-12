@@ -3,7 +3,7 @@
     <application>
         <activity
             android:name="uk.co.yahoo.p1rpp.secondsclock.test.WidgetHostActivity"
-            android:exported="true"
+            android:exported="false"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     </application>
 </manifest>

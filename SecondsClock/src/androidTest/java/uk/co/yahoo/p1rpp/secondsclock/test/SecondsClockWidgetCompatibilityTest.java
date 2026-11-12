@@ -50,7 +50,6 @@ public final class SecondsClockWidgetCompatibilityTest {
     public void visibleRemoteWidgetDisplaysChangingSeconds() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         Context targetContext = instrumentation.getTargetContext();
-        Context testContext = instrumentation.getContext();
         SharedPreferences preferences = targetContext.getSharedPreferences(
                 "SecondsClock", Context.MODE_PRIVATE);
         Map<String, ?> originalPreferences = preferences.getAll();
@@ -60,10 +59,10 @@ public final class SecondsClockWidgetCompatibilityTest {
         try {
             setSecondsOnlyDefault(preferences);
 
-            Intent hostIntent = new Intent(testContext, WidgetHostActivity.class)
+            Intent hostIntent = new Intent(targetContext, WidgetHostActivity.class)
                     .putExtra(WidgetHostActivity.EXTRA_PROVIDER, provider.flattenToString())
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            testContext.startActivity(hostIntent);
+            targetContext.startActivity(hostIntent);
             host = waitForHostActivity();
 
             if (!host.awaitWidget(500, TimeUnit.MILLISECONDS)) {
@@ -81,13 +80,12 @@ public final class SecondsClockWidgetCompatibilityTest {
                     provider, deliveredProvider.get());
 
             TextClock clock = waitForHostedClock(instrumentation, hostView);
-            AtomicReference<Boolean> clockShown = new AtomicReference<>(false);
+            assertTrue("the AppWidgetHost view must become attached and visible",
+                    waitForClockVisible(instrumentation, clock));
             AtomicReference<CharSequence> clockFormat = new AtomicReference<>();
             instrumentation.runOnMainSync(() -> {
-                clockShown.set(clock.isShown());
                 clockFormat.set(clock.getFormat24Hour());
             });
-            assertTrue("the AppWidgetHost view must be attached and visible", clockShown.get());
             assertNotNull("RemoteViews did not set a 24-hour format", clockFormat.get());
             assertTrue("the delivered RemoteViews format must include seconds",
                     clockFormat.get().toString().contains("ss"));
@@ -159,6 +157,20 @@ public final class SecondsClockWidgetCompatibilityTest {
             SystemClock.sleep(100);
         }
         throw new AssertionError("SecondsClock RemoteViews did not contain its TextClock");
+    }
+
+    private static boolean waitForClockVisible(Instrumentation instrumentation, TextClock clock) {
+        long deadline = SystemClock.elapsedRealtime() + CONSENT_TIMEOUT_MS;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            AtomicReference<Boolean> visible = new AtomicReference<>(false);
+            instrumentation.runOnMainSync(() -> visible.set(
+                    clock.isAttachedToWindow()
+                            && clock.isShown()
+                            && clock.getWindowVisibility() == View.VISIBLE));
+            if (visible.get()) return true;
+            SystemClock.sleep(100);
+        }
+        return false;
     }
 
     private static void setSecondsOnlyDefault(SharedPreferences preferences) {

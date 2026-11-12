@@ -15,7 +15,8 @@ The test installs the real SecondsClock APK and binds its declared `SecondsClock
 an Android `AppWidgetHost`. It receives the provider's serialized `RemoteViews` through the platform
 AppWidget service, attaches the returned `AppWidgetHostView` to a visible test-host Activity, and
 checks that its actual `TextClock` has a seconds format and advances through at least three displayed
-values within 12 seconds. This is intentionally stronger than inflating a `TextClock` in a unit test.
+values within 12 seconds. The host Activity is included only in the debug variant, not release APKs.
+This is intentionally stronger than inflating a `TextClock` in a unit test.
 
 The harness uses a test-owned widget host, not the emulator's home-screen launcher. It therefore
 checks framework binding, provider delivery, `RemoteViews` application, and visible `TextClock`
