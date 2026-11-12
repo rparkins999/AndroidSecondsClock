@@ -177,6 +177,7 @@ android {
         versionCode VERSIONCODE
         versionName VERSIONNAME
         minSdk 26
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
     }
@@ -221,4 +222,7 @@ tasks.named("preBuild").configure {
 dependencies {
     implementation 'com.google.android.material:material:1.4.0'
     testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
 }
