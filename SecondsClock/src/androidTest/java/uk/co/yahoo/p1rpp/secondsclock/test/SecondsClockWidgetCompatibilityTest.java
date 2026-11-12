@@ -22,9 +22,6 @@ import android.widget.TextClock;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.UiDevice;
-import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 
 import uk.co.yahoo.p1rpp.secondsclock.R;
 import uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget;
@@ -43,7 +39,7 @@ import uk.co.yahoo.p1rpp.secondsclock.SecondsClockWidget;
 @RunWith(AndroidJUnit4.class)
 public final class SecondsClockWidgetCompatibilityTest {
     private static final String TAG = "SecondsClockWidgetTest";
-    private static final long CONSENT_TIMEOUT_MS = 15_000;
+    private static final long WIDGET_TIMEOUT_MS = 15_000;
     private static final long TICK_TIMEOUT_MS = 12_000;
 
     @Test
@@ -64,12 +60,11 @@ public final class SecondsClockWidgetCompatibilityTest {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             targetContext.startActivity(hostIntent);
             host = waitForHostActivity();
-
-            if (!host.awaitWidget(500, TimeUnit.MILLISECONDS)) {
-                acceptWidgetBindConfirmation(instrumentation, host);
-            }
+            // The compatibility workflow grants this debug host bind authorization with
+            // `appwidget grantbind` before instrumentation starts. This avoids depending on
+            // Android Settings' version-specific consent UI while still using real binding.
             assertTrue("widget bind/RemoteViews delivery failed: " + host.getFailure(),
-                    host.awaitWidget(CONSENT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+                    host.awaitWidget(WIDGET_TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             AppWidgetHostView hostView = host.getWidgetView();
             assertNotNull("AppWidgetHost did not create its RemoteViews host view", hostView);
@@ -79,16 +74,7 @@ public final class SecondsClockWidgetCompatibilityTest {
             assertEquals("host must receive the installed SecondsClock provider",
                     provider, deliveredProvider.get());
 
-            TextClock clock = waitForHostedClock(instrumentation, hostView);
-            assertTrue("the AppWidgetHost view must become attached and visible",
-                    waitForClockVisible(instrumentation, clock));
-            AtomicReference<CharSequence> clockFormat = new AtomicReference<>();
-            instrumentation.runOnMainSync(() -> {
-                clockFormat.set(clock.getFormat24Hour());
-            });
-            assertNotNull("RemoteViews did not set a 24-hour format", clockFormat.get());
-            assertTrue("the delivered RemoteViews format must include seconds",
-                    clockFormat.get().toString().contains("ss"));
+            TextClock clock = waitForVisibleSecondsClock(instrumentation, hostView);
 
             Set<String> displayedValues = new HashSet<>();
             long deadline = SystemClock.elapsedRealtime() + TICK_TIMEOUT_MS;
@@ -112,7 +98,7 @@ public final class SecondsClockWidgetCompatibilityTest {
     }
 
     private static WidgetHostActivity waitForHostActivity() {
-        long deadline = SystemClock.elapsedRealtime() + CONSENT_TIMEOUT_MS;
+        long deadline = SystemClock.elapsedRealtime() + WIDGET_TIMEOUT_MS;
         while (SystemClock.elapsedRealtime() < deadline) {
             WidgetHostActivity host = WidgetHostActivity.active;
             if (host != null) return host;
@@ -121,56 +107,34 @@ public final class SecondsClockWidgetCompatibilityTest {
         throw new AssertionError("test widget-host Activity did not start");
     }
 
-    private static void acceptWidgetBindConfirmation(
-            Instrumentation instrumentation, WidgetHostActivity host) {
-        UiDevice device = UiDevice.getInstance(instrumentation);
-        long deadline = SystemClock.elapsedRealtime() + CONSENT_TIMEOUT_MS;
-        while (SystemClock.elapsedRealtime() < deadline) {
-            UiObject2 positiveButton = device.findObject(By.res("android", "button1"));
-            if (positiveButton == null) {
-                positiveButton = device.findObject(
-                        By.text(Pattern.compile("(?i)^(allow|add|create|ok|yes)$")));
-            }
-            if (positiveButton != null && positiveButton.isClickable()) {
-                positiveButton.click();
-                return;
-            }
-            if (host.getFailure() != null) {
-                throw new AssertionError(host.getFailure());
-            }
-            SystemClock.sleep(200);
-        }
-        throw new AssertionError(
-                "Android widget-bind confirmation did not appear or expose a positive button");
-    }
-
-    private static TextClock waitForHostedClock(
-            Instrumentation instrumentation, AppWidgetHostView hostView) {
-        long deadline = SystemClock.elapsedRealtime() + CONSENT_TIMEOUT_MS;
+    private static TextClock waitForVisibleSecondsClock(
+        Instrumentation instrumentation, AppWidgetHostView hostView) {
+        long deadline = SystemClock.elapsedRealtime() + WIDGET_TIMEOUT_MS;
+        AtomicReference<CharSequence> lastFormat = new AtomicReference<>();
+        AtomicReference<Boolean> lastVisible = new AtomicReference<>(false);
         while (SystemClock.elapsedRealtime() < deadline) {
             AtomicReference<TextClock> found = new AtomicReference<>();
             instrumentation.runOnMainSync(() -> {
                 View view = hostView.findViewById(R.id.appwidget_textclock);
-                if (view instanceof TextClock) found.set((TextClock) view);
-            });
-            if (found.get() != null) return found.get();
-            SystemClock.sleep(100);
-        }
-        throw new AssertionError("SecondsClock RemoteViews did not contain its TextClock");
-    }
-
-    private static boolean waitForClockVisible(Instrumentation instrumentation, TextClock clock) {
-        long deadline = SystemClock.elapsedRealtime() + CONSENT_TIMEOUT_MS;
-        while (SystemClock.elapsedRealtime() < deadline) {
-            AtomicReference<Boolean> visible = new AtomicReference<>(false);
-            instrumentation.runOnMainSync(() -> visible.set(
-                    clock.isAttachedToWindow()
+                if (view instanceof TextClock) {
+                    TextClock clock = (TextClock) view;
+                    found.set(clock);
+                    lastFormat.set(clock.getFormat24Hour());
+                    lastVisible.set(clock.isAttachedToWindow()
                             && clock.isShown()
-                            && clock.getWindowVisibility() == View.VISIBLE));
-            if (visible.get()) return true;
+                            && clock.getWindowVisibility() == View.VISIBLE);
+                }
+            });
+            CharSequence format = lastFormat.get();
+            if (found.get() != null && Boolean.TRUE.equals(lastVisible.get())
+                    && format != null && format.toString().contains("ss")) {
+                return found.get();
+            }
             SystemClock.sleep(100);
         }
-        return false;
+        throw new AssertionError("AppWidgetHost did not receive visible seconds-formatted "
+                + "RemoteViews; last24HourFormat=" + lastFormat.get()
+                + ", visible=" + lastVisible.get());
     }
 
     private static void setSecondsOnlyDefault(SharedPreferences preferences) {

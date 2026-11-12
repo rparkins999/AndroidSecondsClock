@@ -14,12 +14,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The SDK uses 37.0 in package IDs; 37.2 is currently the QPR2 beta.
         include:
           - android-api: '26'
             sdk-level: '26'
-          - android-api: '37.0 (Android 17)'
+            image-package: 'system-images;android-26;google_apis;x86_64'
+            image-path: 'system-images/android-26/google_apis/x86_64'
+            avd-target: 'android-26'
+            avd-device: 'pixel_2'
+          - android-api: '37.0 (Android 17 base stable)'
             sdk-level: '37.0'
+            image-package: 'system-images;android-37.0;google_apis;x86_64'
+            image-path: 'system-images/android-37.0/google_apis/x86_64'
+            avd-target: 'android-37.0'
+            avd-device: 'pixel_2'
+          - android-api: '37.2 (current stable)'
+            sdk-level: '37.2'
+            image-package: 'system-images;android-37.2;google_apis_ps16k;x86_64'
+            image-path: 'system-images/android-37.2/google_apis_ps16k/x86_64'
+            avd-target: 'android-37.2'
+            avd-device: 'pixel_2'
+          - android-api: '37.1 Beta 3 (QPR2)'
+            sdk-level: '37.2-beta3'
+            image-package: 'system-images;android-37.2-beta3;google_apis_ps16k;x86_64'
+            image-path: 'system-images/android-37.2-beta3/google_apis_ps16k/x86_64'
+            avd-target: 'android-37.2-beta3'
+            avd-device: ''
+          - android-api: '37.2 Canary (2026-11-04)'
+            sdk-level: 'canary-20261104'
+            image-package: 'system-images;android-canary-20261104;google_apis_ps16k;x86_64'
+            image-path: 'system-images/android-canary-20261104/google_apis_ps16k/x86_64'
+            avd-target: 'android-canary-20261104'
+            avd-device: ''
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -47,23 +72,42 @@ jobs:
       - name: Install Android emulator image
         env:
           ANDROID_API: ${{ matrix.sdk-level }}
+          ANDROID_IMAGE_PACKAGE: ${{ matrix.image-package }}
+          ANDROID_IMAGE_PATH: ${{ matrix.image-path }}
+          ANDROID_AVD_TARGET: ${{ matrix.avd-target }}
+          ANDROID_AVD_DEVICE: ${{ matrix.avd-device }}
           ANDROID_AVD_HOME: ${{ runner.temp }}/android-avd
         run: |
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager --install \
+          sdkmanager --channel=3 --install \
             'platforms;android-28' \
             'build-tools;34.0.0' \
             "platforms;android-${ANDROID_API}" \
-            "system-images;android-${ANDROID_API};google_apis;x86_64" \
+            "${ANDROID_IMAGE_PACKAGE}" \
             emulator >/dev/null
           mkdir -p "$ANDROID_AVD_HOME"
+          avd_device_args=()
+          if [[ -n "$ANDROID_AVD_DEVICE" ]]; then
+            avd_device_args+=(--device "$ANDROID_AVD_DEVICE")
+          fi
           echo no | avdmanager create avd --force -n widget-test \
-            --package "system-images;android-${ANDROID_API};google_apis;x86_64" \
-            --device pixel_2 \
+            --package "${ANDROID_IMAGE_PACKAGE}" \
+            "${avd_device_args[@]}" \
             --path "$ANDROID_AVD_HOME/widget-test.avd"
-          grep -Fx "target=android-${ANDROID_API}" "$ANDROID_AVD_HOME/widget-test.ini"
+          avd_config="$ANDROID_AVD_HOME/widget-test.ini"
+          if ! grep -Fxq "target=${ANDROID_AVD_TARGET}" "$avd_config"; then
+            echo "Unexpected AVD target: expected ${ANDROID_AVD_TARGET}, got:"
+            grep '^target=' "$avd_config" || true
+            exit 1
+          fi
+          image_config="$ANDROID_AVD_HOME/widget-test.avd/config.ini"
+          if ! grep -Fxq "image.sysdir.1=${ANDROID_IMAGE_PATH}/" "$image_config"; then
+            echo "Unexpected system image path: expected ${ANDROID_IMAGE_PATH}/, got:"
+            grep '^image.sysdir.1=' "$image_config" || true
+            exit 1
+          fi
           printf 'hw.cpu.ncore=2\ndisk.dataPartition.size=4G\n' \
             >> "$ANDROID_AVD_HOME/widget-test.avd/config.ini"
 
@@ -166,6 +210,12 @@ jobs:
             echo 'Package Manager stopped before instrumentation could start.'
             exit 1
           fi
+          # The Settings confirmation activity has no accessible root on some API 37.2 builds.
+          # Grant the test-only host permission before Gradle installs/runs instrumentation.
+          timeout 30 adb -s emulator-5554 install -r \
+            SecondsClock/build/outputs/apk/debug/SecondsClock-debug.apk
+          timeout 15 adb -s emulator-5554 shell appwidget grantbind \
+            --package uk.co.yahoo.p1rpp.secondsclock.debug --user 0
           ./gradlew --no-daemon connectedDebugAndroidTest
 
       - name: Upload emulator logcat on failure
