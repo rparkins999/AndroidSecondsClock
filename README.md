@@ -70,13 +70,14 @@ You can change the widget's text colour, background colour, and background opaci
 actions can open the system clock, SecondsClock, its settings, or the full-screen clock. You can
 place multiple widgets with different settings on the same or different home-screen pages.
 
-Each home-screen widget can optionally use Android's built-in analog clock instead of its digital
-display. It shows hour and minute hands only; Android updates the clock while visible, without
-SecondsClock scheduling repeating alarms. The platform supplies the face and hands with fixed
-colours, so the widget's digital text-colour setting does not affect them. The selected background
-colour and opacity are applied behind the face, but the Android dial may cover them within its face.
-Switching back to Digital restores the widget's saved date/time format and other display settings.
-This option affects home-screen widgets only; the full-screen night clock is unchanged.
+Each home-screen widget can optionally use a minimalist analog face with 12 numerals and hour,
+minute, and seconds hands. The dial markings follow the widget's text colour; the hands use a
+high-contrast white design. On Android 17 and later, the platform clock view keeps the seconds hand
+synchronized with system time while visible and when it resumes. Earlier Android versions use a
+launcher-side seconds animation, which some launchers may resume at its previous position after
+hiding the widget. Neither mode schedules recurring app alarms. Switching back to Digital restores
+the widget's saved date/time format and other display settings. This option affects home-screen
+widgets only; the full-screen night clock is unchanged.
 
 If a widget's touch action doesn't open its configuration page, open SecondsClock from its app icon
 (usually in the apps list), then choose **Configure existing widget**. Touch the widget you want to

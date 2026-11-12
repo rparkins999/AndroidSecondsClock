@@ -21,10 +21,7 @@
         android:autoSizeTextType="uniform"
     />
 
-    <AnalogClock
-        android:id="@+id/appwidget_analogclock"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-    />
+    <include
+        layout="@layout/analog_clock_widget"
+        android:visibility="gone" />
 </RelativeLayout>

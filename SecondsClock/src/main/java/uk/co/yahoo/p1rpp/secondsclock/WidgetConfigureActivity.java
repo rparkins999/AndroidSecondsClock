@@ -16,23 +16,29 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.drawable.Icon;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AnalogClock;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextClock;
 import android.widget.TextView;
+import android.widget.ViewFlipper;
+
+import java.util.Calendar;
 
 public class WidgetConfigureActivity extends ConfigureActivity
 {
@@ -53,8 +59,9 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private int minWidth = 93;
     private int m_bgcolour;
     private TextClock demo;
-    @SuppressWarnings("deprecation") // AnalogClock remains supported in RemoteViews widgets.
-    private AnalogClock analogDemo;
+    private View analogDemo;
+    private ImageView analogDial;
+    private ViewFlipper analogSecondHand;
     private int m_fgcolour;
     private String widgetFormat;
     private int showTime;
@@ -118,6 +125,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case ALPHASLIDER: doToast(R.string.alphasliderhelp); return true;
             case ALPHAVALUE: doToast(R.string.alphavaluehelp); return true;
             case WIDGETDEMO:
+            case R.id.appwidget_analogclock:
                 doToast(R.string.demohelp);
                 doToast(R.string.demohelp);
                 return true;
@@ -501,18 +509,28 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogDemo.setMinimumWidth(width);
         analogDemo.setMinimumHeight(height);
         analogDemo.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+        analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
+        if (analogSecondHand != null) {
+            analogSecondHand.setDisplayedChild(
+                    Calendar.getInstance().get(Calendar.SECOND));
+        }
         showPreview();
     }
 
     private void showPreview() {
         if (demobox == null || demo == null || analogDemo == null) return;
         demobox.removeAllViews();
+        if (analogSecondHand != null) {
+            analogSecondHand.setDisplayedChild(
+                    Calendar.getInstance().get(Calendar.SECOND));
+        }
         demobox.addView(analogMode ? analogDemo : demo);
     }
 
     private void setDemoBackgroundColor() {
         demo.setBackgroundColor(m_bgcolour);
         analogDemo.setBackgroundColor(m_bgcolour);
+        analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
     }
 
     private LinearLayout makeDisplayModeControls() {
@@ -1174,10 +1192,27 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setBackgroundColor(m_bgcolour);
         demo.setTextColor(m_fgcolour);
         demo.setOnLongClickListener(this);
-        analogDemo = new AnalogClock(this);
+        analogDemo = LayoutInflater.from(this).inflate(
+                R.layout.analog_clock_widget, null);
         analogDemo.setId(WIDGETDEMO);
         analogDemo.setBackgroundColor(m_bgcolour);
         analogDemo.setOnLongClickListener(this);
+        analogDial = analogDemo.findViewById(R.id.appwidget_analog_dial);
+        analogSecondHand = analogDemo.findViewById(
+                R.id.appwidget_second_hand_flipper);
+        if (Build.VERSION.SDK_INT >= 37) {
+            View analogClock = analogDemo.findViewById(
+                    R.id.appwidget_analog_hands);
+            try {
+                analogClock.getClass().getMethod("setSecondHand", Icon.class)
+                        .invoke(analogClock, Icon.createWithResource(
+                                this, R.drawable.analog_hand_second));
+            } catch (ReflectiveOperationException exception) {
+                throw new IllegalStateException(
+                        "Android 17 analog clock second hand API is unavailable",
+                        exception);
+            }
+        }
         demobox = new LinearLayout(this);
         demobox.setLayoutParams(lpWrapWrap);
         demobox.setBackgroundResource(R.drawable.background);

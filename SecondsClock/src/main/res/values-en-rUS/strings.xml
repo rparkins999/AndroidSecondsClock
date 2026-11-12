@@ -12,11 +12,11 @@
     <string name="setfgcolourhelp">Choose the %1s text color.</string>
     <string name="bgcolourhelp">Adjust background hue, saturation, value, RGB, and opacity. Type values except hue.</string>
     <string name="fgcolourhelp">Adjust hue, saturation, value, or RGB. Type values except hue.</string>
-    <string name="widget_analog_mode">Analog clock (hour and minute hands)</string>
-    <string name="widget_analog_mode_note">Uses Android\'s built-in clock face. Its face and hands have fixed colors, so the digital text color applies only in Digital mode. The dial may cover the selected background inside its face. Digital display settings are retained when you switch back.</string>
-    <string name="widget_analog_mode_help">Uses Android\'s built-in analog clock with hour and minute hands only; SecondsClock schedules no recurring updates. Android fixes the face and hand colors, so the digital text color is ignored in Analog mode. The dial may cover the selected background inside its face. Digital display settings are retained.</string>
-    <string name="widget_digital_text_colour">Set widget digital text color</string>
-    <string name="widget_digital_text_colour_help">Choose the widget\'s digital text color. Analog mode uses the fixed Android clock face and hand colors.</string>
+    <string name="widget_analog_mode">Minimal analog clock (with seconds hand)</string>
+    <string name="widget_analog_mode_note">Uses a custom dial with hour, minute, and seconds hands. Dial markings follow the widget text color; the hands use a fixed white design. Android 17+ keeps the seconds hand synchronized with system time when the widget becomes visible again. Older Android versions use a launcher-side animation that some launchers may resume at its previous position. Digital display settings are retained when you switch back.</string>
+    <string name="widget_analog_mode_help">Uses a custom SecondsClock dial with hour, minute, and seconds hands. It schedules no recurring app alarms. Android 17+ keeps the seconds hand synchronized with system time when visible; older Android versions use a launcher-side animation that may resume at its previous position after hiding the widget. Dial markings follow the widget text color, while hands are fixed white. Digital display settings are retained.</string>
+    <string name="widget_digital_text_colour">Set widget text/dial color</string>
+    <string name="widget_digital_text_colour_help">Choose the widget\'s digital text color. In Analog mode, the dial markings use this color and the hands remain white.</string>
     <string name="huesliderhelp">Set the hue of the %1s. Grayscale colors have no hue.</string>
     <string name="saturationsliderhelp">Set saturation for %1s. Lower values make it less vivid.</string>
     <string name="saturationvaluehelp">Saturation: 0–255. Tap to edit; double-tap to select all.</string>

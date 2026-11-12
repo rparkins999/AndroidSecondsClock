@@ -109,11 +109,11 @@
     <string name="showtimehelp">Shows local time.</string>
     <string name="show_seconds">Show seconds</string>
     <string name="showsecondshelp">Adds seconds; the widget updates every second and uses more battery.</string>
-    <string name="widget_analog_mode">Analog clock (hour and minute hands)</string>
-    <string name="widget_analog_mode_note">Uses Android\'s built-in clock face. Its face and hands have fixed colours, so the digital text colour applies only in Digital mode. The dial may cover the selected background inside its face. Digital display settings are retained when you switch back.</string>
-    <string name="widget_analog_mode_help">Uses Android\'s built-in analog clock with hour and minute hands only; SecondsClock schedules no recurring updates. Android fixes the face and hand colours, so the digital text colour is ignored in Analog mode. The dial may cover the selected background inside its face. Digital display settings are retained.</string>
-    <string name="widget_digital_text_colour">Set widget digital text colour</string>
-    <string name="widget_digital_text_colour_help">Choose the widget\'s digital text colour. Analog mode uses the fixed Android clock face and hand colours.</string>
+    <string name="widget_analog_mode">Minimal analog clock (with seconds hand)</string>
+    <string name="widget_analog_mode_note">Uses a custom dial with hour, minute, and seconds hands. Dial markings follow the widget text colour; the hands use a fixed white design. Android 17+ keeps the seconds hand synchronized with system time when the widget becomes visible again. Older Android versions use a launcher-side animation that some launchers may resume at its previous position. Digital display settings are retained when you switch back.</string>
+    <string name="widget_analog_mode_help">Uses a custom SecondsClock dial with hour, minute, and seconds hands. It schedules no recurring app alarms. Android 17+ keeps the seconds hand synchronized with system time when visible; older Android versions use a launcher-side animation that may resume at its previous position after hiding the widget. Dial markings follow the widget text colour, while hands are fixed white. Digital display settings are retained.</string>
+    <string name="widget_digital_text_colour">Set widget text/dial colour</string>
+    <string name="widget_digital_text_colour_help">Choose the widget\'s digital text colour. In Analog mode, the dial markings use this colour and the hands remain white.</string>
     <string name="show_next_alarm_any_app">Show next alarm (any app)</string>
     <string name="next_alarm_source_help">Checkbox mode shows it as ALM: Mon, 3:30.</string>
     <string name="advanced_format_mode">Advanced mode</string>

@@ -13,7 +13,7 @@
  * The widget is fully programmable from its app settings page.
  *
  * Users should be aware that displaying seconds can increase battery drain.
- * Widgets can alternatively use Android's built-in hour/minute analog clock.
+ * The analog display uses the platform clock view's timekeeping in the launcher.
  */
 
 package uk.co.yahoo.p1rpp.secondsclock;
@@ -27,10 +27,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Icon;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import java.util.Calendar;
 import java.util.Objects;
 
 /*
@@ -133,7 +136,21 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 analogMode ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_textclock,
                 analogMode ? android.view.View.GONE : android.view.View.VISIBLE);
-        if (!analogMode) {
+        if (analogMode) {
+            views.setImageViewBitmap(R.id.appwidget_analog_dial,
+                    AnalogClockFace.createBitmap(fgcolour));
+            boolean nativeSecondHand = Build.VERSION.SDK_INT >= 37
+                    && setRemoteViewIcon(views, R.id.appwidget_analog_hands,
+                            "setSecondHand", Icon.createWithResource(
+                                    context, R.drawable.analog_hand_second));
+            if (!nativeSecondHand) {
+                views.setViewVisibility(R.id.appwidget_second_hand_flipper,
+                        android.view.View.VISIBLE);
+                views.setInt(R.id.appwidget_second_hand_flipper,
+                        "setDisplayedChild",
+                        Calendar.getInstance().get(Calendar.SECOND));
+            }
+        } else {
             Long nextAlarmTime = Formatter.getNextAlarmTime(context);
             Formatter f = new Formatter();
             boolean advancedFormatMode = prefs.getBoolean(
@@ -177,6 +194,18 @@ public class SecondsClockWidget extends AppWidgetProvider {
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
+    }
+
+    private static boolean setRemoteViewIcon(
+            RemoteViews views, int viewId, String methodName, Icon icon) {
+        try {
+            RemoteViews.class.getMethod(
+                    "setIcon", int.class, String.class, Icon.class)
+                    .invoke(views, viewId, methodName, icon);
+            return true;
+        } catch (ReflectiveOperationException exception) {
+            return false;
+        }
     }
 
     @Override
