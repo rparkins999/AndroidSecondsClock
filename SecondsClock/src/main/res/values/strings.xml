@@ -4,7 +4,7 @@
    Released under GPL V3 or later
   -->
 
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="widget">widget</string>
     <string name="clock">clock</string>
     <string name="app_name">SecondsClock</string>
