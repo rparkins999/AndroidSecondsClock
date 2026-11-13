@@ -5,9 +5,10 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/** Converts advanced formats containing `%@` into text and analog render parts. */
+/** Converts advanced-format lines into text rows and optional analog rows. */
 final class AnalogFormatRenderer {
     static final class Part {
         final boolean analog;
@@ -34,22 +35,24 @@ final class AnalogFormatRenderer {
     static final class Line {
         final List<Part> parts;
         final boolean emphasized;
+        final AnalogFormat.Hands hands;
 
-        Line(List<Part> parts, boolean emphasized) {
+        Line(List<Part> parts, boolean emphasized, AnalogFormat.Hands hands) {
             this.parts = parts;
             this.emphasized = emphasized;
+            this.hands = hands;
         }
     }
 
     static final class Result {
-        final AnalogFormat.Hands hands;
         final List<Line> lines;
         final boolean hasAnalog;
+        final boolean hasSecondHand;
 
-        Result(AnalogFormat.Hands hands, List<Line> lines, boolean hasAnalog) {
-            this.hands = hands;
+        Result(List<Line> lines, boolean hasAnalog, boolean hasSecondHand) {
             this.lines = lines;
             this.hasAnalog = hasAnalog;
+            this.hasSecondHand = hasSecondHand;
         }
     }
 
@@ -57,61 +60,40 @@ final class AnalogFormatRenderer {
 
     static Result render(String format, Long nextAlarmTime,
                          boolean emphasizeMarkers) {
-        boolean hasPlaceholder = AnalogFormat.containsPlaceholder(format);
-        AnalogFormat.Hands hands = AnalogFormat.handsFor(format);
-        String prepared = AnalogFormat.removeHandSelectors(format);
         List<FormatLineSplit.Line> formatLines = FormatLineSplit.splitLines(
-                prepared, emphasizeMarkers);
-        return renderLines(formatLines, hasPlaceholder, hands, nextAlarmTime);
+                format, emphasizeMarkers);
+        return renderLines(formatLines, nextAlarmTime);
     }
 
     static Result renderLines(List<FormatLineSplit.Line> formatLines,
-                              boolean hasPlaceholder, AnalogFormat.Hands hands,
                               Long nextAlarmTime) {
         List<Line> lines = new ArrayList<>();
         boolean hasAnalog = false;
+        boolean hasSecondHand = false;
         for (FormatLineSplit.Line formatLine : formatLines) {
+            AnalogFormat.Hands hands =
+                    AnalogFormat.handsForClockLine(
+                            formatLine.format, nextAlarmTime);
+            if (hands != null) {
+                lines.add(new Line(Collections.singletonList(Part.analog()),
+                        formatLine.emphasized, hands));
+                hasAnalog = true;
+                hasSecondHand |= hands.second;
+                continue;
+            }
+
             DateCommandFormat.FormattedPattern converted =
                     DateCommandFormat.toTextClockPatternWithTimeRanges(
                             formatLine.format, nextAlarmTime);
             if (converted.pattern.isEmpty() && formatLine.format.contains("%<")) {
                 continue;
             }
-            List<Part> parts = splitPattern(converted);
-            for (Part part : parts) hasAnalog |= part.analog;
-            lines.add(new Line(parts, formatLine.emphasized));
-        }
-        return new Result(hands, lines, hasPlaceholder && hasAnalog);
-    }
-
-    private static List<Part> splitPattern(
-            DateCommandFormat.FormattedPattern converted) {
-        List<Part> result = new ArrayList<>();
-        String pattern = converted.pattern;
-        int start = 0;
-        for (int index = 0; index < pattern.length(); ++index) {
-            if (pattern.charAt(index) != AnalogFormat.PLACEHOLDER) continue;
-            addTextPart(result, converted, start, index);
-            result.add(Part.analog());
-            start = index + 1;
-        }
-        addTextPart(result, converted, start, pattern.length());
-        return result;
-    }
-
-    private static void addTextPart(List<Part> result,
-                                    DateCommandFormat.FormattedPattern converted,
-                                    int start, int end) {
-        if (start >= end) return;
-        List<DateCommandFormat.PatternRange> ranges = new ArrayList<>();
-        for (DateCommandFormat.PatternRange range : converted.timeRanges) {
-            int overlapStart = Math.max(start, range.start);
-            int overlapEnd = Math.min(end, range.end);
-            if (overlapStart < overlapEnd) {
-                ranges.add(new DateCommandFormat.PatternRange(
-                        overlapStart - start, overlapEnd - start));
+            List<Part> parts = new ArrayList<>();
+            if (!converted.pattern.isEmpty()) {
+                parts.add(Part.text(converted.pattern, converted.timeRanges));
             }
+            lines.add(new Line(parts, formatLine.emphasized, null));
         }
-        result.add(Part.text(converted.pattern.substring(start, end), ranges));
+        return new Result(lines, hasAnalog, hasSecondHand);
     }
 }

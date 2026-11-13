@@ -4,10 +4,10 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
-/** Parsing helpers for the advanced-format analog-clock placeholder. */
+/** Parsing helpers for advanced-format analog-clock lines. */
 final class AnalogFormat {
-    static final String TOKEN = "%@";
-    static final char PLACEHOLDER = '\u0001';
+    static final String CLOCK_TOKEN = "%C";
+    static final String LEGACY_CLOCK_TOKEN = "%@";
 
     static final class Hands {
         final boolean hour;
@@ -23,13 +23,14 @@ final class AnalogFormat {
 
     private AnalogFormat() {}
 
-    /** `%@` is not an existing conversion; doubled percent signs stay literal. */
-    static boolean containsPlaceholder(String format) {
+    /** Finds an unescaped current or legacy analog-clock marker. */
+    static boolean containsClock(String format) {
         if (format == null) return false;
         for (int index = 0; index < format.length();) {
             if (format.startsWith("%%", index)) {
                 index += 2;
-            } else if (format.startsWith(TOKEN, index)) {
+            } else if (format.startsWith(CLOCK_TOKEN, index)
+                    || format.startsWith(LEGACY_CLOCK_TOKEN, index)) {
                 return true;
             } else if (format.charAt(index) == '%' && index + 1 < format.length()) {
                 index += format.charAt(index + 1) == ':' && index + 2 < format.length()
@@ -41,50 +42,36 @@ final class AnalogFormat {
         return false;
     }
 
-    /** With `%@`, each time token suppresses its corresponding analog hand. */
-    static Hands handsFor(String format) {
+    /** Returns this line's hand settings, or null if it has no clock marker. */
+    static Hands handsForClockLine(String format) {
+        return handsForClockLine(format, null);
+    }
+
+    /** Returns hand settings for the clock marker selected by any alarm block. */
+    static Hands handsForClockLine(String format, Long nextAlarmTime) {
+        String selectedFormat = DateCommandFormat.selectAlarmBranch(
+                format, nextAlarmTime);
+        if (!containsClock(selectedFormat)) return null;
+
         boolean hour = true;
         boolean minute = true;
         boolean second = true;
-        if (format != null) {
-            for (int index = 0; index < format.length();) {
-                if (format.startsWith("%%", index)) {
-                    index += 2;
-                } else if (format.charAt(index) == '%' && index + 1 < format.length()) {
-                    char conversion = format.charAt(index + 1);
-                    if (conversion == 'H' || conversion == 'M' || conversion == 'S') {
-                        if (conversion == 'H') hour = false;
-                        if (conversion == 'M') minute = false;
-                        if (conversion == 'S') second = false;
-                    }
-                    index += conversion == ':' && index + 2 < format.length() ? 3 : 2;
-                } else {
-                    ++index;
-                }
+
+        for (int index = 0; index < selectedFormat.length();) {
+            if (selectedFormat.startsWith("%%", index)) {
+                index += 2;
+            } else if (selectedFormat.charAt(index) == '%'
+                    && index + 1 < selectedFormat.length()) {
+                char conversion = selectedFormat.charAt(index + 1);
+                if (conversion == 'H') hour = false;
+                if (conversion == 'M') minute = false;
+                if (conversion == 'S') second = false;
+                index += conversion == ':' && index + 2 < selectedFormat.length()
+                        ? 3 : 2;
+            } else {
+                ++index;
             }
         }
         return new Hands(hour, minute, second);
-    }
-
-    /** Removes hand-suppression tokens without changing escaped text. */
-    static String removeHandSelectors(String format) {
-        if (format == null || !containsPlaceholder(format)) return format;
-        StringBuilder result = new StringBuilder(format.length());
-        for (int index = 0; index < format.length();) {
-            if (format.startsWith("%%", index)) {
-                result.append("%%");
-                index += 2;
-            } else if (format.charAt(index) == '%' && index + 1 < format.length()
-                    && isHandSelector(format.charAt(index + 1))) {
-                index += 2;
-            } else {
-                result.append(format.charAt(index++));
-            }
-        }
-        return result.toString();
-    }
-
-    private static boolean isHandSelector(char conversion) {
-        return conversion == 'H' || conversion == 'M' || conversion == 'S';
     }
 }
