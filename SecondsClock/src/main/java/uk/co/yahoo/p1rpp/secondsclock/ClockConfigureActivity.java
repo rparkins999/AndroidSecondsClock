@@ -307,7 +307,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         addClockTokenSection(guide, R.string.widget_format_other_section);
         addClockTokenRow(guide, R.string.format_token_large_line, "%L", 2);
         addClockTokenRow(guide,
-                R.string.format_token_analog_clock, "%@", 2);
+                R.string.format_token_analog_clock, "%C\n", 2);
         TextView analogHint = new TextView(this);
         analogHint.setText(R.string.format_token_hand_selector_hint);
         guide.addView(analogHint, lpMatchWrap);

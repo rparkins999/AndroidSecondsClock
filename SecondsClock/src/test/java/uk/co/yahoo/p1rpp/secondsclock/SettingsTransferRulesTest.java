@@ -30,6 +30,7 @@ public class SettingsTransferRulesTest {
         assertEquals("%H:%M", result.get("formatHorizontal"));
         assertEquals(2, result.get("formatProfile")); // vertical
         assertEquals(2, result.get("showTime"));
+        assertEquals(true, result.get("showSeconds"));
         assertTrue((Boolean) result.get("showNextAlarm"));
         assertFalse(result.containsKey("minBright"));
     }
@@ -105,5 +106,18 @@ public class SettingsTransferRulesTest {
 
         assertTrue((Boolean) widget.get("analogMode"));
         assertTrue((Boolean) clock.get("analogMode"));
+    }
+
+    @Test
+    public void analogSecondHandSettingIsIndependentOfDigitalShowTimeWhenTransferred() {
+        Map<String, Object> source = new LinkedHashMap<>();
+        source.put("analogMode", true);
+        source.put("showTime", 2);
+        source.put("showSeconds", false);
+
+        Map<String, Object> clock = SettingsTransferRules.forTarget(
+                SettingsTransferRules.WIDGET, SettingsTransferRules.CLOCK, source);
+
+        assertEquals(0, clock.get("secondsSize"));
     }
 }

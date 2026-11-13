@@ -504,19 +504,18 @@ class ClockView extends LinearLayout implements SensorEventListener {
             format = TextStyleEmoji.preferTextPresentation(format);
         }
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
-        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
-                AnalogFormat.removeHandSelectors(format));
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
         boolean legacyLargeLandscapeTime =
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE
                 && m_prefs.getBoolean("CadvancedLargeTime", true);
         lines = FormatLineSplit.applyLegacyFirstLineEmphasis(
                 lines, legacyLargeLandscapeTime);
-        if (AnalogFormat.containsPlaceholder(format)) {
+        if (AnalogFormat.containsClock(format)) {
             if (m_customFormatLayout != null) removeView(m_customFormatLayout);
             m_advancedAnalogViews.clear();
             AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.renderLines(
-                    lines, true, AnalogFormat.handsFor(format), nextAlarmTime);
-            m_customAnalogShowsSeconds = rendered.hands.second && rendered.hasAnalog;
+                    lines, nextAlarmTime);
+            m_customAnalogShowsSeconds = rendered.hasSecondHand;
             m_customFormatLayout = makeAdvancedAnalogLayout(rendered);
             m_customClockView = null;
             addView(m_customFormatLayout, new LinearLayout.LayoutParams(
@@ -547,17 +546,18 @@ class ClockView extends LinearLayout implements SensorEventListener {
             LinearLayout row = new LinearLayout(m_owner);
             row.setOrientation(HORIZONTAL);
             row.setGravity(Gravity.CENTER);
+            float rowWeight = line.hands != null ? 3.0F
+                    : line.emphasized ? 1.6F : 1.0F;
             LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0,
-                    line.emphasized ? 1.6F : 1.0F);
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, rowWeight);
             layout.addView(row, rowParams);
             boolean addedPart = false;
             for (AnalogFormatRenderer.Part part : line.parts) {
                 if (part.analog) {
                     AnalogClockView dial = new AnalogClockView(m_owner);
                     dial.setColor(m_fgcolour);
-                    dial.setHands(rendered.hands.hour,
-                            rendered.hands.minute, rendered.hands.second);
+                    dial.setHands(line.hands.hour,
+                            line.hands.minute, line.hands.second);
                     m_advancedAnalogViews.add(dial);
                     row.addView(dial, new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.WRAP_CONTENT,

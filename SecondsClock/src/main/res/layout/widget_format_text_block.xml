@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextClock xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_format_text_block_clock"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1.5"
+    android:autoSizeMinTextSize="12px"
+    android:autoSizeTextType="uniform"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:singleLine="false" />

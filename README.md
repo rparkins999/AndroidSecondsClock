@@ -51,12 +51,19 @@ Common tokens:
 | `%F` | ISO date |
 | `%x`, `%X` | Localized date or time |
 | `%n`, `%%` | New line or literal percent sign |
-| `%@` | Analog dial at this position |
+| `%C` | Full-row analog clock (on its own line) |
 
-When `%@` is present, all three hands are shown by default. `%H`, `%M`, and `%S` suppress the hour,
-minute, and second hands respectively instead of printing digital time fields. These suppression
-tokens are not printed, and ordinary text and date/time tokens outside the dial continue to work;
-`%x` and `%X` retain their localized date and time behavior.
+Put `%C` on its own line to show a full-row analog clock. The clock line renders no text; all hands
+are shown by default. `%H`, `%M`, and `%S` on that same line suppress the hour, minute, and second
+hands respectively, and are consumed rather than printed. A real newline or `%n` ends the clock line.
+On every other line, time tokens such as `%H`, `%M`, and `%S` print normally, and `%x` and `%X` retain
+their localized date and time behavior. For example:
+
+```text
+%H:%M:%S
+%C
+Other text
+```
 
 #### Optional alarm text
 
@@ -80,8 +87,8 @@ place multiple widgets with different settings on the same or different home-scr
 
 In Checkbox mode, each widget can optionally show an analog face with 12 numerals. The date and other
 selected details remain below the dial, and **Show seconds** controls only its second hand. The dial
-markings follow the widget's text colour; the hands use a high-contrast white design. On Android 17,
-the platform clock synchronizes the second hand when the widget becomes visible again. Earlier
+markings follow the widget's text colour; Android 16 and later also tint the hands to match. On Android
+17, the platform clock synchronizes the second hand when the widget becomes visible again. Earlier
 Android versions use a launcher-side animation that some launchers may resume at its previous
 position after hiding the widget. The widget does not schedule recurring app alarms.
 
@@ -123,11 +130,11 @@ the second hand is shown.
 ### Advanced mode
 
 The same date/time tokens and optional alarm block are available. **Sync** shares a format across
-screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. `%@` inserts an
-analog dial at that exact position. All three hands appear by default. When it is present, `%H`, `%M`,
-and `%S` suppress the matching hands instead of printing those digital time fields. Text and date
-tokens outside the dial—including localized `%x` and `%X`—continue to render normally. The separate
-seconds-size control applies only in Checkbox mode.
+screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. Put `%C` on its
+own line for a full-row analog dial; that line renders no text. All hands appear by default. `%H`, `%M`,
+and `%S` on the same line suppress the matching hands instead of printing those digital time fields.
+Other lines continue to render normally, including localized `%x` and `%X`. A real newline or `%n`
+ends the clock line. The separate seconds-size control applies only in Checkbox mode.
 
 To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines share extra height
 and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.

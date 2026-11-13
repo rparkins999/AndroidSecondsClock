@@ -41,7 +41,7 @@ final class SettingsStore {
     private static final String[] WIDGET_SETTING_SUFFIXES = {
             "bgcolour", "fgcolour", "touchaction", "analogMode",
             "formatSyncEnabled",
-            "textStyleEmoji", "advancedFormatMode", "showTime",
+            "textStyleEmoji", "advancedFormatMode", "showTime", "showSeconds",
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
             "showYear", "showNextAlarm", "format", "formatHorizontal",
             "formatVertical", "formatProfile"};
@@ -58,7 +58,7 @@ final class SettingsStore {
             "formatPortrait", "formatLandscape"};
     private static final String[] BOOLEAN_SETTINGS = {
             "formatSyncEnabled", "textStyleEmoji", "advancedFormatMode",
-            "showNextAlarm", "analogMode", "7seg", "forcevertical",
+            "showNextAlarm", "analogMode", "showSeconds", "7seg", "forcevertical",
             "advancedLargeTime"};
 
     private SettingsStore() {}
@@ -420,6 +420,9 @@ final class SettingsStore {
         putDefault(values, "textStyleEmoji", false);
         putDefault(values, "advancedFormatMode", values.containsKey("format"));
         putDefault(values, "showTime", 2);
+        Object showTime = values.get("showTime");
+        putDefault(values, "showSeconds",
+                showTime instanceof Number && ((Number) showTime).intValue() == 2);
         putDefault(values, "showWeekDay", 2);
         putDefault(values, "showShortDate", 0);
         putDefault(values, "showMonthDay", 1);

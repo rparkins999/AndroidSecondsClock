@@ -25,7 +25,7 @@
         layout="@layout/analog_clock_widget"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
+        android:layout_weight="2.5"
         android:visibility="gone" />
 
     <TextClock
@@ -33,7 +33,7 @@
         android:id="@+id/appwidget_analog_dateclock"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="1.5"
         android:gravity="center"
         android:autoSizeMinTextSize="12px"
         android:autoSizeTextType="uniform"
@@ -43,6 +43,7 @@
         android:id="@+id/appwidget_format_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="top"
         android:orientation="vertical"
         android:visibility="gone" />
 </LinearLayout>
