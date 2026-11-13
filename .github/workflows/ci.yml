@@ -31,6 +31,11 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager 'platforms;android-28' 'build-tools;34.0.0'
 
+      - name: Install launcher icon check tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes librsvg2-bin python3-pil
+
       - name: Check release metadata
         run: python3 scripts/release.py check
 
@@ -38,4 +43,7 @@ jobs:
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
 
       - name: Test, lint, and assemble
-        run: ./gradlew --no-daemon clean test lint assembleDebug assembleRelease
+        run: ./gradlew --no-daemon -PrsvgConvertExecutable=rsvg-convert clean test lint assembleDebug assembleRelease
+
+      - name: Verify generated launcher icon in APKs
+        run: python3 scripts/check_launcher_icon.py
