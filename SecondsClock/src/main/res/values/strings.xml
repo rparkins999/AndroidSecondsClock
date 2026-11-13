@@ -109,9 +109,11 @@
     <string name="showtimehelp">Shows local time.</string>
     <string name="show_seconds">Show seconds</string>
     <string name="showsecondshelp">Adds seconds; the widget updates every second and uses more battery.</string>
-    <string name="widget_analog_mode">Minimal analog clock (with seconds hand)</string>
-    <string name="widget_analog_mode_note">Uses a custom dial with hour, minute, and seconds hands. Dial markings follow the widget text colour; the hands use a fixed white design. Android 17+ keeps the seconds hand synchronized with system time when the widget becomes visible again. Older Android versions use a launcher-side animation that some launchers may resume at its previous position. Digital display settings are retained when you switch back.</string>
-    <string name="widget_analog_mode_help">Uses a custom SecondsClock dial with hour, minute, and seconds hands. It schedules no recurring app alarms. Android 17+ keeps the seconds hand synchronized with system time when visible; older Android versions use a launcher-side animation that may resume at its previous position after hiding the widget. Dial markings follow the widget text colour, while hands are fixed white. Digital display settings are retained.</string>
+    <string name="widget_analog_mode">Analog clock</string>
+    <string name="widget_analog_mode_note">Shows the analog dial with selected date and alarm text below it. The Show seconds checkbox controls only the second hand; the hour and minute hands stay visible. Dial markings follow the widget text colour; the hands use a fixed white design.</string>
+    <string name="widget_analog_mode_help">Shows an analog dial in checkbox mode. Your date, weekday, alarm, and other checkbox settings remain available below it. Show seconds toggles only the second hand; the hour and minute hands stay visible. The app schedules no recurring alarms.</string>
+    <string name="clock_analog_mode">Analog clock</string>
+    <string name="clock_analog_mode_help">Shows an analog dial in checkbox mode, with selected date and alarm details below it. The seconds-size control determines whether the second hand is shown.</string>
     <string name="widget_digital_text_colour">Set widget text/dial colour</string>
     <string name="widget_digital_text_colour_help">Choose the widget\'s digital text colour. In Analog mode, the dial markings use this colour and the hands remain white.</string>
     <string name="show_next_alarm_any_app">Show next alarm (any app)</string>
@@ -126,12 +128,13 @@
     <string name="format_profile_landscape">Landscape</string>
     <string name="widget_format_profile_hint">Sync shares one format; otherwise size picks Horizontal/Vertical. Breaks stay fixed; text scales.</string>
     <string name="clock_format_label">Full-screen clock format</string>
-    <string name="clock_format_caption">Advanced mode accepts tokens; checkbox mode keeps the automatic layout.</string>
+    <string name="clock_format_caption">Advanced mode accepts tokens, including an inline analog dial; checkbox mode keeps the automatic layout.</string>
     <string name="clock_format_profile_hint">Sync shares one format; otherwise orientation selects Portrait or Landscape.</string>
     <string name="clock_format_input_hint">Tap the box below to type.</string>
     <string name="clock_format_guide_title">Date and time tokens</string>
     <string name="clock_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
-    <string name="clock_format_seconds_help" formatted="false">Advanced formats use %S to show seconds; the slider affects checkbox mode only.</string>
+    <string name="clock_format_seconds_help" formatted="false">Advanced formats use %S to select the analog second hand or show digital seconds; the slider affects checkbox mode only.</string>
+    <string name="format_token_hand_selector_hint" formatted="false">With %@ present, include %H, %M, and/or %S to select the hands. If none are present, all three hands are shown. These selector tokens are not printed; text outside %@ remains formatted normally.</string>
     <string name="format_token_large_line" formatted="false">Emphasize line (%L)</string>
     <string name="clock_format_landscape_emphasis_hint" formatted="false">Put %L before a line to enlarge it; the marker stays hidden. Other lines keep room for details.</string>
     <string name="clock_alarm_prefix">ALM:</string>
@@ -163,9 +166,11 @@
     <string name="format_token_local_time" formatted="false">Localized time (%X)</string>
     <string name="format_token_newline" formatted="false">New line (%n)</string>
     <string name="format_token_percent" formatted="false">Literal % (%%)</string>
+    <string name="format_token_analog_clock" formatted="false">Analog clock (%@)</string>
     <string name="format_token_alarm" formatted="false">Alarm block (%&lt;…%&gt;)</string>
     <string name="format_token_alarm_alternative" formatted="false">No-alarm text (%|)</string>
     <string name="widget_format_alarm_hint" formatted="false">The next alarm from any app selects text before %|. Text after %| is the no-alarm fallback. Keep line breaks inside the markers.</string>
+    <string name="widget_format_analog_hint" formatted="false">%@ inserts an analog dial at this position. With it present, %H, %M, and/or %S select visible hands (none are printed); without selectors all three hands show. Text such as %x and %X outside the dial still works normally.</string>
     <string name="show_short_weekday">Short weekday</string>
     <string name="showshortweekdayhelp">Shows the localized short weekday in %1s.</string>
     <string name="show_long_weekday">Full weekday</string>

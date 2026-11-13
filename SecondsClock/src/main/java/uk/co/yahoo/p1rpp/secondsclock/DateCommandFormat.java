@@ -61,6 +61,7 @@ final class DateCommandFormat {
         if (format == null || format.isEmpty()) {
             return new FormattedPattern("", new ArrayList<PatternRange>());
         }
+        format = AnalogFormat.removeHandSelectors(format);
 
         StringBuilder result = new StringBuilder();
         List<PatternRange> timeRanges = new ArrayList<>();
@@ -95,17 +96,8 @@ final class DateCommandFormat {
                         if (nextAlarmTime == null) {
                             appendPattern(result, timeRanges, selectedFormat);
                         } else {
-                            AttributedCharacterIterator alarmText =
-                                    new SimpleDateFormat(selectedFormat.pattern,
-                                            Locale.getDefault())
-                                            .formatToCharacterIterator(referenceDate);
-                            int[] outputPositions = appendLiteralWithMapping(
-                                    result, iteratorText(alarmText));
-                            for (PatternRange range : attributedTimeRanges(alarmText)) {
-                                timeRanges.add(new PatternRange(
-                                        outputPositions[range.start],
-                                        outputPositions[range.end]));
-                            }
+                            appendAlarmText(result, timeRanges,
+                                    selectedFormat, referenceDate);
                         }
                     }
                     index = end + ALARM_END.length();
@@ -179,6 +171,12 @@ final class DateCommandFormat {
 
             char conversion = format.charAt(index + 1);
             int end = index + 2;
+            if (conversion == '@') {
+                flushLiteral(pattern, literal);
+                pattern.append(AnalogFormat.PLACEHOLDER);
+                index = end;
+                continue;
+            }
             String patternConversion;
             if (conversion == ':' && end < format.length()
                     && format.charAt(end) == 'z') {
@@ -213,6 +211,35 @@ final class DateCommandFormat {
         String result = pattern.toString();
         return new FormattedPattern(
                 result, mergeTimeRanges(result, timeRanges, true));
+    }
+
+    /** Renders an alarm branch to literal text while keeping analog placeholders structural. */
+    private static void appendAlarmText(StringBuilder output,
+                                        List<PatternRange> outputTimeRanges,
+                                        FormattedPattern selectedFormat,
+                                        Date referenceDate) {
+        String pattern = selectedFormat.pattern;
+        int start = 0;
+        while (start <= pattern.length()) {
+            int marker = pattern.indexOf(AnalogFormat.PLACEHOLDER, start);
+            int end = marker < 0 ? pattern.length() : marker;
+            if (end > start) {
+                String textPattern = pattern.substring(start, end);
+                AttributedCharacterIterator alarmText =
+                        new SimpleDateFormat(textPattern, Locale.getDefault())
+                                .formatToCharacterIterator(referenceDate);
+                int[] outputPositions = appendLiteralWithMapping(
+                        output, iteratorText(alarmText));
+                for (PatternRange range : attributedTimeRanges(alarmText)) {
+                    outputTimeRanges.add(new PatternRange(
+                            outputPositions[range.start],
+                            outputPositions[range.end]));
+                }
+            }
+            if (marker < 0) break;
+            output.append(AnalogFormat.PLACEHOLDER);
+            start = marker + 1;
+        }
     }
 
     private static boolean isTimeConversion(char conversion) {

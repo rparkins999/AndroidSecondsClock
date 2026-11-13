@@ -4,7 +4,7 @@
    Released under GPL V3 or later
   -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/appwidget_root"
     android:orientation="vertical"
@@ -15,13 +15,34 @@
         tools:ignore="PxUsage"
         android:id="@+id/appwidget_textclock"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:gravity="center"
         android:autoSizeMinTextSize="16px"
-        android:autoSizeTextType="uniform"
-    />
+        android:autoSizeTextType="uniform" />
 
     <include
         layout="@layout/analog_clock_widget"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
         android:visibility="gone" />
-</RelativeLayout>
+
+    <TextClock
+        tools:ignore="PxUsage"
+        android:id="@+id/appwidget_analog_dateclock"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:autoSizeMinTextSize="12px"
+        android:autoSizeTextType="uniform"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/appwidget_format_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone" />
+</LinearLayout>

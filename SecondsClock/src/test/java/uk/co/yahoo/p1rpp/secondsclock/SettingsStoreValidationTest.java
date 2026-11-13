@@ -24,6 +24,9 @@ public class SettingsStoreValidationTest {
         assertNull(SettingsStore.invalidSetting(
                 Collections.singletonMap("minBright", 30),
                 SettingsTransferRules.CLOCK));
+        assertNull(SettingsStore.invalidSetting(
+                Collections.singletonMap("analogMode", true),
+                SettingsTransferRules.CLOCK));
     }
 
     @Test
@@ -40,17 +43,16 @@ public class SettingsStoreValidationTest {
         assertEquals("analogMode", SettingsStore.invalidSetting(
                 Collections.singletonMap("analogMode", 1),
                 SettingsTransferRules.WIDGET));
-        assertEquals("analogMode", SettingsStore.invalidSetting(
-                Collections.singletonMap("analogMode", true),
-                SettingsTransferRules.CLOCK));
     }
 
     @Test
-    public void analogModeDefaultsToDigitalAndSurvivesWidgetSettingsReads() {
+    public void analogModeDefaultsToDigitalAndSurvivesComponentSettingsReads() {
         assertEquals(false, SettingsStore.globalValues(Collections.emptyMap())
                 .get("analogMode"));
         assertEquals(false, SettingsStore.widgetValues(
                 Collections.emptyMap(), 17).get("analogMode"));
+        assertEquals(false, SettingsStore.clockValues(Collections.emptyMap())
+                .get("analogMode"));
 
         Map<String, Object> stored = new LinkedHashMap<>();
         stored.put("W17analogMode", true);
@@ -58,6 +60,9 @@ public class SettingsStoreValidationTest {
                 .get("analogMode"));
         assertEquals(true, SettingsStore.globalValues(
                 Collections.singletonMap("WanalogMode", true))
+                .get("analogMode"));
+        assertEquals(true, SettingsStore.clockValues(
+                Collections.singletonMap("CanalogMode", true))
                 .get("analogMode"));
     }
 

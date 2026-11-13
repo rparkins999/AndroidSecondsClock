@@ -94,7 +94,7 @@ public class SettingsTransferRulesTest {
     }
 
     @Test
-    public void analogModeTransfersBetweenWidgetSettingsButNotToFullScreenClock() {
+    public void analogModeTransfersBetweenWidgetAndFullScreenSettings() {
         Map<String, Object> source = new LinkedHashMap<>();
         source.put("analogMode", true);
 
@@ -104,6 +104,6 @@ public class SettingsTransferRulesTest {
                 SettingsTransferRules.WIDGET, SettingsTransferRules.CLOCK, source);
 
         assertTrue((Boolean) widget.get("analogMode"));
-        assertFalse(clock.containsKey("analogMode"));
+        assertTrue((Boolean) clock.get("analogMode"));
     }
 }

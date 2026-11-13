@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextClock xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_format_segment_clock"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:autoSizeMinTextSize="10px"
+    android:autoSizeTextType="uniform"
+    android:gravity="center"
+    android:singleLine="true" />

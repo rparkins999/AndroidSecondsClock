@@ -19,13 +19,41 @@
         android:hand_hour="@drawable/analog_hand_hour"
         android:hand_minute="@drawable/analog_hand_minute" />
 
+    <AnalogClock
+        android:id="@+id/appwidget_analog_hours_only"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_hand_hour"
+        android:hand_minute="@drawable/analog_transparent_dial"
+        android:visibility="gone" />
+
+    <AnalogClock
+        android:id="@+id/appwidget_analog_minutes_only"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_transparent_dial"
+        android:hand_minute="@drawable/analog_hand_minute"
+        android:visibility="gone" />
+
+    <AnalogClock
+        android:id="@+id/appwidget_analog_no_hands"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_transparent_dial"
+        android:hand_minute="@drawable/analog_transparent_dial"
+        android:visibility="gone" />
+
     <ViewFlipper
         android:id="@+id/appwidget_second_hand_flipper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:autoStart="true"
         android:animateFirstView="false"
-        android:flipInterval="1000">
+        android:flipInterval="1000"
+        android:visibility="gone">
         <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="0" />
         <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="6" />
         <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="12" />

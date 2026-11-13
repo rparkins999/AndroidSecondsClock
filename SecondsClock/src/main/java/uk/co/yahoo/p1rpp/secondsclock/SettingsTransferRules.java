@@ -29,6 +29,7 @@ final class SettingsTransferRules {
         putEffective(values, result, "showMonthDay", 1);
         putEffective(values, result, "showMonth", 2);
         putEffective(values, result, "showYear", 1);
+        putEffective(values, result, "analogMode", false);
         putEffective(values, result, "showNextAlarm", false);
         putEffective(values, result, "formatSyncEnabled", true);
         putEffective(values, result, "textStyleEmoji", false);

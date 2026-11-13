@@ -128,41 +128,74 @@ public class SecondsClockWidget extends AppWidgetProvider {
         Toast.makeText(context, s, Toast.LENGTH_LONG).show();
         // */
 
-        // Construct the RemoteViews object
-        RemoteViews views = new RemoteViews
-            (context.getPackageName(), R.layout.seconds_clock_widget);
+        // Construct the RemoteViews object. Checkbox analog mode keeps the
+        // date and alarm text below the dial; advanced mode uses its own
+        // inline placeholder instead of hiding the digital-format settings.
+        RemoteViews views = new RemoteViews(
+                context.getPackageName(), R.layout.seconds_clock_widget);
         views.setInt(R.id.appwidget_root, "setBackgroundColor", bgcolour);
+        views.setTextColor(R.id.appwidget_textclock, fgcolour);
+        views.setTextColor(R.id.appwidget_analog_dateclock, fgcolour);
+
+        Long nextAlarmTime = Formatter.getNextAlarmTime(context);
+        Formatter f = new Formatter();
+        boolean advancedFormatMode = prefs.getBoolean(
+                key + "advancedFormatMode", prefs.contains(key + "format"));
+        String format = null;
+        if (advancedFormatMode) {
+            String syncFormat = prefs.getString(key + "format", "");
+            format = FormatProfiles.widgetFormat(
+                    syncFormat,
+                    prefs.getString(key + "formatHorizontal", null),
+                    prefs.getString(key + "formatVertical", null),
+                    prefs.getBoolean(key + "formatSyncEnabled", true),
+                    FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
+        }
+        boolean advancedAnalog = advancedFormatMode
+                && AnalogFormat.containsPlaceholder(format);
+        boolean checkboxAnalog = analogMode && !advancedFormatMode;
         views.setViewVisibility(R.id.appwidget_analogclock,
-                analogMode ? android.view.View.VISIBLE : android.view.View.GONE);
+                checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_analog_dateclock,
+                checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_format_container,
+                advancedAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_textclock,
-                analogMode ? android.view.View.GONE : android.view.View.VISIBLE);
-        if (analogMode) {
+                checkboxAnalog || advancedAnalog
+                        ? android.view.View.GONE : android.view.View.VISIBLE);
+
+        if (advancedAnalog) {
+            AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.render(
+                    format, nextAlarmTime, false);
+            addAdvancedAnalogFormat(context, views, rendered, fgcolour);
+        } else if (checkboxAnalog) {
+            boolean showTime = prefs.getInt(key + "showTime", 2) > 0;
+            boolean showSeconds = prefs.getInt(key + "showTime", 2) == 2;
             views.setImageViewBitmap(R.id.appwidget_analog_dial,
                     AnalogClockFace.createBitmap(fgcolour));
-            boolean nativeSecondHand = Build.VERSION.SDK_INT >= 37
-                    && setRemoteViewIcon(views, R.id.appwidget_analog_hands,
-                            "setSecondHand", Icon.createWithResource(
-                                    context, R.drawable.analog_hand_second));
-            if (!nativeSecondHand) {
-                views.setViewVisibility(R.id.appwidget_second_hand_flipper,
-                        android.view.View.VISIBLE);
-                views.setInt(R.id.appwidget_second_hand_flipper,
-                        "setDisplayedChild",
-                        Calendar.getInstance().get(Calendar.SECOND));
-            }
+            setAnalogHands(views, context, showTime, showTime,
+                    showSeconds, R.id.appwidget_analog_hands,
+                    R.id.appwidget_analog_hours_only,
+                    R.id.appwidget_analog_minutes_only,
+                    R.id.appwidget_analog_no_hands,
+                    R.id.appwidget_second_hand_flipper);
+            f.setCheckboxes(context, minWidth, maxHeight, 0,
+                    prefs.getInt(key + "showWeekDay", 2),
+                    prefs.getInt(key + "showShortDate", 0),
+                    prefs.getInt(key + "showMonthDay", 1),
+                    prefs.getInt(key + "showMonth", 2),
+                    prefs.getInt(key + "showYear", 1),
+                    prefs.getBoolean(key + "showNextAlarm", false),
+                    nextAlarmTime);
+            views.setCharSequence(R.id.appwidget_analog_dateclock,
+                    "setFormat12Hour", f.time12 + f.rest);
+            views.setCharSequence(R.id.appwidget_analog_dateclock,
+                    "setFormat24Hour", f.time24 + f.rest);
+            views.setInt(R.id.appwidget_analog_dateclock, "setLines", f.lines);
+            views.setViewVisibility(R.id.appwidget_analog_dateclock,
+                    f.rest.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
         } else {
-            Long nextAlarmTime = Formatter.getNextAlarmTime(context);
-            Formatter f = new Formatter();
-            boolean advancedFormatMode = prefs.getBoolean(
-                    key + "advancedFormatMode", prefs.contains(key + "format"));
             if (advancedFormatMode) {
-                String syncFormat = prefs.getString(key + "format", "");
-                String format = FormatProfiles.widgetFormat(
-                        syncFormat,
-                        prefs.getString(key + "formatHorizontal", null),
-                        prefs.getString(key + "formatVertical", null),
-                        prefs.getBoolean(key + "formatSyncEnabled", true),
-                        FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
                 f.set(format, nextAlarmTime,
                         prefs.getBoolean(key + "textStyleEmoji", false));
             } else {
@@ -176,7 +209,6 @@ public class SecondsClockWidget extends AppWidgetProvider {
                         prefs.getBoolean(key + "showNextAlarm", false),
                         nextAlarmTime);
             }
-            views.setTextColor(R.id.appwidget_textclock, fgcolour);
             views.setCharSequence(R.id.appwidget_textclock,
                     "setFormat12Hour", f.time12 + f.rest);
             views.setCharSequence(R.id.appwidget_textclock,
@@ -205,6 +237,80 @@ public class SecondsClockWidget extends AppWidgetProvider {
             return true;
         } catch (ReflectiveOperationException exception) {
             return false;
+        }
+    }
+
+    private static void addAdvancedAnalogFormat(
+            Context context, RemoteViews views,
+            AnalogFormatRenderer.Result rendered, int dialColor) {
+        views.removeAllViews(R.id.appwidget_format_container);
+        for (AnalogFormatRenderer.Line line : rendered.lines) {
+            RemoteViews row = new RemoteViews(
+                    context.getPackageName(), R.layout.widget_format_line);
+            boolean added = false;
+            for (AnalogFormatRenderer.Part part : line.parts) {
+                if (part.analog) {
+                    RemoteViews analog = new RemoteViews(
+                            context.getPackageName(), R.layout.analog_clock_widget_inline);
+                    analog.setImageViewBitmap(R.id.appwidget_analog_dial,
+                            AnalogClockFace.createBitmap(dialColor));
+                    setAnalogHands(analog, context,
+                            rendered.hands.hour, rendered.hands.minute,
+                            rendered.hands.second,
+                            R.id.appwidget_analog_hands,
+                            R.id.appwidget_analog_hours_only,
+                            R.id.appwidget_analog_minutes_only,
+                            R.id.appwidget_analog_no_hands,
+                            R.id.appwidget_second_hand_flipper);
+                    row.addView(R.id.widget_format_line, analog);
+                    added = true;
+                } else if (!part.pattern.isEmpty()) {
+                    RemoteViews text = new RemoteViews(
+                            context.getPackageName(), R.layout.widget_format_segment);
+                    text.setTextColor(R.id.widget_format_segment_clock, dialColor);
+                    text.setCharSequence(R.id.widget_format_segment_clock,
+                            "setFormat12Hour", part.pattern);
+                    text.setCharSequence(R.id.widget_format_segment_clock,
+                            "setFormat24Hour", part.pattern);
+                    row.addView(R.id.widget_format_line, text);
+                    added = true;
+                }
+            }
+            if (!added) {
+                RemoteViews blank = new RemoteViews(
+                        context.getPackageName(), R.layout.widget_format_segment);
+                blank.setCharSequence(R.id.widget_format_segment_clock,
+                        "setFormat12Hour", "''");
+                blank.setCharSequence(R.id.widget_format_segment_clock,
+                        "setFormat24Hour", "''");
+                row.addView(R.id.widget_format_line, blank);
+            }
+            views.addView(R.id.appwidget_format_container, row);
+        }
+    }
+
+    private static void setAnalogHands(
+            RemoteViews views, Context context, boolean hour, boolean minute,
+            boolean second, int bothId, int hourId, int minuteId, int noneId,
+            int secondFlipperId) {
+        int selectedId = hour
+                ? minute ? bothId : hourId
+                : minute ? minuteId : noneId;
+        int[] clockIds = {bothId, hourId, minuteId, noneId};
+        for (int clockId : clockIds) {
+            views.setViewVisibility(clockId, clockId == selectedId
+                    ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
+        boolean nativeSecondHand = second && Build.VERSION.SDK_INT >= 37
+                && setRemoteViewIcon(views, selectedId, "setSecondHand",
+                        Icon.createWithResource(
+                                context, R.drawable.analog_hand_second));
+        views.setViewVisibility(secondFlipperId,
+                second && !nativeSecondHand
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
+        if (second && !nativeSecondHand) {
+            views.setInt(secondFlipperId, "setDisplayedChild",
+                    Calendar.getInstance().get(Calendar.SECOND));
         }
     }
 

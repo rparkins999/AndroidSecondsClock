@@ -26,8 +26,10 @@ The options differ slightly between home-screen widgets and the full-screen cloc
 
 Choose whether to show the time, seconds, weekday, date, and next alarm. You can use a numeric date
 or choose the day, month, and year separately. Time uses the device's 12- or 24-hour preference.
-The layout adapts to the widget's size. The **Show next alarm (any alarm app)** option displays the
-next alarm Android reports, not necessarily one from the default clock app.
+The layout adapts to the widget's size. **Analog clock** replaces the digital time with a dial while
+keeping the date, alarm, and other checkbox settings available; **Show seconds** toggles only its
+second hand. The **Show next alarm (any alarm app)** option displays the next alarm Android reports,
+not necessarily one from the default clock app.
 
 ### Advanced mode
 
@@ -49,6 +51,12 @@ Common tokens:
 | `%F` | ISO date |
 | `%x`, `%X` | Localized date or time |
 | `%n`, `%%` | New line or literal percent sign |
+| `%@` | Analog dial at this position |
+
+When `%@` is present, `%H`, `%M`, and `%S` select the hour, minute, and second hands instead of
+printing digital time fields. If none of those selectors appear, all three hands are shown. The
+selectors are not printed, and ordinary text and date/time tokens outside the dial continue to work;
+`%x` and `%X` retain their localized date and time behavior.
 
 #### Optional alarm text
 
@@ -70,14 +78,12 @@ You can change the widget's text colour, background colour, and background opaci
 actions can open the system clock, SecondsClock, its settings, or the full-screen clock. You can
 place multiple widgets with different settings on the same or different home-screen pages.
 
-Each home-screen widget can optionally use a minimalist analog face with 12 numerals and hour,
-minute, and seconds hands. The dial markings follow the widget's text colour; the hands use a
-high-contrast white design. On Android 17 and later, the platform clock view keeps the seconds hand
-synchronized with system time while visible and when it resumes. Earlier Android versions use a
-launcher-side seconds animation, which some launchers may resume at its previous position after
-hiding the widget. Neither mode schedules recurring app alarms. Switching back to Digital restores
-the widget's saved date/time format and other display settings. This option affects home-screen
-widgets only; the full-screen night clock is unchanged.
+In Checkbox mode, each widget can optionally show an analog face with 12 numerals. The date and other
+selected details remain below the dial, and **Show seconds** controls only its second hand. The dial
+markings follow the widget's text colour; the hands use a high-contrast white design. On Android 17,
+the platform clock synchronizes the second hand when the widget becomes visible again. Earlier
+Android versions use a launcher-side animation that some launchers may resume at its previous
+position after hiding the widget. The widget does not schedule recurring app alarms.
 
 If a widget's touch action doesn't open its configuration page, open SecondsClock from its app icon
 (usually in the apps list), then choose **Configure existing widget**. Touch the widget you want to
@@ -110,13 +116,18 @@ in both Light and Dark appearance.
 
 Choose the time, seconds size, weekday, date, and next-alarm options. The clock arranges the
 selected information automatically. The seconds size can be adjusted separately. Its checkbox-mode
-alarm is shown as `ALM: Mon, 3:30`.
+alarm is shown as `ALM: Mon, 3:30`. **Analog clock** replaces the digital time with a dial while
+keeping the selected date and alarm details below it; the seconds-size control determines whether
+the second hand is shown.
 
 ### Advanced mode
 
 The same date/time tokens and optional alarm block are available. **Sync** shares a format across
-screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. Include `%S`
-to show seconds; the separate seconds-size control applies only in Checkbox mode.
+screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. `%@` inserts an
+analog dial at that exact position. When it is present, `%H`, `%M`, and `%S` select the hands instead
+of printing those digital time fields; with no selectors, all three hands are shown. Text and date
+tokens outside the dial—including localized `%x` and `%X`—continue to render normally. The separate
+seconds-size control applies only in Checkbox mode.
 
 To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines share extra height
 and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.

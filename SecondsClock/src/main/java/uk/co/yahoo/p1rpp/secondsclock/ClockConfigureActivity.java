@@ -85,6 +85,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int FORMATFIELD = FORMATPROFILE_LANDSCAPE + 1;
     private static final int SHOW_NEXT_ALARM = FORMATFIELD + 1;
     private static final int TEXT_STYLE_EMOJI = SHOW_NEXT_ALARM + 1;
+    private static final int ANALOG_MODE = TEXT_STYLE_EMOJI + 1;
 
     // Conversion between threshold slider and numeric value
     private int m_fgcolour;
@@ -305,6 +306,11 @@ public class ClockConfigureActivity extends ConfigureActivity
                 R.string.format_token_percent, "%%");
         addClockTokenSection(guide, R.string.widget_format_other_section);
         addClockTokenRow(guide, R.string.format_token_large_line, "%L", 2);
+        addClockTokenRow(guide,
+                R.string.format_token_analog_clock, "%@", 2);
+        TextView analogHint = new TextView(this);
+        analogHint.setText(R.string.format_token_hand_selector_hint);
+        guide.addView(analogHint, lpMatchWrap);
         TextView landscapeHint = new TextView(this);
         landscapeHint.setText(R.string.clock_format_landscape_emphasis_hint);
         guide.addView(landscapeHint, lpMatchWrap);
@@ -412,6 +418,7 @@ public class ClockConfigureActivity extends ConfigureActivity
             case DATABUTTON: doToast(R.string.setdatahelp); return true;
             case FORMATMODE: doToast(R.string.clock_format_caption); return true;
             case SHOW_NEXT_ALARM: doToast(R.string.next_alarm_source_help); return true;
+            case ANALOG_MODE: doToast(R.string.clock_analog_mode_help); return true;
             case DISPLAYBUTTON: doToast(R.string.setdisplayhelp); return true;
             case DIMBUTTON: doToast(R.string.setdimminghelp); return true;
             case CURRENTLUX: doToast(R.string.luxhelp); return true;
@@ -562,6 +569,10 @@ public class ClockConfigureActivity extends ConfigureActivity
                 m_prefs.edit().putBoolean("CshowNextAlarm", isChecked).commit();
                 m_clockView.updateLayout();
                 break;
+            case ANALOG_MODE:
+                m_prefs.edit().putBoolean("CanalogMode", isChecked).commit();
+                m_clockView.updateLayout();
+                break;
             case TEXT_STYLE_EMOJI:
                 m_prefs.edit().putBoolean("CtextStyleEmoji", isChecked).apply();
                 m_clockView.updateLayout();
@@ -633,6 +644,13 @@ public class ClockConfigureActivity extends ConfigureActivity
             showNextAlarm.setOnLongClickListener(this);
             showNextAlarm.setOnCheckedChangeListener(this);
             lboxes.addView(showNextAlarm);
+            CheckBox analogMode = new CheckBox(this);
+            analogMode.setId(ANALOG_MODE);
+            analogMode.setText(R.string.clock_analog_mode);
+            analogMode.setChecked(m_prefs.getBoolean("CanalogMode", false));
+            analogMode.setOnLongClickListener(this);
+            analogMode.setOnCheckedChangeListener(this);
+            lboxes.addView(analogMode);
         }
         CheckBox cb = new CheckBox(this);
         cb.setId(SEVENSEGMENTS);

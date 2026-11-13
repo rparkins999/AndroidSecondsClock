@@ -47,6 +47,7 @@ final class SettingsStore {
             "formatVertical", "formatProfile"};
     private static final String[] CLOCK_SETTING_SUFFIXES = {
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
+            "analogMode",
             "showYear", "secondsSize", "advancedFormatMode", "format",
             "formatPortrait", "formatLandscape", "formatSyncEnabled",
             "formatProfile", "textStyleEmoji", "fgcolour", "minBright",
@@ -434,6 +435,7 @@ final class SettingsStore {
         putDefault(values, "showMonthDay", 1);
         putDefault(values, "showMonth", 2);
         putDefault(values, "showYear", 1);
+        putDefault(values, "analogMode", false);
         putDefault(values, "secondsSize", 255);
         putDefault(values, "advancedFormatMode", false);
         putDefault(values, "formatSyncEnabled", true);

@@ -26,11 +26,13 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -59,9 +61,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private int minWidth = 93;
     private int m_bgcolour;
     private TextClock demo;
+    private TextClock analogDateDemo;
     private View analogDemo;
+    private LinearLayout analogPreview;
     private ImageView analogDial;
-    private ViewFlipper analogSecondHand;
     private int m_fgcolour;
     private String widgetFormat;
     private int showTime;
@@ -263,7 +266,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         } else { // SETTEXTCOLOUR
             m_fgcolour = colour | (m_fgcolour & 0xFF000000);
             m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour).commit();
-            demo.setTextColor(m_fgcolour);
+            updateDemoTextColor();
             setAlphaSliderTint();
         }
     }
@@ -291,7 +294,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 } else {
                     m_fgcolour = redSliderChanged(
                         value, m_fgcolour, m_key + "fgcolour");
-                    demo.setTextColor(m_fgcolour);
+                    updateDemoTextColor();
                     setAlphaSliderTint();
                 }
                 break;
@@ -304,7 +307,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 } else {
                     m_fgcolour = greenSliderChanged(
                         value, m_fgcolour, m_key + "fgcolour");
-                    demo.setTextColor(m_fgcolour);
+                    updateDemoTextColor();
                     setAlphaSliderTint();
                 }
                 break;
@@ -317,7 +320,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 } else {
                     m_fgcolour = blueSliderChanged(
                         value, m_fgcolour, m_key + "fgcolour");
-                    demo.setTextColor(m_fgcolour);
+                    updateDemoTextColor();
                     setAlphaSliderTint();
                 }
                 break;
@@ -482,17 +485,33 @@ public class WidgetConfigureActivity extends ConfigureActivity
 
     void updateDemo() {
         Formatter f = new Formatter();
-        if (!analogMode) {
-            Long nextAlarm = Formatter.getNextAlarmTime(this);
-            if (advancedFormatMode) {
-                f.set(getFormatForProfile(formatProfile), nextAlarm,
-                        m_prefs.getBoolean(m_key + "textStyleEmoji", false));
-            } else {
-                f.setCheckboxes(this, minWidth, maxHeight, showTime,
-                        showWeekDay, showShortDate, showMonthDay, showMonth,
-                        showYear, showNextAlarmCheckBox != null
-                                && showNextAlarmCheckBox.isChecked(), nextAlarm);
-            }
+        Long nextAlarm = Formatter.getNextAlarmTime(this);
+        boolean checkboxAnalog = analogMode && !advancedFormatMode;
+        String format = advancedFormatMode ? getFormatForProfile(formatProfile) : "";
+        if (checkboxAnalog) {
+            f.setCheckboxes(this, minWidth, maxHeight, 0,
+                    showWeekDay, showShortDate, showMonthDay, showMonth,
+                    showYear, showNextAlarmCheckBox != null
+                            && showNextAlarmCheckBox.isChecked(), nextAlarm);
+            analogDateDemo.setTextColor(m_fgcolour);
+            analogDateDemo.setFormat12Hour(f.time12 + f.rest);
+            analogDateDemo.setFormat24Hour(f.time24 + f.rest);
+            analogDateDemo.setLines(f.lines);
+            analogDateDemo.setVisibility(f.rest.isEmpty() ? View.GONE : View.VISIBLE);
+            configureAnalogPreviewHands(analogDemo, showTime > 0,
+                    showTime > 0, showTime == 2);
+        } else if (advancedFormatMode) {
+            f.set(format, nextAlarm,
+                    m_prefs.getBoolean(m_key + "textStyleEmoji", false));
+        } else {
+            f.setCheckboxes(this, minWidth, maxHeight, showTime,
+                    showWeekDay, showShortDate, showMonthDay, showMonth,
+                    showYear, showNextAlarmCheckBox != null
+                            && showNextAlarmCheckBox.isChecked(), nextAlarm);
+        }
+        demo.setTextColor(m_fgcolour);
+        if (!checkboxAnalog
+                && !(advancedFormatMode && AnalogFormat.containsPlaceholder(format))) {
             demo.setFormat12Hour(f.time12 + f.rest);
             demo.setFormat24Hour(f.time24 + f.rest);
             demo.setLines(f.lines);
@@ -507,38 +526,143 @@ public class WidgetConfigureActivity extends ConfigureActivity
             10, 3000,
             3, TypedValue.COMPLEX_UNIT_PX);
         analogDemo.setMinimumWidth(width);
-        analogDemo.setMinimumHeight(height);
-        analogDemo.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+        analogDemo.setMinimumHeight(0);
+        analogPreview.setMinimumWidth(width);
+        analogPreview.setMinimumHeight(height);
+        analogPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
         analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
-        if (analogSecondHand != null) {
-            analogSecondHand.setDisplayedChild(
-                    Calendar.getInstance().get(Calendar.SECOND));
-        }
         showPreview();
+    }
+
+    private void configureAnalogPreviewHands(
+            View frame, boolean hour, boolean minute, boolean second) {
+        if (frame == null) return;
+        int bothId = R.id.appwidget_analog_hands;
+        int hourId = R.id.appwidget_analog_hours_only;
+        int minuteId = R.id.appwidget_analog_minutes_only;
+        int noneId = R.id.appwidget_analog_no_hands;
+        int selectedId = hour ? (minute ? bothId : hourId)
+                : (minute ? minuteId : noneId);
+        for (int id : new int[] {bothId, hourId, minuteId, noneId}) {
+            View handClock = frame.findViewById(id);
+            if (handClock != null) handClock.setVisibility(
+                    id == selectedId ? View.VISIBLE : View.GONE);
+        }
+        boolean nativeSecondHand = false;
+        View selectedClock = frame.findViewById(selectedId);
+        if (second && Build.VERSION.SDK_INT >= 37 && selectedClock != null) {
+            try {
+                selectedClock.getClass().getMethod("setSecondHand", Icon.class)
+                        .invoke(selectedClock, Icon.createWithResource(
+                                this, R.drawable.analog_hand_second));
+                nativeSecondHand = true;
+            } catch (ReflectiveOperationException ignored) {
+                nativeSecondHand = false;
+            }
+        }
+        ViewFlipper flipper = frame.findViewById(
+                R.id.appwidget_second_hand_flipper);
+        if (flipper != null) {
+            flipper.setVisibility(second && !nativeSecondHand ? View.VISIBLE : View.GONE);
+            if (second && !nativeSecondHand) {
+                flipper.setDisplayedChild(Calendar.getInstance().get(Calendar.SECOND));
+            }
+        }
+    }
+
+    private View makeAdvancedFormatPreview() {
+        String format = getFormatForProfile(formatProfile);
+        AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.render(
+                format, Formatter.getNextAlarmTime(this), false);
+        LinearLayout result = new LinearLayout(this);
+        result.setOrientation(LinearLayout.VERTICAL);
+        result.setBackgroundColor(m_bgcolour);
+        int width = (int)(minWidth * m_density);
+        int height = (int)(maxHeight * m_density);
+        result.setMinimumWidth(width);
+        result.setMinimumHeight(height);
+        result.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+        for (AnalogFormatRenderer.Line line : rendered.lines) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER);
+            result.addView(row, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0F));
+            boolean added = false;
+            for (AnalogFormatRenderer.Part part : line.parts) {
+                if (part.analog) {
+                    FrameLayout clock = (FrameLayout) LayoutInflater.from(this)
+                            .inflate(R.layout.analog_clock_widget, null);
+                    clock.setBackgroundColor(m_bgcolour);
+                    ImageView dial = clock.findViewById(R.id.appwidget_analog_dial);
+                    dial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
+                    configureAnalogPreviewHands(clock, rendered.hands.hour,
+                            rendered.hands.minute, rendered.hands.second);
+                    row.addView(clock, new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0F));
+                    added = true;
+                } else if (!part.pattern.isEmpty()) {
+                    TextClock text = new TextClock(this);
+                    text.setGravity(Gravity.CENTER);
+                    text.setTextColor(m_fgcolour);
+                    text.setSingleLine(true);
+                    text.setFormat12Hour(part.pattern);
+                    text.setFormat24Hour(part.pattern);
+                    text.setAutoSizeTextTypeUniformWithConfiguration(
+                            10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
+                    row.addView(text, new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0F));
+                    added = true;
+                }
+            }
+            if (!added) {
+                row.addView(new TextView(this), new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+        }
+        return result;
     }
 
     private void showPreview() {
         if (demobox == null || demo == null || analogDemo == null) return;
         demobox.removeAllViews();
-        if (analogSecondHand != null) {
-            analogSecondHand.setDisplayedChild(
-                    Calendar.getInstance().get(Calendar.SECOND));
+        if (advancedFormatMode
+                && AnalogFormat.containsPlaceholder(getFormatForProfile(formatProfile))) {
+            demobox.addView(makeAdvancedFormatPreview());
+        } else if (analogMode && !advancedFormatMode) {
+            demobox.addView(analogPreview);
+        } else {
+            demobox.addView(demo);
         }
-        demobox.addView(analogMode ? analogDemo : demo);
     }
 
     private void setDemoBackgroundColor() {
         demo.setBackgroundColor(m_bgcolour);
         analogDemo.setBackgroundColor(m_bgcolour);
+        analogPreview.setBackgroundColor(m_bgcolour);
         analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
+        if (demobox != null && demobox.getChildCount() > 0) showPreview();
+    }
+
+    private void updateDemoTextColor() {
+        if (demo != null) demo.setTextColor(m_fgcolour);
+        if (analogDateDemo != null) analogDateDemo.setTextColor(m_fgcolour);
+        if (analogDial != null) {
+            analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
+        }
+        if (demobox != null && demobox.getChildCount() > 0) showPreview();
     }
 
     private LinearLayout makeDisplayModeControls() {
         LinearLayout controls = new LinearLayout(this);
         controls.setOrientation(LinearLayout.VERTICAL);
         analogModeCheckBox.setChecked(analogMode);
+        analogModeCheckBox.setVisibility(
+                advancedFormatMode ? View.GONE : View.VISIBLE);
         controls.addView(analogModeCheckBox, lpWrapWrap);
-        analogModeNote.setVisibility(analogMode ? View.VISIBLE : View.GONE);
+        analogModeNote.setVisibility(
+                analogMode && !advancedFormatMode ? View.VISIBLE : View.GONE);
         controls.addView(analogModeNote, lpMatchWrap);
         return controls;
     }
@@ -556,10 +680,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         LinearLayout settingsEditor = advancedFormatMode
                 ? makeFormatEditor() : makeCheckboxEditor();
         LinearLayout displayModeControls = makeDisplayModeControls();
-        settingsEditor.setVisibility(analogMode ? View.GONE : View.VISIBLE);
         formatModeButton.setText(advancedFormatMode
                 ? R.string.checkbox_mode : R.string.advanced_format_mode);
-        formatModeButton.setVisibility(analogMode ? View.GONE : View.VISIBLE);
         if (m_orientation == Configuration.ORIENTATION_LANDSCAPE) {
             l1.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout l2 = new LinearLayout(this);
@@ -590,7 +712,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             page.setOrientation(LinearLayout.VERTICAL);
             if (widgetNameButton != null) page.addView(widgetNameButton, lpMatchWrap);
             page.addView(l1, lpMatchWrap);
-            if (advancedFormatMode && !analogMode) {
+            if (advancedFormatMode) {
                 page.addView(makeFormatGuide(), lpMatchWrap);
             }
             lscroll.addView(page);
@@ -615,7 +737,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             l2.addView(chooseButton, lpWrapWrap);
             l2.addView(formatModeButton, lpWrapWrap);
             l2.addView(m_okButton, lpWrapWrap);
-            if (advancedFormatMode && !analogMode) {
+            if (advancedFormatMode) {
                 l2.addView(makeFormatGuide(), lpMatchWrap);
             }
             l1.addView(l2);
@@ -762,6 +884,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
         addGuideSection(guide, R.string.widget_format_other_section);
         addFormatTokenRow(guide,
                 new FormatToken(R.string.format_token_percent, "%%"), null);
+        addFormatTokenRow(guide,
+                new FormatToken(R.string.format_token_analog_clock, "%@"), null);
+        TextView analogHint = new TextView(this);
+        analogHint.setText(R.string.widget_format_analog_hint);
+        guide.addView(analogHint, lpMatchWrap);
 
         addGuideSection(guide, R.string.widget_format_alarm_section);
         addFormatTokenRow(guide,
@@ -955,7 +1082,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 break;
             case SETTEXTCOLOUR:
                 m_ColourType = "widget text";
-                demo.setTextColor(m_fgcolour);
+                updateDemoTextColor();
                 rgbChanged(m_fgcolour);
                 break;
             case CONFIGURE:
@@ -1198,21 +1325,18 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogDemo.setBackgroundColor(m_bgcolour);
         analogDemo.setOnLongClickListener(this);
         analogDial = analogDemo.findViewById(R.id.appwidget_analog_dial);
-        analogSecondHand = analogDemo.findViewById(
-                R.id.appwidget_second_hand_flipper);
-        if (Build.VERSION.SDK_INT >= 37) {
-            View analogClock = analogDemo.findViewById(
-                    R.id.appwidget_analog_hands);
-            try {
-                analogClock.getClass().getMethod("setSecondHand", Icon.class)
-                        .invoke(analogClock, Icon.createWithResource(
-                                this, R.drawable.analog_hand_second));
-            } catch (ReflectiveOperationException exception) {
-                throw new IllegalStateException(
-                        "Android 17 analog clock second hand API is unavailable",
-                        exception);
-            }
-        }
+        analogPreview = new LinearLayout(this);
+        analogPreview.setOrientation(LinearLayout.VERTICAL);
+        analogPreview.setBackgroundColor(m_bgcolour);
+        analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 3.0F));
+        analogDateDemo = new TextClock(this);
+        analogDateDemo.setGravity(Gravity.CENTER);
+        analogDateDemo.setTextColor(m_fgcolour);
+        analogDateDemo.setAutoSizeTextTypeUniformWithConfiguration(
+                10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
+        analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0F));
         demobox = new LinearLayout(this);
         demobox.setLayoutParams(lpWrapWrap);
         demobox.setBackgroundResource(R.drawable.background);
@@ -1293,7 +1417,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                         m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
                                .commit();
-                        demo.setTextColor(m_fgcolour);
+                        updateDemoTextColor();
                         setAlphaSliderTint();
                     }
                     updateWidget();
@@ -1327,7 +1451,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         m_fgcolour = colour | (m_fgcolour & 0xFF000000);
                         m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
                                .commit();
-                        demo.setTextColor(m_fgcolour);
+                        updateDemoTextColor();
                         setAlphaSliderTint();
                     }
                     updateWidget();
@@ -1364,7 +1488,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         m_fgcolour = (val << 16) | (m_fgcolour & 0xFF00FFFF);
                         m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
                                .commit();
-                        demo.setTextColor(m_fgcolour);
+                        updateDemoTextColor();
                         setAlphaSliderTint();
                     }
                     rgbChanged();
@@ -1402,7 +1526,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         m_fgcolour = (val << 8) | (m_fgcolour & 0xFFFF00FF);
                         m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
                                .commit();
-                        demo.setTextColor(m_fgcolour);
+                        updateDemoTextColor();
                         setAlphaSliderTint();
                     }
                     rgbChanged();
@@ -1440,7 +1564,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         m_fgcolour = val | (m_fgcolour & 0xFFFFFF00);
                         m_prefs.edit().putInt(m_key + "fgcolour", m_fgcolour)
                                .commit();
-                        demo.setTextColor(m_fgcolour);
+                        updateDemoTextColor();
                         setAlphaSliderTint();
                     }
                     rgbChanged();
