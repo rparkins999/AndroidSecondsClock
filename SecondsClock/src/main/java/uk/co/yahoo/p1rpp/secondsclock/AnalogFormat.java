@@ -41,15 +41,11 @@ final class AnalogFormat {
         return false;
     }
 
-    /**
-     * With no hand selectors, `%@` shows the usual three hands. Once any of
-     * `%H`, `%M`, or `%S` is present, their presence selects the visible hands.
-     */
+    /** With `%@`, each time token suppresses its corresponding analog hand. */
     static Hands handsFor(String format) {
-        boolean hour = false;
-        boolean minute = false;
-        boolean second = false;
-        boolean hasSelector = false;
+        boolean hour = true;
+        boolean minute = true;
+        boolean second = true;
         if (format != null) {
             for (int index = 0; index < format.length();) {
                 if (format.startsWith("%%", index)) {
@@ -57,10 +53,9 @@ final class AnalogFormat {
                 } else if (format.charAt(index) == '%' && index + 1 < format.length()) {
                     char conversion = format.charAt(index + 1);
                     if (conversion == 'H' || conversion == 'M' || conversion == 'S') {
-                        hasSelector = true;
-                        if (conversion == 'H') hour = true;
-                        if (conversion == 'M') minute = true;
-                        if (conversion == 'S') second = true;
+                        if (conversion == 'H') hour = false;
+                        if (conversion == 'M') minute = false;
+                        if (conversion == 'S') second = false;
                     }
                     index += conversion == ':' && index + 2 < format.length() ? 3 : 2;
                 } else {
@@ -68,11 +63,10 @@ final class AnalogFormat {
                 }
             }
         }
-        return hasSelector ? new Hands(hour, minute, second)
-                : new Hands(true, true, true);
+        return new Hands(hour, minute, second);
     }
 
-    /** Removes `%H`, `%M`, and `%S` selectors without changing escaped text. */
+    /** Removes hand-suppression tokens without changing escaped text. */
     static String removeHandSelectors(String format) {
         if (format == null || !containsPlaceholder(format)) return format;
         StringBuilder result = new StringBuilder(format.length());

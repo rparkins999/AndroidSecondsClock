@@ -133,8 +133,8 @@
     <string name="clock_format_input_hint">Tap the box below to type.</string>
     <string name="clock_format_guide_title">Date and time tokens</string>
     <string name="clock_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
-    <string name="clock_format_seconds_help" formatted="false">Advanced formats use %S to select the analog second hand or show digital seconds; the slider affects checkbox mode only.</string>
-    <string name="format_token_hand_selector_hint" formatted="false">With %@ present, include %H, %M, and/or %S to select the hands. If none are present, all three hands are shown. These selector tokens are not printed; text outside %@ remains formatted normally.</string>
+    <string name="clock_format_seconds_help" formatted="false">Advanced formats use %S to suppress the analog second hand or show digital seconds; the slider affects checkbox mode only.</string>
+    <string name="format_token_hand_selector_hint" formatted="false">With %@ present, all hands show by default. Add %H, %M, and/or %S to suppress the matching hand. These tokens are not printed; text outside %@ remains formatted normally.</string>
     <string name="format_token_large_line" formatted="false">Emphasize line (%L)</string>
     <string name="clock_format_landscape_emphasis_hint" formatted="false">Put %L before a line to enlarge it; the marker stays hidden. Other lines keep room for details.</string>
     <string name="clock_alarm_prefix">ALM:</string>
@@ -170,7 +170,7 @@
     <string name="format_token_alarm" formatted="false">Alarm block (%&lt;…%&gt;)</string>
     <string name="format_token_alarm_alternative" formatted="false">No-alarm text (%|)</string>
     <string name="widget_format_alarm_hint" formatted="false">The next alarm from any app selects text before %|. Text after %| is the no-alarm fallback. Keep line breaks inside the markers.</string>
-    <string name="widget_format_analog_hint" formatted="false">%@ inserts an analog dial at this position. With it present, %H, %M, and/or %S select visible hands (none are printed); without selectors all three hands show. Text such as %x and %X outside the dial still works normally.</string>
+    <string name="widget_format_analog_hint" formatted="false">%@ inserts an analog dial at this position. All hands show by default; with it present, %H, %M, and/or %S suppress the matching hands (none are printed). Text such as %x and %X outside the dial still works normally.</string>
     <string name="show_short_weekday">Short weekday</string>
     <string name="showshortweekdayhelp">Shows the localized short weekday in %1s.</string>
     <string name="show_long_weekday">Full weekday</string>

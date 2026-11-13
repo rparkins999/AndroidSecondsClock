@@ -15,21 +15,37 @@ public class AnalogFormatTest {
     }
 
     @Test
-    public void selectorsChooseHandsAndDefaultToAllWhenNoneAreSpecified() {
+    public void suppressionTokensRemoveOnlyTheirMatchingHands() {
         AnalogFormat.Hands defaults = AnalogFormat.handsFor("%@");
         assertTrue(defaults.hour);
         assertTrue(defaults.minute);
         assertTrue(defaults.second);
 
-        AnalogFormat.Hands hourAndMinute = AnalogFormat.handsFor("%H%M%@");
-        assertTrue(hourAndMinute.hour);
-        assertTrue(hourAndMinute.minute);
-        assertFalse(hourAndMinute.second);
+        AnalogFormat.Hands withoutHour = AnalogFormat.handsFor("%@%H");
+        assertFalse(withoutHour.hour);
+        assertTrue(withoutHour.minute);
+        assertTrue(withoutHour.second);
 
-        AnalogFormat.Hands secondOnly = AnalogFormat.handsFor("%S%@");
-        assertFalse(secondOnly.hour);
-        assertFalse(secondOnly.minute);
-        assertTrue(secondOnly.second);
+        AnalogFormat.Hands withoutMinute = AnalogFormat.handsFor("%@%M");
+        assertTrue(withoutMinute.hour);
+        assertFalse(withoutMinute.minute);
+        assertTrue(withoutMinute.second);
+
+        AnalogFormat.Hands withoutSecond = AnalogFormat.handsFor("%@%S");
+        assertTrue(withoutSecond.hour);
+        assertTrue(withoutSecond.minute);
+        assertFalse(withoutSecond.second);
+
+        AnalogFormat.Hands withoutHourOrMinute =
+                AnalogFormat.handsFor("%@%H%M");
+        assertFalse(withoutHourOrMinute.hour);
+        assertFalse(withoutHourOrMinute.minute);
+        assertTrue(withoutHourOrMinute.second);
+
+        AnalogFormat.Hands withoutAny = AnalogFormat.handsFor("%@%H%M%S");
+        assertFalse(withoutAny.hour);
+        assertFalse(withoutAny.minute);
+        assertFalse(withoutAny.second);
 
         AnalogFormat.Hands escaped = AnalogFormat.handsFor("%%H %@");
         assertTrue(escaped.hour);

@@ -53,9 +53,9 @@ Common tokens:
 | `%n`, `%%` | New line or literal percent sign |
 | `%@` | Analog dial at this position |
 
-When `%@` is present, `%H`, `%M`, and `%S` select the hour, minute, and second hands instead of
-printing digital time fields. If none of those selectors appear, all three hands are shown. The
-selectors are not printed, and ordinary text and date/time tokens outside the dial continue to work;
+When `%@` is present, all three hands are shown by default. `%H`, `%M`, and `%S` suppress the hour,
+minute, and second hands respectively instead of printing digital time fields. These suppression
+tokens are not printed, and ordinary text and date/time tokens outside the dial continue to work;
 `%x` and `%X` retain their localized date and time behavior.
 
 #### Optional alarm text
@@ -124,8 +124,8 @@ the second hand is shown.
 
 The same date/time tokens and optional alarm block are available. **Sync** shares a format across
 screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. `%@` inserts an
-analog dial at that exact position. When it is present, `%H`, `%M`, and `%S` select the hands instead
-of printing those digital time fields; with no selectors, all three hands are shown. Text and date
+analog dial at that exact position. All three hands appear by default. When it is present, `%H`, `%M`,
+and `%S` suppress the matching hands instead of printing those digital time fields. Text and date
 tokens outside the dial—including localized `%x` and `%X`—continue to render normally. The separate
 seconds-size control applies only in Checkbox mode.
 

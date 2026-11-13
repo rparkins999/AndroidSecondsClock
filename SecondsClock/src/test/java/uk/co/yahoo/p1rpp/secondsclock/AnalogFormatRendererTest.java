@@ -33,12 +33,12 @@ public class AnalogFormatRendererTest {
     }
 
     @Test
-    public void selectorTokensDoNotBecomeInlineTextAndCanHideOneHand() {
+    public void suppressionTokensDoNotBecomeInlineTextAndHideMatchingHands() {
         AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.render(
-                "%H%M%@", null, false);
+                "%H%@%S", null, false);
 
         assertTrue(rendered.hasAnalog);
-        assertTrue(rendered.hands.hour);
+        assertFalse(rendered.hands.hour);
         assertTrue(rendered.hands.minute);
         assertFalse(rendered.hands.second);
         assertEquals(1, rendered.lines.get(0).parts.size());

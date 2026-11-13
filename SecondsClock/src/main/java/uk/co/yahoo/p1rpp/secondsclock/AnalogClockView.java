@@ -18,6 +18,7 @@ final class AnalogClockView extends View {
     private static final float DESIGN_SIZE = 512.0f;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int color = 0xFFFFFFFF;
+    private int handColor = 0xFFFFFFFF;
     private Bitmap face;
     private Calendar time = Calendar.getInstance();
     private boolean showHour = true;
@@ -33,7 +34,14 @@ final class AnalogClockView extends View {
     void setColor(int value) {
         if (color == value) return;
         color = value;
+        handColor = value;
         face = AnalogClockFace.createBitmap(color);
+        invalidate();
+    }
+
+    void setHandColor(int value) {
+        if (handColor == value) return;
+        handColor = value;
         invalidate();
     }
 
@@ -86,7 +94,7 @@ final class AnalogClockView extends View {
         if (showHour) drawHand(canvas, center, hour, 130.0f, 12.0f);
         if (showMinute) drawHand(canvas, center, minute, 190.0f, 8.0f);
         if (showSecond) {
-            paint.setColor(color);
+            paint.setColor(handColor);
             paint.setStrokeWidth(3.5f);
             paint.setStrokeCap(Paint.Cap.ROUND);
             float angle = (float) Math.toRadians(
@@ -95,14 +103,14 @@ final class AnalogClockView extends View {
                     center + (float) Math.cos(angle) * 210.0f,
                     center + (float) Math.sin(angle) * 210.0f, paint);
         }
-        paint.setColor(color);
+        paint.setColor(handColor);
         paint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(center, center, 10.0f, paint);
     }
 
     private void drawHand(Canvas canvas, float center, float degrees,
                           float length, float width) {
-        paint.setColor(color);
+        paint.setColor(handColor);
         paint.setStrokeWidth(width);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStyle(Paint.Style.STROKE);

@@ -16,6 +16,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -62,9 +63,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private int m_bgcolour;
     private TextClock demo;
     private TextClock analogDateDemo;
-    private View analogDemo;
+    private AnalogClockView analogDemo;
     private LinearLayout analogPreview;
-    private ImageView analogDial;
     private int m_fgcolour;
     private String widgetFormat;
     private int showTime;
@@ -530,13 +530,20 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.setMinimumWidth(width);
         analogPreview.setMinimumHeight(height);
         analogPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-        analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
+        analogDemo.setColor(m_fgcolour);
+        analogDemo.setHandColor(Color.WHITE);
         showPreview();
     }
 
     private void configureAnalogPreviewHands(
             View frame, boolean hour, boolean minute, boolean second) {
         if (frame == null) return;
+        if (frame instanceof AnalogClockView) {
+            AnalogClockView dial = (AnalogClockView) frame;
+            dial.setHands(hour, minute, second);
+            dial.setTime(Calendar.getInstance());
+            return;
+        }
         int bothId = R.id.appwidget_analog_hands;
         int hourId = R.id.appwidget_analog_hours_only;
         int minuteId = R.id.appwidget_analog_minutes_only;
@@ -599,7 +606,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     configureAnalogPreviewHands(clock, rendered.hands.hour,
                             rendered.hands.minute, rendered.hands.second);
                     row.addView(clock, new LinearLayout.LayoutParams(
-                            0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0F));
+                            0, ViewGroup.LayoutParams.MATCH_PARENT, 2.0F));
                     added = true;
                 } else if (!part.pattern.isEmpty()) {
                     TextClock text = new TextClock(this);
@@ -641,15 +648,15 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setBackgroundColor(m_bgcolour);
         analogDemo.setBackgroundColor(m_bgcolour);
         analogPreview.setBackgroundColor(m_bgcolour);
-        analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
         if (demobox != null && demobox.getChildCount() > 0) showPreview();
     }
 
     private void updateDemoTextColor() {
         if (demo != null) demo.setTextColor(m_fgcolour);
         if (analogDateDemo != null) analogDateDemo.setTextColor(m_fgcolour);
-        if (analogDial != null) {
-            analogDial.setImageBitmap(AnalogClockFace.createBitmap(m_fgcolour));
+        if (analogDemo != null) {
+            analogDemo.setColor(m_fgcolour);
+            analogDemo.setHandColor(Color.WHITE);
         }
         if (demobox != null && demobox.getChildCount() > 0) showPreview();
     }
@@ -1300,9 +1307,9 @@ public class WidgetConfigureActivity extends ConfigureActivity
             public void afterTextChanged(Editable s) {
                 if (!recursive && !changingFormatInput) {
                     widgetFormat = s.toString();
+                    String preference = formatPreferenceForProfile(formatProfile);
                     m_prefs.edit().putString(
-                            formatPreferenceForProfile(formatProfile),
-                            widgetFormat).apply();
+                            preference, widgetFormat).apply();
                     updateWidget();
                     updateDemo();
                 }
@@ -1319,14 +1326,15 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setBackgroundColor(m_bgcolour);
         demo.setTextColor(m_fgcolour);
         demo.setOnLongClickListener(this);
-        analogDemo = LayoutInflater.from(this).inflate(
-                R.layout.analog_clock_widget, null);
+        analogDemo = new AnalogClockView(this);
         analogDemo.setId(WIDGETDEMO);
         analogDemo.setBackgroundColor(m_bgcolour);
         analogDemo.setOnLongClickListener(this);
-        analogDial = analogDemo.findViewById(R.id.appwidget_analog_dial);
+        analogDemo.setColor(m_fgcolour);
+        analogDemo.setHandColor(Color.WHITE);
         analogPreview = new LinearLayout(this);
         analogPreview.setOrientation(LinearLayout.VERTICAL);
+        analogPreview.setGravity(Gravity.CENTER_HORIZONTAL);
         analogPreview.setBackgroundColor(m_bgcolour);
         analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 3.0F));
