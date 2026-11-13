@@ -46,10 +46,18 @@ import java.util.Objects;
  */
 public class SecondsClockWidget extends AppWidgetProvider {
 
-    @SuppressLint("ApplySharedPref")
     void updateAppWidget(
         Context context, AppWidgetManager appWidgetManager, int appWidgetId)
     {
+        RemoteViews views = buildRemoteViews(context, appWidgetId,
+                appWidgetManager.getAppWidgetOptions(appWidgetId));
+        appWidgetManager.updateAppWidget(appWidgetId, views);
+    }
+
+    /** Creates widget RemoteViews without submitting them to the host manager. */
+    @SuppressLint("ApplySharedPref")
+    static RemoteViews buildRemoteViews(
+            Context context, int appWidgetId, Bundle newOptions) {
         int bgcolour;
         int fgcolour;
         int touchaction;
@@ -118,7 +126,6 @@ public class SecondsClockWidget extends AppWidgetProvider {
             edit.commit();
         }
 
-        Bundle newOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
         int minWidth = newOptions.getInt(
             AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 93);
         int maxHeight = newOptions.getInt(
@@ -228,8 +235,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
             context, appWidgetId, ai, PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.appwidget_root, pi);
 
-        // Instruct the widget manager to update the widget
-        appWidgetManager.updateAppWidget(appWidgetId, views);
+        return views;
     }
 
     private static boolean setRemoteViewIcon(

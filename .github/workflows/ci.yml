@@ -47,3 +47,31 @@ jobs:
 
       - name: Verify generated launcher icon in APKs
         run: python3 scripts/check_launcher_icon.py
+
+  widget-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+
+      - name: Install Android SDK components
+        run: sdkmanager 'platforms;android-28' 'build-tools;34.0.0'
+
+      - name: Apply RemoteViews layout tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          target: google_apis
+          arch: x86
+          script: ./gradlew --no-daemon :SecondsClock:connectedDebugAndroidTest
