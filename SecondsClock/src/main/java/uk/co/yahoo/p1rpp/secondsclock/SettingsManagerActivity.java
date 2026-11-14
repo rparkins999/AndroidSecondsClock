@@ -242,16 +242,24 @@ public class SettingsManagerActivity extends Activity_common
 
         managerErrorText = new TextView(this);
         managerErrorText.setGravity(Gravity.CENTER);
-        managerErrorText.setPadding(dp(8), dp(5), dp(8), dp(5));
+        managerErrorText.setPadding(dp(16), dp(10), dp(16), dp(10));
+        managerErrorText.setTextSize(14.0F);
         managerErrorText.setTextColor(m_foreground);
+        managerErrorText.setMaxLines(2);
+        managerErrorText.setMaxWidth((int)(m_width * 0.85F));
         managerErrorText.setVisibility(View.GONE);
         GradientDrawable errorBackground = new GradientDrawable();
-        errorBackground.setColor(m_background);
-        errorBackground.setStroke(dp(1), m_foreground);
+        errorBackground.setColor(m_background == 0xFF000000
+                ? 0xFF424242 : m_background);
+        errorBackground.setCornerRadius(dp(4));
         managerErrorText.setBackground(errorBackground);
-        panel.addView(managerErrorText, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        managerErrorText.setElevation(dp(4));
+        LinearLayout.LayoutParams errorLayoutParams =
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+        errorLayoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+        panel.addView(managerErrorText, errorLayoutParams);
 
         newPresetButton = new Button(this);
         newPresetButton.setText(R.string.new_preset);
