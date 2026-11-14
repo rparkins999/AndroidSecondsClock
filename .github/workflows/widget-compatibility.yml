@@ -218,6 +218,15 @@ jobs:
             --package uk.co.yahoo.p1rpp.secondsclock.debug --user 0
           ./gradlew --no-daemon connectedDebugAndroidTest
 
+      - name: Upload debug APK
+        if: ${{ success() && matrix.sdk-level == '37.2' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: seconds-clock-debug-apk
+          path: SecondsClock/build/outputs/apk/debug/SecondsClock-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload emulator logcat on failure
         if: failure()
         uses: actions/upload-artifact@v4
