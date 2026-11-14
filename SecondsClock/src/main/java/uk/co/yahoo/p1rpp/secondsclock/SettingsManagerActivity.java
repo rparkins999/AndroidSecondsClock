@@ -9,6 +9,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -437,9 +438,16 @@ public class SettingsManagerActivity extends Activity_common
             doToast(message.toString());
             return;
         }
-        Snackbar.make(newPresetButton, message, Snackbar.LENGTH_LONG)
-                .setAnchorView(newPresetButton)
-                .show();
+        Snackbar snackbar = Snackbar.make(
+                newPresetButton, message, Snackbar.LENGTH_LONG)
+                .setAnchorView(newPresetButton);
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(m_background);
+        background.setCornerRadius(dp(4));
+        background.setStroke(dp(1), m_foreground);
+        snackbar.getView().setBackground(background);
+        snackbar.setTextColor(m_foreground);
+        snackbar.show();
     }
 
     private void executeTransfer() {
