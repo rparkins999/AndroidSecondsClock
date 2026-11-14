@@ -29,6 +29,7 @@ final class SettingsTransferRules {
         putEffective(values, result, "showMonthDay", 1);
         putEffective(values, result, "showMonth", 2);
         putEffective(values, result, "showYear", 1);
+        putEffective(values, result, "analogMode", false);
         putEffective(values, result, "showNextAlarm", false);
         putEffective(values, result, "formatSyncEnabled", true);
         putEffective(values, result, "textStyleEmoji", false);
@@ -41,6 +42,9 @@ final class SettingsTransferRules {
             copy(values, result, "formatPortrait", "formatVertical");
             copy(values, result, "formatLandscape", "formatHorizontal");
             Object secondsSize = values.get("secondsSize");
+            if (secondsSize instanceof Number) {
+                result.put("showSeconds", ((Number) secondsSize).intValue() != 0);
+            }
             if (!isAdvancedFormat(source, values)) {
                 int size = secondsSize instanceof Number
                         ? ((Number) secondsSize).intValue() : 255;
@@ -53,7 +57,13 @@ final class SettingsTransferRules {
             if (!isAdvancedFormat(source, values)) {
                 int time = showTime instanceof Number
                         ? ((Number) showTime).intValue() : 2;
-                if (time > 0) result.put("secondsSize", time == 1 ? 0 : 255);
+                Object showSeconds = values.get("showSeconds");
+                boolean analogMode = Boolean.TRUE.equals(values.get("analogMode"));
+                if (analogMode && showSeconds instanceof Boolean) {
+                    result.put("secondsSize", (Boolean) showSeconds ? 255 : 0);
+                } else if (time > 0) {
+                    result.put("secondsSize", time == 1 ? 0 : 255);
+                }
             }
         }
 

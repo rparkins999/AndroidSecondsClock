@@ -61,7 +61,6 @@ final class DateCommandFormat {
         if (format == null || format.isEmpty()) {
             return new FormattedPattern("", new ArrayList<PatternRange>());
         }
-
         StringBuilder result = new StringBuilder();
         List<PatternRange> timeRanges = new ArrayList<>();
         Date now = new Date();
@@ -69,7 +68,7 @@ final class DateCommandFormat {
         while (index < format.length()) {
             if (format.startsWith(ALARM_START, index)) {
                 int contentStart = index + ALARM_START.length();
-                int end = format.indexOf(ALARM_END, contentStart);
+                int end = alarmEndIndex(format, contentStart);
                 if (end >= 0) {
                     int separator = alarmSeparatorIndex(format, contentStart, end);
                     int selectedStart;
@@ -95,17 +94,8 @@ final class DateCommandFormat {
                         if (nextAlarmTime == null) {
                             appendPattern(result, timeRanges, selectedFormat);
                         } else {
-                            AttributedCharacterIterator alarmText =
-                                    new SimpleDateFormat(selectedFormat.pattern,
-                                            Locale.getDefault())
-                                            .formatToCharacterIterator(referenceDate);
-                            int[] outputPositions = appendLiteralWithMapping(
-                                    result, iteratorText(alarmText));
-                            for (PatternRange range : attributedTimeRanges(alarmText)) {
-                                timeRanges.add(new PatternRange(
-                                        outputPositions[range.start],
-                                        outputPositions[range.end]));
-                            }
+                            appendAlarmText(result, timeRanges,
+                                    selectedFormat, referenceDate);
                         }
                     }
                     index = end + ALARM_END.length();
@@ -135,6 +125,52 @@ final class DateCommandFormat {
                 pattern, mergeTimeRanges(pattern, timeRanges, true));
     }
 
+    /** Selects conditional text while retaining date tokens for other parsers. */
+    static String selectAlarmBranch(String format, Long nextAlarmTime) {
+        if (format == null || format.isEmpty()) return format;
+        StringBuilder selected = new StringBuilder(format.length());
+        for (int index = 0; index < format.length();) {
+            if (format.startsWith("%%", index)) {
+                selected.append("%%");
+                index += 2;
+                continue;
+            }
+            if (format.startsWith(ALARM_START, index)) {
+                int contentStart = index + ALARM_START.length();
+                int end = alarmEndIndex(format, contentStart);
+                if (end >= 0) {
+                    int separator = alarmSeparatorIndex(format, contentStart, end);
+                    int selectedStart;
+                    int selectedEnd;
+                    if (nextAlarmTime != null) {
+                        selectedStart = contentStart;
+                        selectedEnd = separator < 0 ? end : separator;
+                    } else if (separator >= 0) {
+                        selectedStart = separator + ALARM_SEPARATOR.length();
+                        selectedEnd = end;
+                    } else {
+                        selectedStart = end;
+                        selectedEnd = end;
+                    }
+                    selected.append(format, selectedStart, selectedEnd);
+                    index = end + ALARM_END.length();
+                    continue;
+                }
+                // Match the date formatter: an unclosed block is literal.
+                selected.append(ALARM_START);
+                index = contentStart;
+                continue;
+            }
+            if (format.startsWith(ALARM_END, index)) {
+                selected.append(ALARM_END);
+                index += ALARM_END.length();
+                continue;
+            }
+            selected.append(format.charAt(index++));
+        }
+        return selected.toString();
+    }
+
     private static int alarmSeparatorIndex(String format, int start, int end) {
         for (int index = start; index < end;) {
             if (format.startsWith("%%", index)) {
@@ -148,14 +184,31 @@ final class DateCommandFormat {
         return -1;
     }
 
-    private static int nextTagIndex(String format, int fromIndex) {
-        int result = -1;
-        String[] tags = {ALARM_START, ALARM_END};
-        for (String tag : tags) {
-            int found = format.indexOf(tag, fromIndex);
-            if (found >= 0 && (result < 0 || found < result)) result = found;
+    private static int alarmEndIndex(String format, int start) {
+        for (int index = start; index < format.length();) {
+            if (format.startsWith("%%", index)) {
+                index += 2;
+            } else if (format.startsWith(ALARM_END, index)) {
+                return index;
+            } else {
+                ++index;
+            }
         }
-        return result;
+        return -1;
+    }
+
+    private static int nextTagIndex(String format, int fromIndex) {
+        for (int index = fromIndex; index < format.length();) {
+            if (format.startsWith("%%", index)) {
+                index += 2;
+            } else if (format.startsWith(ALARM_START, index)
+                    || format.startsWith(ALARM_END, index)) {
+                return index;
+            } else {
+                ++index;
+            }
+        }
+        return -1;
     }
 
     private static FormattedPattern toDatePatternWithTimeRanges(
@@ -213,6 +266,22 @@ final class DateCommandFormat {
         String result = pattern.toString();
         return new FormattedPattern(
                 result, mergeTimeRanges(result, timeRanges, true));
+    }
+
+    /** Renders an alarm branch to literal text while retaining time-field ranges. */
+    private static void appendAlarmText(StringBuilder output,
+                                        List<PatternRange> outputTimeRanges,
+                                        FormattedPattern selectedFormat,
+                                        Date referenceDate) {
+        AttributedCharacterIterator alarmText =
+                new SimpleDateFormat(selectedFormat.pattern, Locale.getDefault())
+                        .formatToCharacterIterator(referenceDate);
+        int[] outputPositions = appendLiteralWithMapping(
+                output, iteratorText(alarmText));
+        for (PatternRange range : attributedTimeRanges(alarmText)) {
+            outputTimeRanges.add(new PatternRange(
+                    outputPositions[range.start], outputPositions[range.end]));
+        }
     }
 
     private static boolean isTimeConversion(char conversion) {

@@ -90,6 +90,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final TextView m_weekdayView;
     private final TextView m_yearView;
     private TextClock m_customClockView;
+    private LinearLayout m_customFormatLayout;
+    private AnalogClockView m_checkboxAnalogView;
+    private final List<AnalogClockView> m_advancedAnalogViews = new ArrayList<>();
+    private boolean m_customAnalogShowsSeconds;
     private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
     private int m_height;
@@ -105,7 +109,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private final BroadcastReceiver m_clockChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (m_customClockView != null) {
+            if (m_customClockView != null || m_customFormatLayout != null) {
                 updateCustomClockFormat();
             } else if (m_prefs.getBoolean("CshowNextAlarm", false)) {
                 updateLayout();
@@ -127,6 +131,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
         if (m_customClockView != null) m_customClockView.setTextColor(colour);
+        if (m_checkboxAnalogView != null) m_checkboxAnalogView.setColor(colour);
+        for (AnalogClockView view : m_advancedAnalogViews) view.setColor(colour);
     }
 
     // Update the displayed RGB colour without resetting its dimming opacity.
@@ -401,6 +407,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (m_customClockView != null) {
             return next;
         }
+        if (m_customFormatLayout != null) {
+            for (AnalogClockView view : m_advancedAnalogViews) view.setTime(next);
+            return next;
+        }
+        if (m_checkboxAnalogView != null) m_checkboxAnalogView.setTime(next);
         int timeLength = String.valueOf(m_timeView.getText()).length();
         fixLengths(next);
         if (timeLength != String.valueOf(m_timeView.getText()).length()) {
@@ -466,6 +477,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
             long now = next.getTimeInMillis();
             int secondsSize = m_prefs.getInt(
                     "CsecondsSize", DEFAULT_SECONDS_SIZE);
+            if (m_customFormatLayout != null) {
+                secondsSize = m_customAnalogShowsSeconds ? 255 : 0;
+            }
             long offset = ClockTickDelay.millisecondsUntilNextTick(
                     now, secondsSize);
             adjustColour();
@@ -476,7 +490,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void setHeight (int height) { m_height = height; }
 
     private void updateCustomClockFormat() {
-        if (m_customClockView == null) return;
+        if (m_customClockView == null && m_customFormatLayout == null) return;
         Configuration config = getResources().getConfiguration();
         String sync = m_prefs.getString("Cformat",
                 Formatter.fromClockPreferences(m_owner, m_prefs, "C"));
@@ -496,10 +510,90 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 && m_prefs.getBoolean("CadvancedLargeTime", true);
         lines = FormatLineSplit.applyLegacyFirstLineEmphasis(
                 lines, legacyLargeLandscapeTime);
+        if (AnalogFormat.containsClock(format)) {
+            if (m_customFormatLayout != null) removeView(m_customFormatLayout);
+            m_advancedAnalogViews.clear();
+            AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.renderLines(
+                    lines, nextAlarmTime);
+            m_customAnalogShowsSeconds = rendered.hasSecondHand;
+            m_customFormatLayout = makeAdvancedAnalogLayout(rendered);
+            m_customClockView = null;
+            addView(m_customFormatLayout, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            return;
+        }
+        if (m_customFormatLayout != null) removeView(m_customFormatLayout);
+        m_customFormatLayout = null;
+        m_advancedAnalogViews.clear();
+        m_customAnalogShowsSeconds = false;
+        if (m_customClockView == null) m_customClockView = makeCustomClock(m_fgcolour);
         SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
         m_customClockView.setFormat12Hour(pattern);
         m_customClockView.setFormat24Hour(pattern);
         m_customClockView.setLines(countLines(pattern));
+    }
+
+    private LinearLayout makeAdvancedAnalogLayout(
+            AnalogFormatRenderer.Result rendered) {
+        LinearLayout layout = new LinearLayout(m_owner);
+        layout.setOrientation(VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        TextPaint measurePaint = new TextPaint(m_customClockView == null
+                ? new TextPaint() : m_customClockView.getPaint());
+        measurePaint.setTextSize(100.0F);
+        for (AnalogFormatRenderer.Line line : rendered.lines) {
+            LinearLayout row = new LinearLayout(m_owner);
+            row.setOrientation(HORIZONTAL);
+            row.setGravity(Gravity.CENTER);
+            float rowWeight = line.hands != null ? 3.0F
+                    : line.emphasized ? 1.6F : 1.0F;
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, rowWeight);
+            layout.addView(row, rowParams);
+            boolean addedPart = false;
+            for (AnalogFormatRenderer.Part part : line.parts) {
+                if (part.analog) {
+                    AnalogClockView dial = new AnalogClockView(m_owner);
+                    dial.setColor(m_fgcolour);
+                    dial.setHands(line.hands.hour,
+                            line.hands.minute, line.hands.second);
+                    m_advancedAnalogViews.add(dial);
+                    row.addView(dial, new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    addedPart = true;
+                    continue;
+                }
+                if (part.pattern.isEmpty()) continue;
+                TextClock text = makeCustomClock(m_fgcolour);
+                text.setSingleLine(true);
+                text.setLines(1);
+                SpannableStringBuilder pattern = new SpannableStringBuilder(part.pattern);
+                if (m_sevenSegmentTypeface != null) {
+                    for (DateCommandFormat.PatternRange range : part.timeRanges) {
+                        pattern.setSpan(new TypefaceMetricSpan(m_sevenSegmentTypeface),
+                                range.start, range.end,
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                }
+                text.setFormat12Hour(pattern);
+                text.setFormat24Hour(pattern);
+                float weight = Math.max(0.25F, measureStyledTextWidth(
+                        DateFormat.format(pattern, System.currentTimeMillis()),
+                        measurePaint));
+                row.addView(text, new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.MATCH_PARENT, weight));
+                addedPart = true;
+            }
+            if (!addedPart) {
+                TextView blank = createInstance();
+                row.addView(blank, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+        }
+        return layout;
     }
     private SpannableStringBuilder makeAdvancedPattern(
             List<FormatLineSplit.Line> lines, Long nextAlarmTime) {
@@ -659,6 +753,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void updateLayout() {
         removeAllViews(this);
         m_customClockView = null;
+        m_customFormatLayout = null;
+        m_checkboxAnalogView = null;
+        m_advancedAnalogViews.clear();
+        m_customAnalogShowsSeconds = false;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
         int m_secondsSize = m_prefs.getInt(
@@ -671,6 +769,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
         int showYear = m_prefs.getInt("CshowYear", 1);
         boolean advancedFormatMode =
                 m_prefs.getBoolean("CadvancedFormatMode", false);
+        boolean checkboxAnalogMode = !advancedFormatMode
+                && m_prefs.getBoolean("CanalogMode", false);
         m_fgcolour = m_prefs.getInt("Cfgcolour", 0xFFFFFFFF);
         Typeface font;
         float lsp = 1.0F;
@@ -702,9 +802,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (advancedFormatMode) {
             m_customClockView = makeCustomClock(m_fgcolour);
             updateCustomClockFormat();
-            addView(m_customClockView, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
+            if (m_customFormatLayout == null) {
+                addView(m_customClockView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+            }
             m_ticker.run();
             return;
         }
@@ -757,8 +859,14 @@ class ClockView extends LinearLayout implements SensorEventListener {
             }
             float timeWeight = showAlarmLine
                     ? (m_haveDate ? 0.75F : 0.85F) : 0.85F;
-            addView(ll, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, timeWeight));
+            if (checkboxAnalogMode) {
+                m_checkboxAnalogView = makeCheckboxAnalogView(m_secondsSize > 0);
+                addView(m_checkboxAnalogView, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0, timeWeight));
+            } else {
+                addView(ll, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 0, timeWeight));
+            }
             if (m_haveDate) {
                 boolean first = true;
                 StringBuilder sb = new StringBuilder();
@@ -823,7 +931,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 (   (showMonth == 2) || (showWeekDay == 2) || (showShortDate > 0))
                  && !(m_prefs.getBoolean("Cforcevertical", false));
             // first work out how much space we need
-            if (horizontalTime)
+            if (checkboxAnalogMode) {
+                space += 5F;
+            } else if (horizontalTime)
             {
                 ll.setOrientation(HORIZONTAL);
                 if (m_secondsSize == 255) { // full size seconds
@@ -874,20 +984,39 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     space += 3F * lsp;
                 }
             }
-            if (m_secondsSize > 0) { space += (lsp * m_secondsSize) / 255F; }
+            if (!checkboxAnalogMode && m_secondsSize > 0) {
+                space += (lsp * m_secondsSize) / 255F;
+            }
             if (showWeekDay == 1) { space += 1F; m_weekdayFormat = "EEE"; }
             else if (showWeekDay == 2) { space += 1F; m_weekdayFormat = "EEEE"; }
-            if (showMonthDay != 0) { space += 1F; }
-            if (showMonth == 1) { space += 1F; m_monthFormat = "LLL"; }
-            else if (showMonth == 2) { space += 1F; m_monthFormat = "LLLL"; }
-            if (showYear != 0) { space += 1F; }
+            if (showShortDate > 0) {
+                space += 1F;
+            } else {
+                if (showMonthDay != 0) { space += 1F; }
+                if (showMonth == 1) { space += 1F; m_monthFormat = "LLL"; }
+                else if (showMonth == 2) { space += 1F; m_monthFormat = "LLLL"; }
+                if (showYear != 0) { space += 1F; }
+            }
             if (showAlarmLine) { space += 1F; }
             // now add the views
             if (horizontalTime) {
-                addView(ll, new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        (int) (lsp * m_height / space)));
+                if (checkboxAnalogMode) {
+                    m_checkboxAnalogView = makeCheckboxAnalogView(m_secondsSize > 0);
+                    addView(m_checkboxAnalogView, new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            (int) (5F * m_height / space)));
+                } else {
+                    addView(ll, new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            (int) (lsp * m_height / space)));
+                }
             } else { // time in vertical format
+                if (checkboxAnalogMode) {
+                    m_checkboxAnalogView = makeCheckboxAnalogView(m_secondsSize > 0);
+                    addView(m_checkboxAnalogView, new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            (int) (5F * m_height / space)));
+                } else {
                 addView(m_hoursView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (m_height / space)));
                 if (lsp > 1F) {
@@ -916,6 +1045,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     addView(m_ampmView, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         (int) (m_height / space)));
+                }
                 }
             }
             if (showWeekDay > 0) {
@@ -961,6 +1091,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
         tv.setGravity(Gravity.CENTER);
         tv.setLines(1);
         return tv;
+    }
+
+    private AnalogClockView makeCheckboxAnalogView(boolean showSeconds) {
+        AnalogClockView dial = new AnalogClockView(m_owner);
+        dial.setColor(m_fgcolour);
+        dial.setHands(true, true, showSeconds);
+        return dial;
     }
 
     public ClockView(Activity context) {

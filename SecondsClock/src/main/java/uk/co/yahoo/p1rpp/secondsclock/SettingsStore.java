@@ -39,13 +39,15 @@ final class SettingsStore {
     static final String PRESETS_KEY = "settingsPresets";
 
     private static final String[] WIDGET_SETTING_SUFFIXES = {
-            "bgcolour", "fgcolour", "touchaction", "formatSyncEnabled",
-            "textStyleEmoji", "advancedFormatMode", "showTime",
+            "bgcolour", "fgcolour", "touchaction", "analogMode",
+            "formatSyncEnabled",
+            "textStyleEmoji", "advancedFormatMode", "showTime", "showSeconds",
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
             "showYear", "showNextAlarm", "format", "formatHorizontal",
             "formatVertical", "formatProfile"};
     private static final String[] CLOCK_SETTING_SUFFIXES = {
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
+            "analogMode",
             "showYear", "secondsSize", "advancedFormatMode", "format",
             "formatPortrait", "formatLandscape", "formatSyncEnabled",
             "formatProfile", "textStyleEmoji", "fgcolour", "minBright",
@@ -56,7 +58,8 @@ final class SettingsStore {
             "formatPortrait", "formatLandscape"};
     private static final String[] BOOLEAN_SETTINGS = {
             "formatSyncEnabled", "textStyleEmoji", "advancedFormatMode",
-            "showNextAlarm", "7seg", "forcevertical", "advancedLargeTime"};
+            "showNextAlarm", "analogMode", "showSeconds", "7seg", "forcevertical",
+            "advancedLargeTime"};
 
     private SettingsStore() {}
 
@@ -412,10 +415,14 @@ final class SettingsStore {
         putDefault(values, "bgcolour", 0x00000000);
         putDefault(values, "fgcolour", 0xFFFFFFFF);
         putDefault(values, "touchaction", 0);
+        putDefault(values, "analogMode", false);
         putDefault(values, "formatSyncEnabled", true);
         putDefault(values, "textStyleEmoji", false);
         putDefault(values, "advancedFormatMode", values.containsKey("format"));
         putDefault(values, "showTime", 2);
+        Object showTime = values.get("showTime");
+        putDefault(values, "showSeconds",
+                showTime instanceof Number && ((Number) showTime).intValue() == 2);
         putDefault(values, "showWeekDay", 2);
         putDefault(values, "showShortDate", 0);
         putDefault(values, "showMonthDay", 1);
@@ -431,6 +438,7 @@ final class SettingsStore {
         putDefault(values, "showMonthDay", 1);
         putDefault(values, "showMonth", 2);
         putDefault(values, "showYear", 1);
+        putDefault(values, "analogMode", false);
         putDefault(values, "secondsSize", 255);
         putDefault(values, "advancedFormatMode", false);
         putDefault(values, "formatSyncEnabled", true);
