@@ -134,6 +134,40 @@ jobs:
           logcat_pid=
           deadline=$((SECONDS + 600))
 
+          wait_for_process_exit() {
+            local pid="$1"
+            local wait_seconds="$2"
+            local process_deadline=$((SECONDS + wait_seconds))
+            while (( SECONDS < process_deadline )); do
+              if ! kill -0 "$pid" 2>/dev/null; then
+                return 0
+              fi
+              sleep 1
+            done
+            ! kill -0 "$pid" 2>/dev/null
+          }
+
+          stop_process() {
+            local pid="$1"
+            local grace_seconds="$2"
+            if ! kill -0 "$pid" 2>/dev/null; then
+              wait "$pid" 2>/dev/null || true
+              return 0
+            fi
+            kill -TERM "$pid" 2>/dev/null || true
+            if wait_for_process_exit "$pid" "$grace_seconds"; then
+              wait "$pid" 2>/dev/null || true
+              return 0
+            fi
+            echo "Process $pid did not stop after SIGTERM; sending SIGKILL."
+            kill -KILL "$pid" 2>/dev/null || true
+            if wait_for_process_exit "$pid" 5; then
+              wait "$pid" 2>/dev/null || true
+            else
+              echo "Process $pid is still present after SIGKILL; not blocking cleanup."
+            fi
+          }
+
           cleanup() {
             result=$?
             trap - EXIT
@@ -143,16 +177,20 @@ jobs:
               timeout 20 adb -s emulator-5554 logcat -b all -d -t 1000 || true
             fi
             if [[ -n "$logcat_pid" ]]; then
-              kill "$logcat_pid" 2>/dev/null || true
-              wait "$logcat_pid" 2>/dev/null || true
+              stop_process "$logcat_pid" 5
             fi
             if [[ $result -ne 0 && -f "$logcat_file" ]]; then
               echo 'Captured emulator logcat (last 400 lines):'
               tail -n 400 "$logcat_file"
             fi
-            timeout 10 adb -s emulator-5554 emu kill >/dev/null 2>&1 || true
-            kill "$emulator_pid" 2>/dev/null || true
-            wait "$emulator_pid" 2>/dev/null || true
+            timeout --kill-after=5s 25s adb -s emulator-5554 emu kill \
+              >/dev/null 2>&1 || true
+            if ! wait_for_process_exit "$emulator_pid" 20; then
+              echo 'Emulator did not exit after adb emu kill; stopping it directly.'
+              stop_process "$emulator_pid" 5
+            else
+              wait "$emulator_pid" 2>/dev/null || true
+            fi
             exit "$result"
           }
           trap cleanup EXIT

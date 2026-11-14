@@ -84,6 +84,11 @@
             android:screenOrientation="fullSensor"
             android:exported="false" />
 
+        <activity
+            android:name="uk.co.yahoo.p1rpp.secondsclock.GlobalSettingsActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="false" />
+
         <meta-data
             android:name="com.samsung.android.icon_container.has_icon_container"
             android:value="true"/>
