@@ -27,6 +27,11 @@ final class FormatLineSplit {
     private FormatLineSplit() {}
 
     static List<Line> splitLines(String format) {
+        return splitLines(format, true);
+    }
+
+    /** Splits format lines, optionally retaining the full-screen-only `%L` token. */
+    static List<Line> splitLines(String format, boolean removeEmphasisMarkers) {
         List<Line> lines = new ArrayList<>();
         if (format == null) {
             lines.add(new Line("", false));
@@ -96,7 +101,11 @@ final class FormatLineSplit {
                 emphasized = false;
                 index += 2;
             } else if (format.startsWith(EMPHASIS, index)) {
-                emphasized = true;
+                if (removeEmphasisMarkers) {
+                    emphasized = true;
+                } else {
+                    line.append(EMPHASIS);
+                }
                 index += EMPHASIS.length();
             } else if (conversion == ':' && index + 2 < format.length()
                     && format.charAt(index + 2) == 'z') {

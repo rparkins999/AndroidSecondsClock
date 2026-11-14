@@ -26,8 +26,10 @@ The options differ slightly between home-screen widgets and the full-screen cloc
 
 Choose whether to show the time, seconds, weekday, date, and next alarm. You can use a numeric date
 or choose the day, month, and year separately. Time uses the device's 12- or 24-hour preference.
-The layout adapts to the widget's size. The **Show next alarm (any alarm app)** option displays the
-next alarm Android reports, not necessarily one from the default clock app.
+The layout adapts to the widget's size. **Analog clock** replaces the digital time with a dial while
+keeping the date, alarm, and other checkbox settings available; **Show seconds** toggles only its
+second hand. The **Show next alarm (any alarm app)** option displays the next alarm Android reports,
+not necessarily one from the default clock app.
 
 ### Advanced mode
 
@@ -49,6 +51,19 @@ Common tokens:
 | `%F` | ISO date |
 | `%x`, `%X` | Localized date or time |
 | `%n`, `%%` | New line or literal percent sign |
+| `%C` | Full-row analog clock (on its own line) |
+
+Put `%C` on its own line to show a full-row analog clock. The clock line renders no text; all hands
+are shown by default. `%H`, `%M`, and `%S` on that same line suppress the hour, minute, and second
+hands respectively, and are consumed rather than printed. A real newline or `%n` ends the clock line.
+On every other line, time tokens such as `%H`, `%M`, and `%S` print normally, and `%x` and `%X` retain
+their localized date and time behavior. For example:
+
+```text
+%H:%M:%S
+%C
+Other text
+```
 
 #### Optional alarm text
 
@@ -69,6 +84,13 @@ empty. Android does not expose the alarm's label.
 You can change the widget's text colour, background colour, and background opacity. Widget touch
 actions can open the system clock, SecondsClock, its settings, or the full-screen clock. You can
 place multiple widgets with different settings on the same or different home-screen pages.
+
+In Checkbox mode, each widget can optionally show an analog face with 12 numerals. The date and other
+selected details remain below the dial, and **Show seconds** controls only its second hand. The dial
+markings follow the widget's text colour; Android 16 and later also tint the hands to match. On Android
+17, the platform clock synchronizes the second hand when the widget becomes visible again. Earlier
+Android versions use a launcher-side animation that some launchers may resume at its previous
+position after hiding the widget. The widget does not schedule recurring app alarms.
 
 If a widget's touch action doesn't open its configuration page, open SecondsClock from its app icon
 (usually in the apps list), then choose **Configure existing widget**. Touch the widget you want to
@@ -101,13 +123,18 @@ in both Light and Dark appearance.
 
 Choose the time, seconds size, weekday, date, and next-alarm options. The clock arranges the
 selected information automatically. The seconds size can be adjusted separately. Its checkbox-mode
-alarm is shown as `ALM: Mon, 3:30`.
+alarm is shown as `ALM: Mon, 3:30`. **Analog clock** replaces the digital time with a dial while
+keeping the selected date and alarm details below it; the seconds-size control determines whether
+the second hand is shown.
 
 ### Advanced mode
 
 The same date/time tokens and optional alarm block are available. **Sync** shares a format across
-screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. Include `%S`
-to show seconds; the separate seconds-size control applies only in Checkbox mode.
+screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. Put `%C` on its
+own line for a full-row analog dial; that line renders no text. All hands appear by default. `%H`, `%M`,
+and `%S` on the same line suppress the matching hands instead of printing those digital time fields.
+Other lines continue to render normally, including localized `%x` and `%X`. A real newline or `%n`
+ends the clock line. The separate seconds-size control applies only in Checkbox mode.
 
 To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines share extra height
 and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.

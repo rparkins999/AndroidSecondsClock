@@ -85,6 +85,8 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int FORMATFIELD = FORMATPROFILE_LANDSCAPE + 1;
     private static final int SHOW_NEXT_ALARM = FORMATFIELD + 1;
     private static final int TEXT_STYLE_EMOJI = SHOW_NEXT_ALARM + 1;
+    private static final int ANALOG_MODE = TEXT_STYLE_EMOJI + 1;
+    private static final int SHOW_SECONDS = ANALOG_MODE + 1;
 
     // Conversion between threshold slider and numeric value
     private int m_fgcolour;
@@ -96,6 +98,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private Slider m_thresholdSlider;
     private EditText m_thresholdValue;
     private CheckBox m_onlyopacity;
+    private CheckBox m_showSecondsCheckBox;
     private ClockView m_clockView;
     private Button m_textColour;
     private Button m_data;
@@ -106,6 +109,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private boolean m_advancedFormatMode;
     private boolean m_changingFormatInput;
     private boolean m_updatingColourControls;
+    private boolean m_updatingShowSecondsCheckBox;
     private int m_formatProfile = FormatProfiles.SYNC;
     private EditText m_formatInput;
     private TextView m_formatLabel;
@@ -305,6 +309,11 @@ public class ClockConfigureActivity extends ConfigureActivity
                 R.string.format_token_percent, "%%");
         addClockTokenSection(guide, R.string.widget_format_other_section);
         addClockTokenRow(guide, R.string.format_token_large_line, "%L", 2);
+        addClockTokenRow(guide,
+                R.string.format_token_analog_clock, "%C\n", 2);
+        TextView analogHint = new TextView(this);
+        analogHint.setText(R.string.format_token_hand_selector_hint);
+        guide.addView(analogHint, lpMatchWrap);
         TextView landscapeHint = new TextView(this);
         landscapeHint.setText(R.string.clock_format_landscape_emphasis_hint);
         guide.addView(landscapeHint, lpMatchWrap);
@@ -412,6 +421,8 @@ public class ClockConfigureActivity extends ConfigureActivity
             case DATABUTTON: doToast(R.string.setdatahelp); return true;
             case FORMATMODE: doToast(R.string.clock_format_caption); return true;
             case SHOW_NEXT_ALARM: doToast(R.string.next_alarm_source_help); return true;
+            case ANALOG_MODE: doToast(R.string.clock_analog_mode_help); return true;
+            case SHOW_SECONDS: doToast(R.string.clock_show_seconds_help); return true;
             case DISPLAYBUTTON: doToast(R.string.setdisplayhelp); return true;
             case DIMBUTTON: doToast(R.string.setdimminghelp); return true;
             case CURRENTLUX: doToast(R.string.luxhelp); return true;
@@ -470,6 +481,7 @@ public class ClockConfigureActivity extends ConfigureActivity
                 break;
             case SECONDSSIZER:
                 m_prefs.edit().putInt("CsecondsSize", value).commit();
+                updateShowSecondsCheckBox(value);
                 m_clockView.updateLayout();
                 break;
             case MINBRIGHTSLIDER:
@@ -562,6 +574,17 @@ public class ClockConfigureActivity extends ConfigureActivity
                 m_prefs.edit().putBoolean("CshowNextAlarm", isChecked).commit();
                 m_clockView.updateLayout();
                 break;
+            case ANALOG_MODE:
+                m_prefs.edit().putBoolean("CanalogMode", isChecked).commit();
+                m_clockView.updateLayout();
+                break;
+            case SHOW_SECONDS:
+                if (m_updatingShowSecondsCheckBox) break;
+                int secondsSize = isChecked ? 255 : 0;
+                m_prefs.edit().putInt("CsecondsSize", secondsSize).commit();
+                if (m_secondsSizer != null) m_secondsSizer.setValue(secondsSize);
+                m_clockView.updateLayout();
+                break;
             case TEXT_STYLE_EMOJI:
                 m_prefs.edit().putBoolean("CtextStyleEmoji", isChecked).apply();
                 m_clockView.updateLayout();
@@ -614,6 +637,7 @@ public class ClockConfigureActivity extends ConfigureActivity
         scrollView.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
         LinearLayout lboxes = new LinearLayout(this);
         lboxes.setOrientation(LinearLayout.VERTICAL);
+        m_showSecondsCheckBox = null;
         m_formatModeButton.setText(m_advancedFormatMode
                 ? R.string.checkbox_mode : R.string.advanced_format_mode);
         if (m_advancedFormatMode) {
@@ -633,6 +657,21 @@ public class ClockConfigureActivity extends ConfigureActivity
             showNextAlarm.setOnLongClickListener(this);
             showNextAlarm.setOnCheckedChangeListener(this);
             lboxes.addView(showNextAlarm);
+            CheckBox analogMode = new CheckBox(this);
+            analogMode.setId(ANALOG_MODE);
+            analogMode.setText(R.string.clock_analog_mode);
+            analogMode.setChecked(m_prefs.getBoolean("CanalogMode", false));
+            analogMode.setOnLongClickListener(this);
+            analogMode.setOnCheckedChangeListener(this);
+            lboxes.addView(analogMode);
+            m_showSecondsCheckBox = new CheckBox(this);
+            m_showSecondsCheckBox.setId(SHOW_SECONDS);
+            m_showSecondsCheckBox.setText(R.string.show_seconds);
+            m_showSecondsCheckBox.setChecked(
+                    m_prefs.getInt("CsecondsSize", 255) > 0);
+            m_showSecondsCheckBox.setOnLongClickListener(this);
+            m_showSecondsCheckBox.setOnCheckedChangeListener(this);
+            lboxes.addView(m_showSecondsCheckBox);
         }
         CheckBox cb = new CheckBox(this);
         cb.setId(SEVENSEGMENTS);
@@ -860,6 +899,16 @@ public class ClockConfigureActivity extends ConfigureActivity
             gl.addView(scrollView, -1, layoutParams);
         }
         m_topLayout.addView(gl);
+    }
+
+    private void updateShowSecondsCheckBox(int secondsSize) {
+        if (m_showSecondsCheckBox == null
+                || m_showSecondsCheckBox.isChecked() == (secondsSize > 0)) {
+            return;
+        }
+        m_updatingShowSecondsCheckBox = true;
+        m_showSecondsCheckBox.setChecked(secondsSize > 0);
+        m_updatingShowSecondsCheckBox = false;
     }
 
     @SuppressLint("SetTextI18n")

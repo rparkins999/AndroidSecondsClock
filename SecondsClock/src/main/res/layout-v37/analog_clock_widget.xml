@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/appwidget_analogclock"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:contentDescription="@string/widget_analog_mode">
+
+    <ImageView
+        android:id="@+id/appwidget_analog_dial"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
+
+    <AnalogClock
+        android:id="@+id/appwidget_analog_hands"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_hand_hour"
+        android:hand_minute="@drawable/analog_hand_minute"
+        android:visibility="gone" />
+
+    <AnalogClock
+        android:id="@+id/appwidget_analog_hours_only"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_hand_hour"
+        android:hand_minute="@drawable/analog_transparent_dial"
+        android:visibility="gone" />
+
+    <AnalogClock
+        android:id="@+id/appwidget_analog_minutes_only"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_transparent_dial"
+        android:hand_minute="@drawable/analog_hand_minute"
+        android:visibility="gone" />
+
+    <AnalogClock
+        android:id="@+id/appwidget_analog_no_hands"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dial="@drawable/analog_transparent_dial"
+        android:hand_hour="@drawable/analog_transparent_dial"
+        android:hand_minute="@drawable/analog_transparent_dial"
+        android:visibility="gone" />
+
+    <ViewFlipper
+        android:id="@+id/appwidget_second_hand_flipper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:autoStart="true"
+        android:animateFirstView="false"
+        android:flipInterval="1000"
+        android:visibility="gone">
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="0" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="6" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="12" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="18" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="24" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="30" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="36" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="42" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="48" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="54" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="60" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="66" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="72" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="78" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="84" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="90" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="96" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="102" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="108" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="114" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="120" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="126" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="132" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="138" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="144" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="150" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="156" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="162" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="168" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="174" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="180" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="186" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="192" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="198" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="204" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="210" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="216" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="222" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="228" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="234" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="240" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="246" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="252" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="258" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="264" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="270" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="276" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="282" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="288" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="294" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="300" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="306" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="312" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="318" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="324" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="330" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="336" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="342" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="348" />
+        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/analog_hand_second" android:rotation="354" />
+    </ViewFlipper>
+
+    <ImageView
+        android:id="@+id/appwidget_analog_center_cap"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/analog_center_cap" />
+</FrameLayout>
