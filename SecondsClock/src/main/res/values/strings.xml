@@ -112,7 +112,8 @@
     <string name="widget_analog_mode">Analog clock</string>
     <string name="widget_analog_mode_help">Shows an analog dial in checkbox mode. Your date, weekday, alarm, and other checkbox settings remain available below it. Show seconds toggles only the second hand; the hour and minute hands stay visible. Dial markings follow the widget text colour; Android 16 and later also tint the hands to match. The app schedules no recurring alarms.</string>
     <string name="clock_analog_mode">Analog clock</string>
-    <string name="clock_analog_mode_help">Shows an analog dial in checkbox mode, with selected date and alarm details below it. The seconds-size control determines whether the second hand is shown.</string>
+    <string name="clock_analog_mode_help">Shows an analog dial in checkbox mode, with selected date and alarm details below it.</string>
+    <string name="clock_show_seconds_help">Shows digital seconds, or toggles the second hand in Analog clock mode.</string>
     <string name="widget_digital_text_colour">Set widget text/dial/hand colour</string>
     <string name="widget_digital_text_colour_help">Choose the widget\'s text colour. In Analog mode, the dial markings use this colour; Android 16 and later also tint the hands to match.</string>
     <string name="show_next_alarm_any_app">Show next alarm (any app)</string>
@@ -133,7 +134,7 @@
     <string name="clock_format_guide_title">Date and time tokens</string>
     <string name="clock_format_guide_hint">Tokens are case-sensitive. Tap to insert; Enter adds a line.</string>
     <string name="clock_format_seconds_help" formatted="false">Advanced formats use %S to suppress the analog second hand or show digital seconds; the slider affects checkbox mode only.</string>
-    <string name="format_token_hand_selector_hint" formatted="false">Put %C on its own line for a full-row dial. All hands show by default; add %H, %M, and/or %S on that same line to suppress matching hands. The clock line prints no text. On other lines, time tokens print normally.</string>
+    <string name="format_token_hand_selector_hint" formatted="false">Put %C on its own line. Add %H, %M, or %S on that line to hide the matching hand.</string>
     <string name="format_token_large_line" formatted="false">Emphasize line (%L)</string>
     <string name="clock_format_landscape_emphasis_hint" formatted="false">Put %L before a line to enlarge it; the marker stays hidden. Other lines keep room for details.</string>
     <string name="clock_alarm_prefix">ALM:</string>
@@ -169,7 +170,7 @@
     <string name="format_token_alarm" formatted="false">Alarm block (%&lt;…%&gt;)</string>
     <string name="format_token_alarm_alternative" formatted="false">No-alarm text (%|)</string>
     <string name="widget_format_alarm_hint" formatted="false">The next alarm from any app selects text before %|. Text after %| is the no-alarm fallback. Keep line breaks inside the markers.</string>
-    <string name="widget_format_analog_hint" formatted="false">Put %C on its own line for a full-row dial; that line prints no text. All hands show by default. Add %H, %M, and/or %S on the same line to suppress matching hands; on other lines these tokens print normally. A real newline or %n ends the clock line.</string>
+    <string name="widget_format_analog_hint" formatted="false">Put %C on its own line. Add %H, %M, or %S on that line to hide the matching hand.</string>
     <string name="show_short_weekday">Short weekday</string>
     <string name="showshortweekdayhelp">Shows the localized short weekday in %1s.</string>
     <string name="show_long_weekday">Full weekday</string>
