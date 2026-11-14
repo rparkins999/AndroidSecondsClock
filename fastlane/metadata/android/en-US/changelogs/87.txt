@@ -1,0 +1,5 @@
+- Improve live colour preview and dimming in the full-screen clock (PR #35).
+- Add a system-clock app override, chooser, and full-screen fallback when no compatible app is available (PR #36).
+- Improve launcher icon generation and refresh the static fallback artwork (PR #37).
+- Add optional analog home-screen widgets with advanced analog formats (PR #41).
+- Add Global Settings and reorganize main-menu actions (PR #43).

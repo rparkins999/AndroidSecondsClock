@@ -34,10 +34,30 @@ explicit. Ordinary Gradle configuration/builds do not edit files or stage Git ch
    and changelogs of at most 500 characters. Keep the matching file in
    `fastlane/metadata/android/en-US/changelogs/`; do not use version names as filenames.
 
+## Parallel-install package ID
+
+The default application ID remains `uk.co.yahoo.p1rpp.secondsclock`. To build a separate package
+that installs alongside it, specify the alternate ID on the Gradle build command:
+
+```sh
+./gradlew :SecondsClock:assembleRelease \
+  -PsecondsClockApplicationId=io.github.marvin1099.secondsclock
+```
+
+Without the property, builds keep the default ID. Pass it to every build command for the parallel
+package; debug builds also receive the existing `.debug` suffix. The parallel package has separate
+app data, settings, and widgets. Use the app's JSON export/import to move compatible settings.
+
+A build signed with a different key but using the default ID cannot update an existing installation.
+Export settings and uninstall before switching keys, or install the parallel package to keep both
+apps. When producing multiple package-ID or build-type variants, save or rename each APK before the
+next build so the outputs don't overwrite each other.
+
 ## Build and sign APKs
 
-Contributor builds need no private signing credentials. Debug builds use Android's debug key; a
-release build without a configured key is unsigned and is for CI/build verification only.
+Contributor builds need no private signing credentials. Without a configured signing properties
+file, debug builds use Android's debug key and release builds are unsigned for CI/build verification
+only. When signing properties are configured, both debug and release builds use that keystore.
 
 For a distributable APK, use the authorized release keystore and verify its certificate before
 uploading. Keep the keystore and `keystore.properties` outside Git. The build accepts either

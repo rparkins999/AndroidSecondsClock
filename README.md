@@ -1,244 +1,137 @@
 # SecondsClock
 
-SecondsClock is an Android clock that runs as a home-screen widget or a full-screen night clock.
-You can add multiple widgets and configure each one independently.
+A customizable Android clock for home-screen widgets and a full-screen night clock. Choose digital
+or analog displays, configure date/time layouts and alarms, and adjust the full-screen clock for
+low-light use. Each widget can have its own layout and settings.
 
-This is version 2.6.0.
+This is version 2.7.0.
 
 ## Choose a setup
 
-### Easy setup: Checkbox mode
-
-Choose what to show with checkboxes. SecondsClock formats the date and time for your device's
-locale and arranges the selected information automatically. You don't need to know format tokens.
-
-### Custom setup: Advanced mode
-
-Use Advanced mode when you want specific text or a particular layout. Type plain text and insert
-date/time tokens. Tokens are case-sensitive. Press Enter or use `%n` to start a line. Text scales
-to fit, but line breaks stay where you put them, so a resized widget may need adjustment.
-
-The options differ slightly between home-screen widgets and the full-screen clock; details follow.
+- **Checkbox mode** automatically formats the selected date and time for your device's locale.
+- **Advanced mode** lets you type text and insert date/time tokens. Tokens are case-sensitive; press
+  Enter or use `%n` for a new line. Text scales to fit, but line breaks stay fixed, so resizing a
+  widget may need adjustment.
 
 ## Home-screen widgets
 
 ### Checkbox mode
 
-Choose whether to show the time, seconds, weekday, date, and next alarm. You can use a numeric date
-or choose the day, month, and year separately. Time uses the device's 12- or 24-hour preference.
-The layout adapts to the widget's size. **Analog clock** replaces the digital time with a dial while
-keeping the date, alarm, and other checkbox settings available; **Show seconds** toggles only its
-second hand. The **Show next alarm (any alarm app)** option displays the next alarm Android reports,
-not necessarily one from the default clock app.
+Choose the time, seconds, weekday, next alarm, and either a numeric date or separate day, month,
+and year. Time follows the device's 12- or 24-hour setting. Digital is the default; **Analog clock**
+replaces it with a 12-numbered dial, keeps other selected details below it, and preserves your digital
+settings. **Show seconds** controls the second hand. **Show next alarm (any alarm app)** uses the next
+alarm Android reports, not necessarily one from its default clock app. Dial markings follow the
+widget text colour; Android 16 and later also tint the hands. On Android 17 the platform synchronizes
+the second hand when the widget reappears; some earlier launchers may resume it where it stopped.
+The widget schedules no repeating app alarms.
 
 ### Advanced mode
 
-Enter a custom format using date/time tokens. **Sync** shares one format between widget shapes.
-Otherwise, the **Horizontal** and **Vertical** profiles are selected from the widget's reported
-dimensions. New profiles start from Sync.
+**Sync** shares one format across widget shapes. Otherwise, **Horizontal** and **Vertical** profiles
+are selected from the widget's dimensions. New profiles start from Sync.
 
 Common tokens:
 
 | Token | Displays |
 | --- | --- |
-| `%H` | 24-hour clock hour |
-| `%I` | 12-hour clock hour |
+| `%H`, `%I` | 24- or 12-hour clock hour |
 | `%M`, `%S`, `%p` | Minute, second, AM/PM |
 | `%a`, `%A` | Short or full weekday |
 | `%b`, `%B` | Short or full month name |
 | `%d`, `%e` | Zero-padded or unpadded day |
-| `%m`, `%Y` | Month number or year |
-| `%F` | ISO date |
-| `%x`, `%X` | Localized date or time |
-| `%n`, `%%` | New line or literal percent sign |
-| `%C` | Full-row analog clock (on its own line) |
+| `%m`, `%Y` | Month number, year |
+| `%F`, `%x`, `%X` | ISO date, localized date or time |
+| `%n`, `%%` | New line, literal percent sign |
+| `%C` | Full-row analog clock |
 
-Put `%C` on its own line to show a full-row analog clock. The clock line renders no text; all hands
-are shown by default. `%H`, `%M`, and `%S` on that same line suppress the hour, minute, and second
-hands respectively, and are consumed rather than printed. A real newline or `%n` ends the clock line.
-On every other line, time tokens such as `%H`, `%M`, and `%S` print normally, and `%x` and `%X` retain
-their localized date and time behavior. For example:
+Put `%C` on its own line for a full-row analog dial; that line renders no text. On it, `%H`, `%M`,
+and `%S` suppress the matching hands instead of printing time fields. Elsewhere they print normally.
+A real newline or `%n` ends the clock line.
 
-```text
-%H:%M:%S
-%C
-Other text
-```
-
-#### Optional alarm text
-
-Use `%<` and `%>` to mark an alarm block. Inside it, `%|` separates the text shown when an alarm
-is set from an optional fallback shown when none is set:
+To show optional alarm text, wrap it in `%<` and `%>`. Use `%|` to add fallback text for when no
+alarm is set:
 
 ```text
 %<Alarm: %H:%M%|%nNO ALARM%>
 ```
 
-When Android reports a next alarm-clock alarm from any app, the text before `%|` appears and its
-tokens use the alarm time. Without an alarm, the text after `%|` appears and its tokens use the
-current time. Without `%|`, the block is hidden when no alarm is set; the fallback can also be
-empty. Android does not expose the alarm's label.
+When set, alarm tokens use the alarm time; fallback tokens use the current time. Without `%|`, the
+block is hidden when no alarm is set. Android doesn't provide the alarm's label.
 
-### Appearance and touch
+### Appearance and actions
 
-You can change the widget's text colour, background colour, and background opacity. Widget touch
-actions can open the system clock, SecondsClock, its settings, or the full-screen clock. You can
-place multiple widgets with different settings on the same or different home-screen pages.
+Set text and background colours and background opacity. Widget actions can open the system clock,
+SecondsClock, its settings, or the full-screen clock. If a widget action prevents configuration, open
+SecondsClock and choose **Configure existing widget**; the next widget you tap opens its settings.
 
-In Checkbox mode, each widget can optionally show an analog face with 12 numerals. The date and other
-selected details remain below the dial, and **Show seconds** controls only its second hand. The dial
-markings follow the widget's text colour; Android 16 and later also tint the hands to match. On Android
-17, the platform clock synchronizes the second hand when the widget becomes visible again. Earlier
-Android versions use a launcher-side animation that some launchers may resume at its previous
-position after hiding the widget. The widget does not schedule recurring app alarms.
-
-If a widget's touch action doesn't open its configuration page, open SecondsClock from its app icon
-(usually in the apps list), then choose **Configure existing widget**. Touch the widget you want to
-configure; the next widget you touch will open its configuration page regardless of its assigned
-touch action.
-
-Opening the system clock may not work on every device. The system clock app is OEM-specific, and
-Android doesn't define a standard intent to launch it. SecondsClock tries several possible intents.
-If they fail, you can choose an installed app in Android's app selector and save it as an override.
-The next system-clock action tries that app first. Choosing **Not now** opens SecondsClock's
-full-screen clock; select **Don't ask me again** to skip the prompt on later failures. The override
-and prompt preference can be changed or reset from **Global Settings** under **System clock app**.
-
-### Seconds and battery
-
-A widget showing seconds updates every second while it is visible, which uses more battery. It
-doesn't update while hidden.
-
-### Widget orientation
-
-Some launchers don't notify widgets when the screen rotates. On those devices, a widget's layout may
-not adapt to landscape until the launcher updates it or the widget is resized.
+System-clock apps vary by device. SecondsClock tries automatic detection first, then lets you save an
+installed app as an override. A saved app is tried before detection. Choose **Not now** to open the
+full-screen clock, or **Don't ask me again** to suppress later prompts. **Reset** in **Global
+Settings** clears the override and prompt preference, restoring automatic detection and prompts.
+Widgets showing seconds update every second while visible and use more battery; they don't update
+while hidden. Some launchers may not refresh a widget's layout immediately after screen rotation.
 
 ## Full-screen night clock
 
-The full-screen clock's background is always black, but its text colour is configurable
-in both Light and Dark appearance.
+The background is black; text colour can be changed in Light or Dark appearance. In Checkbox mode,
+choose **Analog clock** instead of digital; selected date and alarm details remain below the dial.
+Digital remains the default, and the seconds-size control determines whether the second hand is shown.
+Checkbox alarm text looks like `ALM: Mon, 3:30`.
 
-### Checkbox mode
+Advanced mode uses the same tokens and alarm block as widgets, with **Portrait** and **Landscape**
+profiles or **Sync**. Put `%C` on its own line for a dial. Use `%L` at the start of a line to enlarge
+it; the marker is hidden. Older multiline Landscape formats without `%L` still emphasize the first
+non-empty line. The text-style emoji option preserves joined sequences; appearance depends on device
+fonts. Seven-segment styling applies to time fields.
 
-Choose the time, seconds size, weekday, date, and next-alarm options. The clock arranges the
-selected information automatically. The seconds size can be adjusted separately. Its checkbox-mode
-alarm is shown as `ALM: Mon, 3:30`. **Analog clock** replaces the digital time with a dial while
-keeping the selected date and alarm details below it; the seconds-size control determines whether
-the second hand is shown.
-
-### Advanced mode
-
-The same date/time tokens and optional alarm block are available. **Sync** shares a format across
-screen orientations; otherwise, **Portrait** and **Landscape** profiles can differ. Put `%C` on its
-own line for a full-row analog dial; that line renders no text. All hands appear by default. `%H`, `%M`,
-and `%S` on the same line suppress the matching hands instead of printing those digital time fields.
-Other lines continue to render normally, including localized `%x` and `%X`. A real newline or `%n`
-ends the clock line. The separate seconds-size control applies only in Checkbox mode.
-
-To enlarge a line, put `%L` at its start. The marker is hidden. Emphasized lines share extra height
-and scale to fit; unmarked lines retain space for details. A real newline and `%n` both split lines.
-For compatibility, multiline Landscape formats without a `%L` marker emphasize the first non-empty
-line by default.
-The advanced editor also offers a text-style emoji preference. Joined emoji and flag sequences
-are preserved; monochrome rendering depends on the device's fonts. The seven-segment font applies
-to time fields, not the alarm label or weekday.
-
-### Charging
-
-The full-screen night clock keeps the screen on while the device is charging in both Checkbox and
-Advanced modes.
+The clock keeps the screen on while charging, in both Checkbox and Advanced modes.
 
 ## Settings, backup, and presets
 
-From the main menu, **Export settings** saves the current settings and preset library to a JSON
-file using Android's document picker. **Import settings** restores a file: settings for matching
-widgets are updated, while unmatched widget settings are saved as presets. Give widgets unique
-names in their configuration so backups can match them after reinstalling or moving to another
-installation. Export before uninstalling an APK signed with a different key, because uninstalling
-deletes the app's saved settings.
+The main menu groups widget actions and settings. **Global Settings** controls defaults for new
+widgets and the system-clock app override. **Settings Manager** copies settings between defaults, the
+full-screen clock, widgets, and presets. You can save components as presets, apply presets to
+compatible components, and rename or delete presets; resetting a component first saves its current
+settings as a preset.
 
-**Global Settings** lets you choose the system-clock app override and configure new-widget defaults.
-**Settings Manager** copies settings between new-widget defaults, the full-screen clock, individual
-widgets, and presets. You can save a selected component as a preset, apply a preset to a compatible
-component, and rename or delete presets. Resetting a component saves its previous custom settings as
-a preset first.
+Export and import use Android's document picker and a JSON backup. Backups include new-widget
+defaults, full-screen and widget settings, and presets. Import restores them, matches widgets by name,
+and saves unmatched widget settings as presets; existing settings are preserved as presets, and
+duplicate presets are reported. Give widgets unique names on both installations for reliable matching.
+Android won't install an APK signed with a different key over the installed app. Switching keys may
+require uninstalling, which deletes saved settings, so export first.
 
-## Installation and compatibility
+## Night-clock dimming
 
-SecondsClock works on Android 8.0 (API 26) or later. On some Android 12 devices, help toasts may be
-truncated to two lines, making the built-in guidance harder to read.
+The ambient-light threshold sets when dimming begins. By default, screen brightness dims to
+**Minimum brightness**, then opacity fades the clock toward **Minimum opacity** (zero can hide it).
+**Use only opacity** keeps brightness at Android's reported level and dims the text instead; it can
+interact with device auto-dimming. OEM brightness curves may leave the screen brighter than expected
+or cause a visible step, so settings may need adjustment. Opacity dimming can save power on OLED
+screens, but not on backlit displays.
+
+## Install
+
+SecondsClock requires Android 8.0 (API 26) or later.
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/uk.co.yahoo.p1rpp.secondsclock/)
 
-## Launcher icon
+The parallel-install build uses package ID `io.github.marvin1099.secondsclock`, so it can sit
+alongside the original `uk.co.yahoo.p1rpp.secondsclock` app. It keeps its own settings and widgets;
+see the [release guide](docs/RELEASING.md#parallel-install-package-id) for how to select it.
 
-The editable artwork is `SecondsClock/seconds-clock-icon.svg`. When `rsvg-convert` is available to
-Gradle (on `PATH`, or specified with `-PrsvgConvertExecutable=/path/to/rsvg-convert`), Gradle creates
-a timestamped launcher icon for debug and release APKs. Otherwise, builds use the checked-in
-`SecondsClock/src/main/res/drawable/ic_launcher.png`. The 144×144 F-Droid metadata icon is a static
-rasterization of the SVG.
-
-## Night clock dimming
-
-SecondsClock can dim the full-screen clock in low ambient light. Display brightness varies by
-device: an OEM may apply its own brightness curve or auto-dimming, and Android may report brightness
-before or after that adjustment. As a result, setting software brightness to zero may still leave
-the display too bright for a dark room. SecondsClock can also reduce clock opacity, down to invisible.
-
-### Dimming controls
-
-- **Lux threshold:** Above this ambient-light level, SecondsClock doesn't dim the clock. Below it,
-  the dimming target decreases as ambient light falls. Unless **Use only opacity** is selected,
-  screen brightness bottoms out at the minimum-brightness setting; opacity can provide further
-  dimming. The threshold's maximum is 255 lux, about a brightly lit room; direct sunlight can be
-  much higher.
-- **Minimum brightness:** The control ranges up to 100 to give more precision at low brightness.
-- **Minimum opacity:** At 255, opacity stays unchanged and screen brightness dims only as far as the
-  minimum-brightness setting. Below 255, once brightness reaches that minimum, the clock stays at
-  minimum brightness while opacity fades toward the selected minimum. Set it to zero to let the
-  clock disappear completely.
-- **Use only opacity:** Dims the clock using opacity while setting its window brightness to Android's
-  reported system brightness. Depending on the device, this can interact with or override
-  auto-dimming. Opacity dimming can save power on OLED screens, but not on backlit displays.
-
-Device-specific brightness processing can cause a visible step when dimming begins. SecondsClock
-can't read each device's OEM brightness parameters, so the exact result may need tuning on your
-device.
-
-## Permissions
-
-SecondsClock requests Android's `SET_ALARM` permission, but it doesn't set alarms. Some phones
-require this permission to open the built-in clock app when you tap a widget. Denying it prevents
-that action on affected devices; other widget actions continue to work.
+SecondsClock requests Android's `SET_ALARM` permission but doesn't set alarms. Some phones require
+it to open their built-in clock app; denying it may disable that widget action. Other widget actions
+continue to work.
 
 ## Licensing
 
-`Slider.java` is licensed under Apache License 2.0 because it derives from an Android source file.
-The rest of SecondsClock is licensed under GPL v3 or later.
+`Slider.java` is licensed under Apache License 2.0. The rest of SecondsClock is licensed under GPL v3
+or later.
 
 ## Building
 
-The repository does not include a signing key. For local signed builds, put `keystore.properties`
-and its keystore in the ignored `local/` directory, or pass the properties-file path with
-`-PkeystorePropertiesFile=/absolute/path/to/keystore.properties` (the
-`SECONDSCLOCK_KEYSTORE_PROPERTIES` environment variable is also supported). For compatibility, the
-build still checks `../Keys/keystore.properties` if the local file is absent. The properties file
-contains:
-
-```properties
-keyAlias=your-user-name
-keyPassword=your-key-password
-storeFile=/path/to/your/keystore
-storePassword=your-keystore-password
-```
-
-When signing properties are present, both variants use that key. Without them, debug uses Android's
-default debug key and release APKs are unsigned, so a clean checkout can build and run CI without
-private credentials. Debug APKs have a `.debug` application ID suffix. Android won't install an APK
-over an installed version signed with a different key. Export settings before uninstalling an
-existing app if you need to switch signing keys.
-
-See [`docs/RELEASING.md`](docs/RELEASING.md) for the release checklist and F-Droid metadata workflow.
+See [the release guide](docs/RELEASING.md) for build, signing, and release instructions.
