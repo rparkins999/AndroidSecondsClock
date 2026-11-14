@@ -70,7 +70,7 @@
     <string name="configure_new_widget_defaults">Configure new-widget defaults</string>
     <string name="current_settings">Current settings</string>
     <string name="presets">Presets</string>
-    <string name="global_settings">GLOBALS (new-widget defaults)</string>
+    <string name="global_settings">Global Settings</string>
     <string name="fullscreen_clock">Full-screen clock</string>
     <string name="unnamed_widget">Widget %1$d</string>
     <string name="no_presets">No presets saved.</string>

@@ -21,6 +21,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -63,9 +65,6 @@ public class SettingsManagerActivity extends Activity_common
     private List<SettingsPreset> presets = new ArrayList<>();
 
     private static final int HELP_ID = 12001;
-    private static final int SYSTEM_CLOCK_HELP_ID = HELP_ID + 3;
-    private static final int SYSTEM_CLOCK_OVERRIDE_ID = HELP_ID + 4;
-    private static final int SYSTEM_CLOCK_RESET_ID = HELP_ID + 5;
 
     private static final class Selection {
         static final int COMPONENT = 1;
@@ -181,76 +180,7 @@ public class SettingsManagerActivity extends Activity_common
             doToast(R.string.settings_manager_help);
             return true;
         }
-        if (view.getId() == SYSTEM_CLOCK_HELP_ID
-                || view.getId() == SYSTEM_CLOCK_OVERRIDE_ID
-                || view.getId() == SYSTEM_CLOCK_RESET_ID) {
-            doToast(R.string.system_clock_settings_help);
-            return true;
-        }
         return false;
-    }
-
-    private void addSystemClockControls(LinearLayout parent) {
-        TextView heading = centredLabel(
-                R.string.system_clock_settings_title, SYSTEM_CLOCK_HELP_ID);
-        parent.addView(heading, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        TextView status = new TextView(this);
-        status.setGravity(Gravity.CENTER_HORIZONTAL);
-        if (SystemClockApp.getOverride(m_prefs) == null) {
-            status.setText(R.string.system_clock_automatic_status);
-        } else {
-            String label = SystemClockApp.getOverrideLabel(m_prefs);
-            status.setText(label.isEmpty()
-                    ? getString(R.string.system_clock_override_unavailable_label)
-                    : getString(R.string.system_clock_override_status, label));
-        }
-        parent.addView(status, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        Button override = new Button(this);
-        override.setText(R.string.system_clock_override_button);
-        override.setId(SYSTEM_CLOCK_OVERRIDE_ID);
-        override.setAllCaps(false);
-        override.setOnClickListener(view -> {
-            try {
-                SystemClockApp.openSelector(this, false);
-            } catch (ActivityNotFoundException exception) {
-                doToast(R.string.system_clock_selector_not_found);
-            }
-        });
-        override.setOnLongClickListener(this);
-        parent.addView(override, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        Button reset = new Button(this);
-        reset.setText(R.string.system_clock_reset_button);
-        reset.setId(SYSTEM_CLOCK_RESET_ID);
-        reset.setAllCaps(false);
-        reset.setEnabled(m_prefs.contains(SystemClockApp.OVERRIDE_KEY)
-                || m_prefs.getBoolean(SystemClockApp.DONT_ASK_KEY, false));
-        reset.setOnClickListener(view -> confirmResetSystemClockSettings());
-        reset.setOnLongClickListener(this);
-        parent.addView(reset, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-    }
-
-    private void confirmResetSystemClockSettings() {
-        new AlertDialog.Builder(this)
-                .setMessage(R.string.system_clock_reset_confirm)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.system_clock_reset_button,
-                        (dialog, which) -> {
-                            SystemClockApp.reset(m_prefs);
-                            renderAgain();
-                            doToast(R.string.system_clock_reset_done);
-                        })
-                .show();
     }
 
     private LinearLayout makeCurrentPanel() {
@@ -263,7 +193,6 @@ public class SettingsManagerActivity extends Activity_common
         currentRows = new LinearLayout(this);
         currentRows.setOrientation(LinearLayout.VERTICAL);
         addComponentRow(currentRows, globalsSelection(), false);
-        addSystemClockControls(currentRows);
         addComponentRow(currentRows, clockSelection(), false);
 
         List<SettingsStore.WidgetRecord> widgets = SettingsStore.activeWidgets(
@@ -457,10 +386,10 @@ public class SettingsManagerActivity extends Activity_common
             sourceSelection = item;
         } else if (sameSelection(sourceSelection, item)
                 || !canTransfer(sourceSelection, item)) {
-            doToast(R.string.source_target_incompatible);
             // A CheckBox toggles itself before its click listener runs. Rebuild
             // so an incompatible tap never appears selected.
             renderAgain();
+            showManagerError(R.string.source_target_incompatible);
             return;
         } else {
             // Allow changing the destination before confirming the transfer.
@@ -499,6 +428,20 @@ public class SettingsManagerActivity extends Activity_common
                 sourceSelection.label, destinationSelection.label);
     }
 
+    private void showManagerError(int messageResource) {
+        showManagerError(getString(messageResource));
+    }
+
+    private void showManagerError(CharSequence message) {
+        if (newPresetButton == null || newPresetButton.getWindowToken() == null) {
+            doToast(message.toString());
+            return;
+        }
+        Snackbar.make(newPresetButton, message, Snackbar.LENGTH_LONG)
+                .setAnchorView(newPresetButton)
+                .show();
+    }
+
     private void executeTransfer() {
         if (sourceSelection == null || destinationSelection == null) return;
         try {
@@ -533,7 +476,8 @@ public class SettingsManagerActivity extends Activity_common
             renderAgain();
             doToast(R.string.copy_complete);
         } catch (JSONException exception) {
-            doToast(getString(R.string.file_load_failed, exception.getMessage()));
+            showManagerError(getString(
+                    R.string.file_load_failed, exception.getMessage()));
         }
     }
 
@@ -551,7 +495,7 @@ public class SettingsManagerActivity extends Activity_common
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     String presetName = name.getText().toString().trim();
                     if (presetName.isEmpty()) {
-                        doToast(R.string.preset_name_required);
+                        showManagerError(R.string.preset_name_required);
                         return;
                     }
                     SettingsPreset candidate = new SettingsPreset(
@@ -586,7 +530,7 @@ public class SettingsManagerActivity extends Activity_common
                     if (!SettingsStore.isWidgetNameAvailable(m_prefs,
                             appWidgetManager, secondsClockWidget,
                             widgetId, newName)) {
-                        doToast(R.string.widget_name_in_use);
+                        showManagerError(R.string.widget_name_in_use);
                         return;
                     }
                     SettingsStore.renameWidget(m_prefs, widgetId, newName);
@@ -670,7 +614,8 @@ public class SettingsManagerActivity extends Activity_common
             renderAgain();
             doToast(R.string.component_reset);
         } catch (JSONException exception) {
-            doToast(getString(R.string.file_load_failed, exception.getMessage()));
+            showManagerError(getString(
+                    R.string.file_load_failed, exception.getMessage()));
         }
     }
 
@@ -680,7 +625,8 @@ public class SettingsManagerActivity extends Activity_common
             loadPresets();
             renderAgain();
         } catch (JSONException exception) {
-            doToast(getString(R.string.file_load_failed, exception.getMessage()));
+            showManagerError(getString(
+                    R.string.file_load_failed, exception.getMessage()));
         }
     }
 
@@ -698,7 +644,8 @@ public class SettingsManagerActivity extends Activity_common
             presets = SettingsStore.readPresets(m_prefs);
         } catch (JSONException exception) {
             presets = new ArrayList<>();
-            doToast(getString(R.string.file_load_failed, exception.getMessage()));
+            showManagerError(getString(
+                    R.string.file_load_failed, exception.getMessage()));
         }
     }
 
@@ -753,7 +700,7 @@ public class SettingsManagerActivity extends Activity_common
                 startActivityForResult(intent, REQUEST_CREATE_BACKUP);
             } catch (ActivityNotFoundException exception) {
                 pickerStarted = false;
-                doToast(R.string.file_save_failed);
+                showManagerError(R.string.file_save_failed);
             }
         } else if (ACTION_IMPORT.equals(action)) {
             intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -763,7 +710,7 @@ public class SettingsManagerActivity extends Activity_common
                 startActivityForResult(intent, REQUEST_OPEN_BACKUP);
             } catch (ActivityNotFoundException exception) {
                 pickerStarted = false;
-                doToast(getString(R.string.file_load_failed,
+                showManagerError(getString(R.string.file_load_failed,
                         exception.getMessage()));
             }
         }
@@ -786,7 +733,7 @@ public class SettingsManagerActivity extends Activity_common
             SettingsStore.writeBackup(stream, backup);
             doToast(R.string.file_exported);
         } catch (Exception exception) {
-            doToast(R.string.file_save_failed);
+            showManagerError(R.string.file_save_failed);
         }
     }
 
@@ -805,7 +752,7 @@ public class SettingsManagerActivity extends Activity_common
                 showDuplicateMessages(result.duplicates);
             }
         } catch (Exception exception) {
-            doToast(getString(R.string.file_load_failed,
+            showManagerError(getString(R.string.file_load_failed,
                     exception.getMessage() == null
                             ? exception.getClass().getSimpleName()
                             : exception.getMessage()));
