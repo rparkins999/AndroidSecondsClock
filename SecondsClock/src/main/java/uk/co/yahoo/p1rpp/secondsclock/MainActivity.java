@@ -383,35 +383,27 @@ public class MainActivity extends Activity_common
         lmain.addView(m_helptext);
 
         addMenuSection(lmain, R.string.main_section_clock);
-        addMenuButtonRow(lmain, R.string.gosysclock, GO_SYSTEM_CLOCK,
-                R.string.runnightclock, GO_NIGHT_CLOCK);
-        addMenuButtonRow(lmain, R.string.confignightclock,
-                CONFIGURE_NIGHT_CLOCK, 0, 0);
+        addMenuButtonRow(lmain, R.string.gosysclock, GO_SYSTEM_CLOCK, 0, 0);
+        addMenuButtonRow(lmain, R.string.runnightclock, GO_NIGHT_CLOCK,
+                R.string.confignightclock, CONFIGURE_NIGHT_CLOCK);
 
         addMenuSection(lmain, R.string.main_section_widgets);
         String m_widgetIds = m_prefs.getString("widgetIds", "");
         boolean hasExistingWidgets = m_widgetIds.length() > 0;
-        int secondWidgetLabel = 0;
-        int secondWidgetId = 0;
-        if (widgetID != -1) {
-            secondWidgetLabel = R.string.configwidget;
-            secondWidgetId = CONFIGURE_THIS_WIDGET;
-        } else if (hasExistingWidgets) {
-            secondWidgetLabel = R.string.configoldwwidget;
-            secondWidgetId = CONFIGURE_EXISTING_WIDGET;
-        }
         addMenuButtonRow(lmain, R.string.confignewwidget,
-                CONFIGURE_NEW_WIDGET, secondWidgetLabel, secondWidgetId);
-        if (widgetID != -1 && hasExistingWidgets) {
-            addMenuButtonRow(lmain, R.string.configoldwwidget,
-                    CONFIGURE_EXISTING_WIDGET, 0, 0);
+                CONFIGURE_NEW_WIDGET,
+                hasExistingWidgets ? R.string.configoldwwidget : 0,
+                hasExistingWidgets ? CONFIGURE_EXISTING_WIDGET : 0);
+        if (widgetID != -1) {
+            addMenuButtonRow(lmain, R.string.configwidget,
+                    CONFIGURE_THIS_WIDGET, 0, 0);
         }
 
         addMenuSection(lmain, R.string.main_section_settings);
-        addMenuButtonRow(lmain, R.string.global_settings_button,
-                GLOBAL_SETTINGS, R.string.settings_manager, MANAGE_SETTINGS);
         addMenuButtonRow(lmain, R.string.export_settings, EXPORT_SETTINGS,
                 R.string.import_settings, IMPORT_SETTINGS);
+        addMenuButtonRow(lmain, R.string.global_settings_button,
+                GLOBAL_SETTINGS, R.string.settings_manager, MANAGE_SETTINGS);
 
         addMenuSection(lmain, R.string.main_section_app);
         addMenuButtonRow(lmain, R.string.exit, GO_EXIT, 0, 0);
