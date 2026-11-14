@@ -22,8 +22,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -61,6 +59,8 @@ public class SettingsManagerActivity extends Activity_common
     private Button clearButton;
     private Button confirmButton;
     private Button newPresetButton;
+    private TextView managerErrorText;
+    private Runnable hideManagerError;
     private LinearLayout currentRows;
     private LinearLayout presetRows;
     private List<SettingsPreset> presets = new ArrayList<>();
@@ -129,6 +129,10 @@ public class SettingsManagerActivity extends Activity_common
     @Override
     protected void resume() {
         m_key = "";
+        if (hideManagerError != null) {
+            managerErrorText.removeCallbacks(hideManagerError);
+            hideManagerError = null;
+        }
         super.resume();
         removeAllViews(m_topLayout);
         loadPresets();
@@ -235,6 +239,19 @@ public class SettingsManagerActivity extends Activity_common
         scroll.addView(presetRows);
         panel.addView(scroll, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0F));
+
+        managerErrorText = new TextView(this);
+        managerErrorText.setGravity(Gravity.CENTER);
+        managerErrorText.setPadding(dp(8), dp(5), dp(8), dp(5));
+        managerErrorText.setTextColor(m_foreground);
+        managerErrorText.setVisibility(View.GONE);
+        GradientDrawable errorBackground = new GradientDrawable();
+        errorBackground.setColor(m_background);
+        errorBackground.setStroke(dp(1), m_foreground);
+        managerErrorText.setBackground(errorBackground);
+        panel.addView(managerErrorText, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
 
         newPresetButton = new Button(this);
         newPresetButton.setText(R.string.new_preset);
@@ -434,20 +451,22 @@ public class SettingsManagerActivity extends Activity_common
     }
 
     private void showManagerError(CharSequence message) {
-        if (newPresetButton == null || newPresetButton.getWindowToken() == null) {
+        if (managerErrorText == null
+                || managerErrorText.getWindowToken() == null) {
             doToast(message.toString());
             return;
         }
-        Snackbar snackbar = Snackbar.make(
-                newPresetButton, message, Snackbar.LENGTH_LONG)
-                .setAnchorView(newPresetButton);
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(m_background);
-        background.setCornerRadius(dp(4));
-        background.setStroke(dp(1), m_foreground);
-        snackbar.getView().setBackground(background);
-        snackbar.setTextColor(m_foreground);
-        snackbar.show();
+        if (hideManagerError != null) {
+            managerErrorText.removeCallbacks(hideManagerError);
+        }
+        managerErrorText.setText(message);
+        managerErrorText.setVisibility(View.VISIBLE);
+        TextView messageView = managerErrorText;
+        hideManagerError = () -> {
+            messageView.setVisibility(View.GONE);
+            messageView.setText("");
+        };
+        managerErrorText.postDelayed(hideManagerError, 3000L);
     }
 
     private void executeTransfer() {
