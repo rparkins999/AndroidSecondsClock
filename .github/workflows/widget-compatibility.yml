@@ -2,49 +2,55 @@ name: Android widget compatibility
 
 on:
   push:
+    branches:
+      - master
   pull_request:
+  workflow_dispatch:
+    inputs:
+      full_matrix:
+        description: Run the full Android prerelease compatibility matrix
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
+  select-matrix:
+    name: Select emulator matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      include: ${{ steps.select.outputs.include }}
+    steps:
+      - name: Select default or full emulator matrix
+        id: select
+        env:
+          FULL_MATRIX: ${{ inputs.full_matrix || 'false' }}
+        run: |
+          matrix='[
+            {"android-api":"26","sdk-level":"26","image-package":"system-images;android-26;google_apis;x86_64","image-path":"system-images/android-26/google_apis/x86_64","avd-target":"android-26","avd-device":"pixel_2"},
+            {"android-api":"37.0 (Android 17 base stable)","sdk-level":"37.0","image-package":"system-images;android-37.0;google_apis;x86_64","image-path":"system-images/android-37.0/google_apis/x86_64","avd-target":"android-37.0","avd-device":"pixel_2"},
+            {"android-api":"37.2 (current stable)","sdk-level":"37.2","image-package":"system-images;android-37.2;google_apis_ps16k;x86_64","image-path":"system-images/android-37.2/google_apis_ps16k/x86_64","avd-target":"android-37.2","avd-device":"pixel_2"},
+            {"android-api":"37.1 Beta 3 (QPR2)","sdk-level":"37.2-beta3","image-package":"system-images;android-37.2-beta3;google_apis_ps16k;x86_64","image-path":"system-images/android-37.2-beta3/google_apis_ps16k/x86_64","avd-target":"android-37.2-beta3","avd-device":""},
+            {"android-api":"37.2 Canary (2026-11-04)","sdk-level":"canary-20261104","image-package":"system-images;android-canary-20261104;google_apis_ps16k;x86_64","image-path":"system-images/android-canary-20261104/google_apis_ps16k/x86_64","avd-target":"android-canary-20261104","avd-device":""}
+          ]'
+          if [[ "$FULL_MATRIX" == 'true' ]]; then
+            selected_matrix=$(jq -c '.' <<< "$matrix")
+          else
+            selected_matrix=$(jq -c '[.[] | select(."sdk-level" == "26" or ."sdk-level" == "37.2")]' <<< "$matrix")
+          fi
+          echo "include=$selected_matrix" >> "$GITHUB_OUTPUT"
+
   widget-host:
+    needs: select-matrix
     name: RemoteViews seconds on API ${{ matrix.android-api }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - android-api: '26'
-            sdk-level: '26'
-            image-package: 'system-images;android-26;google_apis;x86_64'
-            image-path: 'system-images/android-26/google_apis/x86_64'
-            avd-target: 'android-26'
-            avd-device: 'pixel_2'
-          - android-api: '37.0 (Android 17 base stable)'
-            sdk-level: '37.0'
-            image-package: 'system-images;android-37.0;google_apis;x86_64'
-            image-path: 'system-images/android-37.0/google_apis/x86_64'
-            avd-target: 'android-37.0'
-            avd-device: 'pixel_2'
-          - android-api: '37.2 (current stable)'
-            sdk-level: '37.2'
-            image-package: 'system-images;android-37.2;google_apis_ps16k;x86_64'
-            image-path: 'system-images/android-37.2/google_apis_ps16k/x86_64'
-            avd-target: 'android-37.2'
-            avd-device: 'pixel_2'
-          - android-api: '37.1 Beta 3 (QPR2)'
-            sdk-level: '37.2-beta3'
-            image-package: 'system-images;android-37.2-beta3;google_apis_ps16k;x86_64'
-            image-path: 'system-images/android-37.2-beta3/google_apis_ps16k/x86_64'
-            avd-target: 'android-37.2-beta3'
-            avd-device: ''
-          - android-api: '37.2 Canary (2026-11-04)'
-            sdk-level: 'canary-20261104'
-            image-package: 'system-images;android-canary-20261104;google_apis_ps16k;x86_64'
-            image-path: 'system-images/android-canary-20261104/google_apis_ps16k/x86_64'
-            avd-target: 'android-canary-20261104'
-            avd-device: ''
+        include: ${{ fromJSON(needs.select-matrix.outputs.include) }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4

@@ -6,9 +6,14 @@ supported launcher/device matrix.
 
 ## Automated GitHub Actions check
 
-`.github/workflows/widget-compatibility.yml` runs the instrumentation test on API 26, the Android
-17 base stable image (API 37.0), the current stable package (API 37.2), Android 17 QPR2 Beta 3, and
-the latest listed Canary image (`android-canary-20261104`) using GitHub-hosted Ubuntu 24.04 runners.
+`.github/workflows/widget-compatibility.yml` runs the instrumentation test on API 26 and the
+current stable package (API 37.2) for pull requests and pushes to `master`, using GitHub-hosted
+Ubuntu 24.04 runners. To check all supported/prerelease images, open **Actions → Android widget
+compatibility → Run workflow**, select the branch, enable **Run the full Android prerelease
+compatibility matrix**, and start the run. The full matrix adds the Android 17 base stable image
+(API 37.0), Android 17 QPR2 Beta 3, and the latest listed Canary image (`android-canary-20261104`).
+The debug APK is uploaded from the API 37.2 stable job after its test passes. Emulator test jobs
+have a 20-minute timeout so a stalled instrumentation run does not hang indefinitely.
 These package/API mappings were checked against the [official Android SDK repository metadata](https://dl.google.com/android/repository/repository2-3.xml)
 on 2026-11-13: `android-37.2` is stable (extension 24), `android-37.2-beta3` reports API 37.1
 (codename `DEV`, extension 23), and `android-canary-20261104` reports API 37.2 (codename `CANARY`,
