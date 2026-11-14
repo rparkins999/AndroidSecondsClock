@@ -69,6 +69,7 @@ public class GlobalSettingsActivity extends Activity_common
         addHeading(page, R.string.new_widget_defaults_title, 0);
         TextView defaultsHelp = new TextView(this);
         defaultsHelp.setText(R.string.new_widget_defaults_help);
+        defaultsHelp.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(defaultsHelp, matchWrap());
         addButton(page, R.string.configure_new_widget_defaults,
                 NEW_WIDGET_DEFAULTS_ID, R.string.helpconfignewwidget);
