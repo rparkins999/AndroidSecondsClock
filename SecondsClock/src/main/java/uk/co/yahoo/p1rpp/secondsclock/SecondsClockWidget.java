@@ -28,14 +28,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
-import android.graphics.Paint;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.format.DateFormat;
-import android.util.TypedValue;
 import android.widget.RemoteViews;
-import android.widget.TextClock;
 import android.widget.Toast;
 
 import java.util.Calendar;
@@ -295,13 +291,9 @@ public class SecondsClockWidget extends AppWidgetProvider {
                         && linePattern.length() > 32;
                 float weight = advancedTextLineWeight(
                         longText, line.emphasized, rendered.hasAnalog);
-                float contentHeightPx = availableHeightPx - 2.0F * topOffsetPx;
-                float rowHeightPx = AdvancedPreviewTextSizing.rowHeightPx(
-                        contentHeightPx, weight, totalWeight);
                 addAdvancedTextLine(context, views, linePattern, longText,
                         line.emphasized, rendered.hasAnalog,
                         line.emphasized && rendered.hasAnalog && lineIndex > 0,
-                        rowHeightPx, availableWidthPx,
                         dialColor);
                 continue;
             }
@@ -328,9 +320,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
     private static void addAdvancedTextLine(
             Context context, RemoteViews views, StringBuilder format,
             boolean longText, boolean emphasized, boolean formatHasAnalog,
-            boolean alignToPrevious,
-            float rowHeightPx,
-            float rowWidthPx, int textColor) {
+            boolean alignToPrevious, int textColor) {
         int layout = emphasized
                 ? formatHasAnalog
                         ? alignToPrevious
@@ -346,10 +336,6 @@ public class SecondsClockWidget extends AppWidgetProvider {
         if (!longText || emphasized) {
             text.setBoolean(R.id.widget_format_text_block_clock,
                     "setSingleLine", true);
-            text.setTextViewTextSize(R.id.widget_format_text_block_clock,
-                    TypedValue.COMPLEX_UNIT_PX,
-                    advancedTextSizePx(context, pattern,
-                            rowHeightPx, rowWidthPx));
         }
         text.setCharSequence(R.id.widget_format_text_block_clock,
                 "setFormat12Hour", pattern);
@@ -398,19 +384,6 @@ public class SecondsClockWidget extends AppWidgetProvider {
         return false;
     }
 
-    private static float advancedTextSizePx(
-            Context context, String pattern,
-            float rowHeightPx, float rowWidthPx) {
-        TextClock measureClock = new TextClock(context);
-        Paint measurePaint = new Paint(measureClock.getPaint());
-        measurePaint.setTextSize(100.0F);
-        String sampleText = DateFormat.format(
-                pattern, Calendar.getInstance()).toString();
-        return AdvancedPreviewTextSizing.maximumTextSizePx(
-                rowHeightPx, rowWidthPx,
-                measurePaint.measureText(sampleText));
-    }
-
     private static void setAnalogHands(
             RemoteViews views, Context context, int handColor,
             boolean hour, boolean minute, boolean second, int bothId,
@@ -433,10 +406,15 @@ public class SecondsClockWidget extends AppWidgetProvider {
                         views, clockId, "setSecondHandTintList", handColors);
             }
         }
-        boolean nativeSecondHand = second && Build.VERSION.SDK_INT >= 37
-                && setRemoteViewIcon(views, selectedId, "setSecondHand",
-                        Icon.createWithResource(
-                                context, R.drawable.analog_hand_second));
+        boolean nativeSecondHand = false;
+        if (Build.VERSION.SDK_INT >= 37) {
+            Icon secondHand = second
+                    ? Icon.createWithResource(context, R.drawable.analog_hand_second)
+                    : null;
+            boolean configured = setRemoteViewIcon(
+                    views, selectedId, "setSecondHand", secondHand);
+            nativeSecondHand = second && configured;
+        }
         views.setViewVisibility(secondFlipperId,
                 second && !nativeSecondHand
                         ? android.view.View.VISIBLE : android.view.View.GONE);

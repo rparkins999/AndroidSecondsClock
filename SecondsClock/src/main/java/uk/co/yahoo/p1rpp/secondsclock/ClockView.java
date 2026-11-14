@@ -93,6 +93,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private LinearLayout m_customFormatLayout;
     private AnalogClockView m_checkboxAnalogView;
     private final List<AnalogClockView> m_advancedAnalogViews = new ArrayList<>();
+    private final List<TextClock> m_advancedAnalogTextViews = new ArrayList<>();
     private boolean m_customAnalogShowsSeconds;
     private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
@@ -131,6 +132,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
         if (m_customClockView != null) m_customClockView.setTextColor(colour);
+        for (TextClock view : m_advancedAnalogTextViews) view.setTextColor(colour);
         if (m_checkboxAnalogView != null) m_checkboxAnalogView.setColor(colour);
         for (AnalogClockView view : m_advancedAnalogViews) view.setColor(colour);
     }
@@ -513,6 +515,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (AnalogFormat.containsClock(format)) {
             if (m_customFormatLayout != null) removeView(m_customFormatLayout);
             m_advancedAnalogViews.clear();
+            m_advancedAnalogTextViews.clear();
             AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.renderLines(
                     lines, nextAlarmTime);
             m_customAnalogShowsSeconds = rendered.hasSecondHand;
@@ -526,6 +529,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (m_customFormatLayout != null) removeView(m_customFormatLayout);
         m_customFormatLayout = null;
         m_advancedAnalogViews.clear();
+        m_advancedAnalogTextViews.clear();
         m_customAnalogShowsSeconds = false;
         if (m_customClockView == null) m_customClockView = makeCustomClock(m_fgcolour);
         SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
@@ -567,6 +571,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 }
                 if (part.pattern.isEmpty()) continue;
                 TextClock text = makeCustomClock(m_fgcolour);
+                m_advancedAnalogTextViews.add(text);
                 text.setSingleLine(true);
                 text.setLines(1);
                 SpannableStringBuilder pattern = new SpannableStringBuilder(part.pattern);
@@ -756,6 +761,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_customFormatLayout = null;
         m_checkboxAnalogView = null;
         m_advancedAnalogViews.clear();
+        m_advancedAnalogTextViews.clear();
         m_customAnalogShowsSeconds = false;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);

@@ -16,7 +16,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
-import android.graphics.Paint;
 import android.graphics.drawable.Icon;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -25,7 +24,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -654,9 +652,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
             float weight = AdvancedPreviewTextSizing.rowWeight(
                     line.hands != null, longText, line.emphasized,
                     rendered.hasAnalog);
-            float contentHeightPx = height - 2.0F * topOffsetPx;
-            float rowHeightPx = AdvancedPreviewTextSizing.rowHeightPx(
-                    contentHeightPx, weight, totalWeight);
             if (line.hands != null) {
                 LinearLayout row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
@@ -676,7 +671,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             addAdvancedFormatPreviewTextBlock(result, linePattern,
                     longText, line.emphasized,
                     line.emphasized && rendered.hasAnalog && lineIndex > 0,
-                    width, rowHeightPx, weight);
+                    weight);
         }
         return result;
     }
@@ -698,7 +693,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private void addAdvancedFormatPreviewTextBlock(
             LinearLayout result, StringBuilder format,
             boolean longText, boolean emphasized, boolean alignToPrevious,
-            int rowWidthPx, float rowHeightPx, float weight) {
+            float weight) {
         TextClock text = new TextClock(this);
         text.setIncludeFontPadding(false);
         text.setGravity(emphasized && alignToPrevious
@@ -707,19 +702,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         text.setSingleLine(!longText || emphasized);
         text.setFormat12Hour(format.toString());
         text.setFormat24Hour(format.toString());
-        if (longText && !emphasized) {
-            text.setAutoSizeTextTypeUniformWithConfiguration(
-                    10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
-        } else {
-            Paint measurePaint = new Paint(text.getPaint());
-            measurePaint.setTextSize(100.0F);
-            String sampleText = DateFormat.format(
-                    format.toString(), Calendar.getInstance()).toString();
-            int textSizePx = AdvancedPreviewTextSizing.maximumTextSizePx(
-                    rowHeightPx, rowWidthPx,
-                    measurePaint.measureText(sampleText));
-            text.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizePx);
-        }
+        text.setAutoSizeTextTypeUniformWithConfiguration(
+                1, 3000, 1, TypedValue.COMPLEX_UNIT_PX);
         result.addView(text, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, weight));
     }

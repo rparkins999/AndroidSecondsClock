@@ -4,6 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="0dp"
     android:layout_weight="1.6"
+    android:autoSizeMinTextSize="1px"
+    android:autoSizeMaxTextSize="3000px"
+    android:autoSizeStepGranularity="1px"
+    android:autoSizeTextType="uniform"
     android:gravity="top|center_horizontal"
     android:includeFontPadding="false"
     android:singleLine="true" />

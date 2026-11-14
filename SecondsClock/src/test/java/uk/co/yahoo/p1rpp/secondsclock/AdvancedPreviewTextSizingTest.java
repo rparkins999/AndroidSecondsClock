@@ -6,33 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 public class AdvancedPreviewTextSizingTest {
     @Test
-    public void clockRowReducesTextSizeCeilingForRemainingRows() {
-        int withoutClock = AdvancedPreviewTextSizing.maximumTextSizePx(
-                180.0F, 280.0F, 300.0F);
-        int withClock = AdvancedPreviewTextSizing.maximumTextSizePx(
-                60.0F, 280.0F, 300.0F);
-
-        assertTrue(withClock < withoutClock);
-    }
-
-    @Test
-    public void textSizeCeilingRespectsAvailableWidth() {
-        int maxTextSize = AdvancedPreviewTextSizing.maximumTextSizePx(
-                180.0F, 140.0F, 400.0F);
-
-        assertTrue(maxTextSize * 4.0F <= 140.0F * 0.98F);
-    }
-
-    @Test
-    public void emphasizedLineIsClampedToItsRowAndWidgetWidth() {
-        int maxTextSize = AdvancedPreviewTextSizing.maximumTextSizePx(
-                80.0F, 300.0F, 400.0F);
-
-        assertTrue(maxTextSize <= 80.0F * 0.85F);
-        assertTrue(maxTextSize * 4.0F <= 300.0F * 0.98F);
-    }
-
-    @Test
     public void advancedLinesKeepTheirIndependentLayoutWeights() {
         assertTrue(AdvancedPreviewTextSizing.rowWeight(false, false, false, false)
                 < AdvancedPreviewTextSizing.rowWeight(false, false, true, false));

@@ -4,21 +4,8 @@ package uk.co.yahoo.p1rpp.secondsclock;
 final class AdvancedPreviewTextSizing {
     private static final float MAX_ANALOG_CONTENT_HEIGHT_TO_WIDTH_RATIO = 2.0F;
     private static final float MAX_TEXT_CONTENT_HEIGHT_TO_WIDTH_RATIO = 1.0F;
-    private static final float MAX_ROW_HEIGHT_RATIO = 0.85F;
-    private static final float MAX_ROW_WIDTH_RATIO = 0.98F;
-    private static final int MIN_MAX_TEXT_SIZE_PX = 8;
 
     private AdvancedPreviewTextSizing() {}
-
-    static int maximumTextSizePx(
-            float rowHeightPx, float rowWidthPx, float textWidthAt100Px) {
-        float heightLimit = rowHeightPx * MAX_ROW_HEIGHT_RATIO;
-        float widthLimit = textWidthAt100Px > 0.0F
-                ? rowWidthPx * MAX_ROW_WIDTH_RATIO * 100.0F / textWidthAt100Px
-                : heightLimit;
-        return Math.max(MIN_MAX_TEXT_SIZE_PX,
-                (int) Math.floor(Math.min(heightLimit, widthLimit)));
-    }
 
     static float rowWeight(
             boolean analog, boolean longText, boolean emphasized,
@@ -61,11 +48,6 @@ final class AdvancedPreviewTextSizing {
                 ? MAX_ANALOG_CONTENT_HEIGHT_TO_WIDTH_RATIO
                 : MAX_TEXT_CONTENT_HEIGHT_TO_WIDTH_RATIO;
         return Math.min(heightPx, widthPx * maxContentRatio);
-    }
-
-    static float rowHeightPx(float totalHeightPx, float rowWeight, float weightSum) {
-        return weightSum > 0.0F
-                ? totalHeightPx * rowWeight / weightSum : 0.0F;
     }
 
 }
