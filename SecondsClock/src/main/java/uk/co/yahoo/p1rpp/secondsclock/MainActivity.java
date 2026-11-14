@@ -17,9 +17,12 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
@@ -37,6 +40,7 @@ public class MainActivity extends Activity_common
     private static final int EXPORT_SETTINGS = CONFIGURE_THIS_WIDGET + 1;
     private static final int IMPORT_SETTINGS = EXPORT_SETTINGS + 1;
     private static final int MANAGE_SETTINGS = IMPORT_SETTINGS + 1;
+    private static final int GLOBAL_SETTINGS = MANAGE_SETTINGS + 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -209,6 +213,9 @@ public class MainActivity extends Activity_common
             case MANAGE_SETTINGS:
                 startSettingsActivity(SettingsManagerActivity.ACTION_MANAGE);
                 break;
+            case GLOBAL_SETTINGS:
+                startActivity(new Intent(this, GlobalSettingsActivity.class));
+                break;
             case CONFIGURE_EXISTING_WIDGET:
                 m_prefs.edit().putInt("Wview", CONFIGURE)
                     .putInt("Wconfiguring", 1).commit();
@@ -256,6 +263,8 @@ public class MainActivity extends Activity_common
                 doToast(R.string.import_settings_help); return true;
             case MANAGE_SETTINGS:
                 doToast(R.string.settings_manager_help); return true;
+            case GLOBAL_SETTINGS:
+                doToast(R.string.global_settings_help); return true;
             case CONFIGURE_EXISTING_WIDGET:
                 doToast(R.string.helpoldwidget); return true;
             case CONFIGURE_NIGHT_CLOCK:
@@ -360,10 +369,6 @@ public class MainActivity extends Activity_common
         LinearLayout lmain = new LinearLayout(this);
         lmain.setOrientation(LinearLayout.VERTICAL);
         lmain.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-        LinearLayout.LayoutParams centreButton = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT);
-        centreButton.gravity = Gravity.CENTER_HORIZONTAL;
         String s = "";
         try
         {
@@ -376,82 +381,92 @@ public class MainActivity extends Activity_common
         m_helptext.setId(LONGPRESSHELP);
         m_helptext.setOnLongClickListener(this);
         lmain.addView(m_helptext);
-        Button b = new Button(this);
-        b.setText(R.string.gosysclock);
-        b.setId(GO_SYSTEM_CLOCK);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        b = new Button(this);
-        b.setText(R.string.export_settings);
-        b.setId(EXPORT_SETTINGS);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        b = new Button(this);
-        b.setText(R.string.import_settings);
-        b.setId(IMPORT_SETTINGS);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        b = new Button(this);
-        b.setText(R.string.settings_manager);
-        b.setId(MANAGE_SETTINGS);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        b = new Button(this);
-        b.setText(R.string.confignewwidget);
-        b.setId(CONFIGURE_NEW_WIDGET);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        if (widgetID != -1) {
-            b = new Button(this);
-            b.setText(R.string.configwidget);
-            b.setId(CONFIGURE_THIS_WIDGET);
-            b.setAllCaps(false);
-            b.setOnClickListener(this);
-            b.setOnLongClickListener(this);
-            lmain.addView(b, centreButton);
-        }
+
+        addMenuSection(lmain, R.string.main_section_clock);
+        addMenuButtonRow(lmain, R.string.gosysclock, GO_SYSTEM_CLOCK,
+                R.string.runnightclock, GO_NIGHT_CLOCK);
+        addMenuButtonRow(lmain, R.string.confignightclock,
+                CONFIGURE_NIGHT_CLOCK, 0, 0);
+
+        addMenuSection(lmain, R.string.main_section_widgets);
         String m_widgetIds = m_prefs.getString("widgetIds", "");
-        if (m_widgetIds.length() > 0) {
-            b = new Button(this);
-            b.setText(R.string.configoldwwidget);
-            b.setId(CONFIGURE_EXISTING_WIDGET);
-            b.setAllCaps(false);
-            b.setOnClickListener(this);
-            b.setOnLongClickListener(this);
-            lmain.addView(b, centreButton);
+        boolean hasExistingWidgets = m_widgetIds.length() > 0;
+        int secondWidgetLabel = 0;
+        int secondWidgetId = 0;
+        if (widgetID != -1) {
+            secondWidgetLabel = R.string.configwidget;
+            secondWidgetId = CONFIGURE_THIS_WIDGET;
+        } else if (hasExistingWidgets) {
+            secondWidgetLabel = R.string.configoldwwidget;
+            secondWidgetId = CONFIGURE_EXISTING_WIDGET;
         }
-        b = new Button(this);
-        b.setText(R.string.confignightclock);
-        b.setId(CONFIGURE_NIGHT_CLOCK);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        b = new Button(this);
-        b.setText(R.string.runnightclock);
-        b.setId(GO_NIGHT_CLOCK);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
-        b = new Button(this);
-        b.setText(R.string.exit);
-        b.setId(GO_EXIT);
-        b.setAllCaps(false);
-        b.setOnClickListener(this);
-        b.setOnLongClickListener(this);
-        lmain.addView(b, centreButton);
+        addMenuButtonRow(lmain, R.string.confignewwidget,
+                CONFIGURE_NEW_WIDGET, secondWidgetLabel, secondWidgetId);
+        if (widgetID != -1 && hasExistingWidgets) {
+            addMenuButtonRow(lmain, R.string.configoldwwidget,
+                    CONFIGURE_EXISTING_WIDGET, 0, 0);
+        }
+
+        addMenuSection(lmain, R.string.main_section_settings);
+        addMenuButtonRow(lmain, R.string.global_settings_button,
+                GLOBAL_SETTINGS, R.string.settings_manager, MANAGE_SETTINGS);
+        addMenuButtonRow(lmain, R.string.export_settings, EXPORT_SETTINGS,
+                R.string.import_settings, IMPORT_SETTINGS);
+
+        addMenuSection(lmain, R.string.main_section_app);
+        addMenuButtonRow(lmain, R.string.exit, GO_EXIT, 0, 0);
+
         lscroll.addView(lmain);
         m_topLayout.addView(lscroll);
+    }
+
+    private void addMenuSection(LinearLayout parent, int titleResource) {
+        TextView title = new TextView(this);
+        title.setText(titleResource);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        title.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        int horizontalPadding = Math.round(8 * m_density);
+        title.setPadding(horizontalPadding, Math.round(12 * m_density),
+                horizontalPadding, Math.round(2 * m_density));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = Math.round(4 * m_density);
+        parent.addView(title, params);
+    }
+
+    private void addMenuButtonRow(LinearLayout parent,
+                                  int firstLabel, int firstId,
+                                  int secondLabel, int secondId) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        parent.addView(row, rowParams);
+
+        boolean hasSecondButton = secondId != 0;
+        addMenuButton(row, firstLabel, firstId, !hasSecondButton);
+        if (hasSecondButton) {
+            addMenuButton(row, secondLabel, secondId, false);
+        }
+    }
+
+    private void addMenuButton(LinearLayout row, int label, int id,
+                               boolean fullWidth) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setId(id);
+        button.setAllCaps(false);
+        button.setOnClickListener(this);
+        button.setOnLongClickListener(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                fullWidth ? ViewGroup.LayoutParams.MATCH_PARENT : 0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                fullWidth ? 0.0F : 1.0F);
+        int gap = Math.round(4 * m_density);
+        params.setMargins(gap, 0, gap, 0);
+        row.addView(button, params);
     }
 }

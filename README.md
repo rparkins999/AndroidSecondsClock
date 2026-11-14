@@ -80,7 +80,7 @@ Android doesn't define a standard intent to launch it. SecondsClock tries severa
 If they fail, you can choose an installed app in Android's app selector and save it as an override.
 The next system-clock action tries that app first. Choosing **Not now** opens SecondsClock's
 full-screen clock; select **Don't ask me again** to skip the prompt on later failures. The override
-and prompt preference can be changed or reset in **Settings Manager** under **System clock app**.
+and prompt preference can be changed or reset from **Global Settings** under **System clock app**.
 
 ### Seconds and battery
 
@@ -131,6 +131,7 @@ names in their configuration so backups can match them after reinstalling or mov
 installation. Export before uninstalling an APK signed with a different key, because uninstalling
 deletes the app's saved settings.
 
+**Global Settings** lets you choose the system-clock app override and configure new-widget defaults.
 **Settings Manager** copies settings between new-widget defaults, the full-screen clock, individual
 widgets, and presets. You can save a selected component as a preset, apply a preset to a compatible
 component, and rename or delete presets. Resetting a component saves its previous custom settings as

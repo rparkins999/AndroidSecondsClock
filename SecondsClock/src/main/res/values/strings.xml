@@ -58,6 +58,16 @@
     <string name="import_settings_help">Load settings and presets from a file. Matching widgets are updated automatically.</string>
     <string name="settings_manager">Settings Manager</string>
     <string name="settings_manager_help">Copy settings between current components and presets.</string>
+    <string name="global_settings_button">Global Settings</string>
+    <string name="global_settings_help">Set the system clock app override or configure defaults for new widgets.</string>
+    <string name="global_settings_done">Back to main menu</string>
+    <string name="main_section_clock">Clock</string>
+    <string name="main_section_widgets">Widgets</string>
+    <string name="main_section_settings">Settings and backup</string>
+    <string name="main_section_app">App</string>
+    <string name="new_widget_defaults_title">New-widget defaults</string>
+    <string name="new_widget_defaults_help">Choose the settings that will be used when you add a new widget.</string>
+    <string name="configure_new_widget_defaults">Configure new-widget defaults</string>
     <string name="current_settings">Current settings</string>
     <string name="presets">Presets</string>
     <string name="global_settings">GLOBALS (new-widget defaults)</string>
