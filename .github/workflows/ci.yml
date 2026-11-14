@@ -68,10 +68,22 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager 'platforms;android-28' 'build-tools;34.0.0'
 
+      - name: Enable KVM access
+        if: ${{ !env.ACT }}
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Apply RemoteViews layout tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 28
           target: google_apis
           arch: x86
-          script: ./gradlew --no-daemon :SecondsClock:connectedDebugAndroidTest
+          script: |
+            set -eu
+            ./gradlew --no-daemon :SecondsClock:assembleDebug
+            timeout 30 adb install -r SecondsClock/build/outputs/apk/debug/SecondsClock-debug.apk
+            timeout 15 adb shell appwidget grantbind --package uk.co.yahoo.p1rpp.secondsclock.debug --user 0
+            ./gradlew --no-daemon :SecondsClock:connectedDebugAndroidTest
