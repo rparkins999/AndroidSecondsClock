@@ -333,20 +333,15 @@ public class SecondsClockWidget extends AppWidgetProvider {
             float rowWidthPx, int textColor) {
         int layout = emphasized
                 ? formatHasAnalog
-                        ? R.layout.widget_format_text_line_emphasized
+                        ? alignToPrevious
+                                ? R.layout.widget_format_text_line_emphasized
+                                : R.layout.widget_format_text_line_emphasized_centered
                         : R.layout.widget_format_text_line_emphasized_compact
                 : longText
                         ? R.layout.widget_format_text_block
                         : R.layout.widget_format_text_block_compact;
         RemoteViews text = new RemoteViews(context.getPackageName(), layout);
         text.setTextColor(R.id.widget_format_text_block_clock, textColor);
-        if (emphasized) {
-            text.setInt(R.id.widget_format_text_block_clock, "setGravity",
-                    formatHasAnalog && alignToPrevious
-                            ? android.view.Gravity.TOP
-                                    | android.view.Gravity.CENTER_HORIZONTAL
-                            : android.view.Gravity.CENTER);
-        }
         String pattern = format.toString();
         if (!longText || emphasized) {
             text.setBoolean(R.id.widget_format_text_block_clock,

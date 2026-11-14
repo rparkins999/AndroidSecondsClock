@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -84,6 +85,7 @@ public class SecondsClockWidgetRemoteViewsTest {
         assertTrue(before.getFormat24Hour().toString().contains("HH"));
         assertTrue(before.getFormat24Hour().toString().contains("mm"));
         assertTrue(year.getFormat24Hour().toString().contains("yyyy"));
+        assertEquals(Gravity.CENTER, year.getGravity());
         assertTrue(year.getHeight() > before.getHeight());
         assertTrue(year.getTextSize() > before.getTextSize());
 
@@ -121,6 +123,22 @@ public class SecondsClockWidgetRemoteViewsTest {
         assertTrue(analogRow.getTop() >= 0);
         assertTrue(analogRow.getBottom() <= container.getHeight());
         assertTrue(container.getChildAt(2) instanceof TextClock);
+    }
+
+    @Test
+    public void emphasizedTextKeepsGravityWithAnalogRows() {
+        View topAlignedRoot = renderFormat("%C\n%L%Y");
+        LinearLayout topAlignedContainer = topAlignedRoot.findViewById(
+                R.id.appwidget_format_container);
+        TextClock topAlignedYear = (TextClock) topAlignedContainer.getChildAt(1);
+        assertEquals(Gravity.TOP | Gravity.CENTER_HORIZONTAL,
+                topAlignedYear.getGravity());
+
+        View centeredRoot = renderFormat("%L%Y\n%C");
+        LinearLayout centeredContainer = centeredRoot.findViewById(
+                R.id.appwidget_format_container);
+        TextClock centeredYear = (TextClock) centeredContainer.getChildAt(0);
+        assertEquals(Gravity.CENTER, centeredYear.getGravity());
     }
 
     private View renderFormat(String format) {
