@@ -120,8 +120,8 @@ exec {
 // fallback PNG. Standard Android/F-Droid builds can use the fallback as-is.
 
 // Update these three to make new version
-def VERSIONCODE = 86
-def VERSIONNAME = "2.6.0"
+def VERSIONCODE = 87
+def VERSIONNAME = "2.7.0"
 
 def explicitKeystorePropertiesPath = findProperty("keystorePropertiesFile")
         ?: System.getenv("SECONDSCLOCK_KEYSTORE_PROPERTIES")

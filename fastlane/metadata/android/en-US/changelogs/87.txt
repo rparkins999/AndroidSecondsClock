@@ -1,0 +1,2 @@
+- Add optional analog home-screen widgets and advanced analog clock formats (PR #41).
+- Add a Global Settings screen and reorganize main-menu actions (PR #43).
