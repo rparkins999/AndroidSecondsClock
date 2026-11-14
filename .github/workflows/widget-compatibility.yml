@@ -53,16 +53,16 @@ jobs:
         include: ${{ fromJSON(needs.select-matrix.outputs.include) }}
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           # Older avdmanager versions silently write target=android-0 for dotted APIs (37.0).
           cmdline-tools-version: '15859902'
@@ -226,7 +226,7 @@ jobs:
 
       - name: Upload debug APK
         if: ${{ success() && matrix.sdk-level == '37.2' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seconds-clock-debug-apk
           path: SecondsClock/build/outputs/apk/debug/SecondsClock-debug.apk
@@ -235,7 +235,7 @@ jobs:
 
       - name: Upload emulator logcat on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: widget-emulator-logcat-api-${{ matrix.sdk-level }}
           path: ${{ runner.temp }}/android-widget-logcat.txt
