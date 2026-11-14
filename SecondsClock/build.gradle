@@ -119,9 +119,19 @@ exec {
 // When rsvg-convert is available, the timestamped SVG overrides the checked-in
 // fallback PNG. Standard Android/F-Droid builds can use the fallback as-is.
 
-// Update these three to make new version
+// Release version metadata is prepared with scripts/release.py.
 def VERSIONCODE = 87
 def VERSIONNAME = "2.7.0"
+
+// Keep the upstream package ID by default. This property selects a parallel-install package.
+def DEFAULT_APPLICATION_ID = "uk.co.yahoo.p1rpp.secondsclock"
+def applicationIdProperty = findProperty("secondsClockApplicationId")
+def APPLICATION_ID = applicationIdProperty == null
+        ? DEFAULT_APPLICATION_ID : applicationIdProperty.toString().trim()
+if (!(APPLICATION_ID ==~ /[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+/)) {
+    throw new GradleException(
+            "secondsClockApplicationId is not a valid Android application ID: ${APPLICATION_ID}")
+}
 
 def explicitKeystorePropertiesPath = findProperty("keystorePropertiesFile")
         ?: System.getenv("SECONDSCLOCK_KEYSTORE_PROPERTIES")
@@ -173,7 +183,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId "uk.co.yahoo.p1rpp.secondsclock"
+        applicationId APPLICATION_ID
         versionCode VERSIONCODE
         versionName VERSIONNAME
         minSdk 26
