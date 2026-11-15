@@ -14,7 +14,12 @@ class ReleaseMetadataTest(unittest.TestCase):
         (self.root / "SecondsClock").mkdir()
         (self.root / "fastlane/metadata/android/en-US/changelogs").mkdir(parents=True)
         (self.root / "SecondsClock/build.gradle").write_text(
-            'def VERSIONCODE = 86\ndef VERSIONNAME = "2.6.0"\n', encoding="utf-8"
+            'defaultConfig {\n'
+            '    applicationId "uk.co.yahoo.p1rpp.secondsclock"\n'
+            '    versionCode 86\n'
+            '    versionName "2.6.0"\n'
+            '}\n',
+            encoding="utf-8",
         )
         (self.root / "README.md").write_text("# Test\n\nThis is version 2.6.0.\n", encoding="utf-8")
         (self.root / "fastlane/metadata/android/en-US/changelogs/86.txt").write_text(
@@ -40,14 +45,29 @@ class ReleaseMetadataTest(unittest.TestCase):
     def test_prepare_updates_version_and_adds_code_keyed_changelog(self):
         prepare_release(self.root, 87, "2.7.0", "- New feature.\n- Bug fix.")
 
-        self.assertIn("def VERSIONCODE = 87", (self.root / "SecondsClock/build.gradle").read_text())
-        self.assertIn('def VERSIONNAME = "2.7.0"', (self.root / "SecondsClock/build.gradle").read_text())
+        build_file = (self.root / "SecondsClock/build.gradle").read_text()
+        self.assertIn('applicationId "uk.co.yahoo.p1rpp.secondsclock"', build_file)
+        self.assertIn("versionCode 87", build_file)
+        self.assertIn('versionName "2.7.0"', build_file)
         self.assertIn("This is version 2.7.0.", (self.root / "README.md").read_text())
         self.assertEqual(
             "- New feature.\n- Bug fix.\n",
             (self.root / "fastlane/metadata/android/en-US/changelogs/87.txt").read_text(),
         )
         self.assertEqual([], validate_release_metadata(self.root))
+
+    def test_prepare_rejects_noncanonical_fdroid_application_id(self):
+        build_file = self.root / "SecondsClock/build.gradle"
+        build_file.write_text(
+            build_file.read_text().replace(
+                'applicationId "uk.co.yahoo.p1rpp.secondsclock"',
+                'applicationId "io.github.marvin1099.secondsclock"',
+            ),
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ReleaseError, "F-Droid's literal applicationId"):
+            prepare_release(self.root, 87, "2.7.0", "- New release.")
 
     def test_prepare_refuses_old_version_code(self):
         with self.assertRaisesRegex(ReleaseError, "must be greater"):
