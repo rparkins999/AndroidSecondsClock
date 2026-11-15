@@ -383,30 +383,56 @@ public class MainActivity extends Activity_common
         lmain.addView(m_helptext);
 
         addMenuSection(lmain, R.string.main_section_clock);
-        addMenuButtonRow(lmain, R.string.gosysclock, GO_SYSTEM_CLOCK, 0, 0);
-        addMenuButtonRow(lmain, R.string.runnightclock, GO_NIGHT_CLOCK,
-                R.string.confignightclock, CONFIGURE_NIGHT_CLOCK);
+        addMenuButtonGroup(lmain,
+                new int[] {
+                    R.string.gosysclock,
+                    R.string.runnightclock,
+                    R.string.confignightclock
+                },
+                new int[] {
+                    GO_SYSTEM_CLOCK,
+                    GO_NIGHT_CLOCK,
+                    CONFIGURE_NIGHT_CLOCK
+                }, false);
 
         addMenuSection(lmain, R.string.main_section_widgets);
         String m_widgetIds = m_prefs.getString("widgetIds", "");
         boolean hasExistingWidgets = m_widgetIds.length() > 0;
-        addMenuButtonRow(lmain, R.string.confignewwidget,
-                CONFIGURE_NEW_WIDGET,
-                hasExistingWidgets ? R.string.configoldwwidget : 0,
-                hasExistingWidgets ? CONFIGURE_EXISTING_WIDGET : 0);
-        if (widgetID != -1) {
-            addMenuButtonRow(lmain, R.string.configwidget,
-                    CONFIGURE_THIS_WIDGET, 0, 0);
+        int widgetButtonCount = 1 + (hasExistingWidgets ? 1 : 0)
+                + (widgetID != -1 ? 1 : 0);
+        int[] widgetLabels = new int[widgetButtonCount];
+        int[] widgetIds = new int[widgetButtonCount];
+        int widgetButtonIndex = 0;
+        widgetLabels[widgetButtonIndex] = R.string.confignewwidget;
+        widgetIds[widgetButtonIndex++] = CONFIGURE_NEW_WIDGET;
+        if (hasExistingWidgets) {
+            widgetLabels[widgetButtonIndex] = R.string.configoldwwidget;
+            widgetIds[widgetButtonIndex++] = CONFIGURE_EXISTING_WIDGET;
         }
+        if (widgetID != -1) {
+            widgetLabels[widgetButtonIndex] = R.string.configwidget;
+            widgetIds[widgetButtonIndex] = CONFIGURE_THIS_WIDGET;
+        }
+        addMenuButtonGroup(lmain, widgetLabels, widgetIds, true);
 
         addMenuSection(lmain, R.string.main_section_settings);
-        addMenuButtonRow(lmain, R.string.export_settings, EXPORT_SETTINGS,
-                R.string.import_settings, IMPORT_SETTINGS);
-        addMenuButtonRow(lmain, R.string.global_settings_button,
-                GLOBAL_SETTINGS, R.string.settings_manager, MANAGE_SETTINGS);
+        addMenuButtonGroup(lmain,
+                new int[] {
+                    R.string.export_settings,
+                    R.string.import_settings,
+                    R.string.global_settings_button,
+                    R.string.settings_manager
+                },
+                new int[] {
+                    EXPORT_SETTINGS,
+                    IMPORT_SETTINGS,
+                    GLOBAL_SETTINGS,
+                    MANAGE_SETTINGS
+                }, false);
 
         addMenuSection(lmain, R.string.main_section_app);
-        addMenuButtonRow(lmain, R.string.exit, GO_EXIT, 0, 0);
+        addMenuButtonGroup(lmain, new int[] { R.string.exit },
+                new int[] { GO_EXIT }, false);
 
         lscroll.addView(lmain);
         m_topLayout.addView(lscroll);
@@ -428,37 +454,83 @@ public class MainActivity extends Activity_common
         parent.addView(title, params);
     }
 
-    private void addMenuButtonRow(LinearLayout parent,
-                                  int firstLabel, int firstId,
-                                  int secondLabel, int secondId) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+    private void addMenuButtonGroup(LinearLayout parent,
+                                   int[] labels, int[] ids,
+                                   boolean reverseFill) {
+        if (labels.length != ids.length) {
+            throw new IllegalArgumentException("Menu labels and IDs must match");
+        }
+        Button[] buttons = new Button[labels.length];
+        for (int i = 0; i < labels.length; ++i) {
+            buttons[i] = new Button(this);
+            buttons[i].setText(labels[i]);
+            buttons[i].setId(ids[i]);
+            buttons[i].setAllCaps(false);
+            buttons[i].setOnClickListener(this);
+            buttons[i].setOnLongClickListener(this);
+        }
+        MenuButtonGroup group = new MenuButtonGroup(buttons, reverseFill);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        parent.addView(row, rowParams);
-
-        boolean hasSecondButton = secondId != 0;
-        addMenuButton(row, firstLabel, firstId, !hasSecondButton);
-        if (hasSecondButton) {
-            addMenuButton(row, secondLabel, secondId, false);
-        }
+        parent.addView(group, params);
     }
 
-    private void addMenuButton(LinearLayout row, int label, int id,
-                               boolean fullWidth) {
-        Button button = new Button(this);
-        button.setText(label);
-        button.setId(id);
-        button.setAllCaps(false);
-        button.setOnClickListener(this);
-        button.setOnLongClickListener(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                fullWidth ? ViewGroup.LayoutParams.MATCH_PARENT : 0,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                fullWidth ? 0.0F : 1.0F);
-        int gap = Math.round(4 * m_density);
-        params.setMargins(gap, 0, gap, 0);
-        row.addView(button, params);
+    private final class MenuButtonGroup extends LinearLayout {
+        private final Button[] buttons;
+        private final boolean reverseFill;
+        private final int gap;
+        private int formattedWidth;
+
+        MenuButtonGroup(Button[] buttons, boolean reverseFill) {
+            super(MainActivity.this);
+            this.buttons = buttons;
+            this.reverseFill = reverseFill;
+            this.gap = Math.round(4 * m_density);
+            setOrientation(LinearLayout.VERTICAL);
+            setBaselineAligned(false);
+            formattedWidth = -1;
+            addOnLayoutChangeListener((view, left, top, right, bottom,
+                                       oldLeft, oldTop, oldRight, oldBottom) -> {
+                int width = right - left;
+                if (width > 0 && width != formattedWidth) {
+                    formatButtons(width);
+                    formattedWidth = width;
+                }
+            });
+        }
+
+        private void formatButtons(int width) {
+            int[] naturalWidths = new int[buttons.length];
+            int unspecified = View.MeasureSpec.makeMeasureSpec(
+                    0, View.MeasureSpec.UNSPECIFIED);
+            for (int i = 0; i < buttons.length; ++i) {
+                buttons[i].measure(unspecified, unspecified);
+                naturalWidths[i] = buttons[i].getMeasuredWidth();
+            }
+            int[][] rows = MenuButtonLayoutFormatter.format(
+                    naturalWidths, width, gap, reverseFill);
+
+            for (Button button : buttons) {
+                if (button.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) button.getParent()).removeView(button);
+                }
+            }
+            removeAllViews();
+            for (int[] rowButtons : rows) {
+                LinearLayout row = new LinearLayout(MainActivity.this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setBaselineAligned(false);
+                addView(row, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
+                for (int buttonIndex : rowButtons) {
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0F);
+                    params.setMargins(gap, 0, gap, 0);
+                    row.addView(buttons[buttonIndex], params);
+                }
+            }
+        }
     }
 }
