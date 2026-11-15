@@ -1,0 +1,1 @@
+- Align the full-screen clock menu buttons when text wraps.

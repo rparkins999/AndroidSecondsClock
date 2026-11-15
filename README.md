@@ -4,7 +4,7 @@ A customizable Android clock for home-screen widgets and a full-screen night clo
 or analog displays, configure date/time layouts and alarms, and adjust the full-screen clock for
 low-light use. Each widget can have its own layout and settings.
 
-This is version 2.7.0.
+This is version 2.7.1.
 
 ## Choose a setup
 

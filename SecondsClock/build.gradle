@@ -120,8 +120,8 @@ exec {
 // fallback PNG. Standard Android/F-Droid builds can use the fallback as-is.
 
 // Release version metadata is prepared with scripts/release.py.
-def VERSIONCODE = 87
-def VERSIONNAME = "2.7.0"
+def VERSIONCODE = 88
+def VERSIONNAME = "2.7.1"
 
 // Keep the upstream package ID by default. This property selects a parallel-install package.
 def DEFAULT_APPLICATION_ID = "uk.co.yahoo.p1rpp.secondsclock"
