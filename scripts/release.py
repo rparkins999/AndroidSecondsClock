@@ -11,11 +11,15 @@ import tempfile
 from pathlib import Path
 
 
+F_DROID_APPLICATION_ID = "uk.co.yahoo.p1rpp.secondsclock"
+APPLICATION_ID_PATTERN = re.compile(
+    r'^([ \t]*applicationId ")([^\"]+)("[ \t]*)$', re.MULTILINE
+)
 VERSION_CODE_PATTERN = re.compile(
-    r"^([ \t]*def VERSIONCODE = )([0-9]+)([ \t]*)$", re.MULTILINE
+    r"^([ \t]*versionCode[ \t]+)([0-9]+)([ \t]*)$", re.MULTILINE
 )
 VERSION_NAME_PATTERN = re.compile(
-    r'^([ \t]*def VERSIONNAME = ")([^"]+)("[ \t]*)$', re.MULTILINE
+    r'^([ \t]*versionName ")([^"]+)("[ \t]*)$', re.MULTILINE
 )
 README_VERSION_PATTERN = re.compile(
     r"^(This is version )\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?(\.)$",
@@ -56,16 +60,28 @@ def validate_release_metadata(root: Path) -> list[str]:
 
     try:
         build_text = build_file.read_text(encoding="utf-8")
-        code_match = _single_match(VERSION_CODE_PATTERN, build_text, "VERSIONCODE")
-        name_match = _single_match(VERSION_NAME_PATTERN, build_text, "VERSIONNAME")
+        app_id_match = _single_match(
+            APPLICATION_ID_PATTERN, build_text, "literal canonical applicationId"
+        )
+        code_match = _single_match(
+            VERSION_CODE_PATTERN, build_text, "literal versionCode"
+        )
+        name_match = _single_match(
+            VERSION_NAME_PATTERN, build_text, "literal versionName"
+        )
         version_code = int(code_match.group(2))
         version_name = name_match.group(2)
     except (OSError, ValueError, ReleaseError) as error:
         return [str(error)]
     if version_code <= 0:
-        problems.append("VERSIONCODE must be a positive integer")
+        problems.append("versionCode must be a positive integer")
+    if app_id_match.group(2) != F_DROID_APPLICATION_ID:
+        problems.append(
+            "F-Droid's literal applicationId must remain "
+            f"{F_DROID_APPLICATION_ID}"
+        )
     if not SEMVER_PATTERN.fullmatch(version_name):
-        problems.append(f"VERSIONNAME is not a valid release version: {version_name}")
+        problems.append(f"versionName is not a valid release version: {version_name}")
 
     readme_text = readme_file.read_text(encoding="utf-8")
     try:
@@ -114,8 +130,18 @@ def prepare_release(root: Path, version_code: int, version_name: str, changelog:
         raise ReleaseError("Run this command from a SecondsClock repository")
 
     build_text = build_file.read_text(encoding="utf-8")
-    code_match = _single_match(VERSION_CODE_PATTERN, build_text, "VERSIONCODE")
-    _single_match(VERSION_NAME_PATTERN, build_text, "VERSIONNAME")
+    app_id_match = _single_match(
+        APPLICATION_ID_PATTERN, build_text, "literal canonical applicationId"
+    )
+    if app_id_match.group(2) != F_DROID_APPLICATION_ID:
+        raise ReleaseError(
+            "F-Droid's literal applicationId must remain "
+            f"{F_DROID_APPLICATION_ID}"
+        )
+    code_match = _single_match(
+        VERSION_CODE_PATTERN, build_text, "literal versionCode"
+    )
+    _single_match(VERSION_NAME_PATTERN, build_text, "literal versionName")
     current_code = int(code_match.group(2))
     if version_code <= current_code:
         raise ReleaseError(
