@@ -59,8 +59,26 @@
     <string name="settings_manager">Settings Manager</string>
     <string name="settings_manager_help">Copy settings between current components and presets.</string>
     <string name="global_settings_button">Global Settings</string>
-    <string name="global_settings_help">Set the system clock app override or configure defaults for new widgets.</string>
+    <string name="global_settings_help">Set the system clock app override, advanced line colors, or defaults for new widgets.</string>
     <string name="global_settings_done">Back to main menu</string>
+    <string name="line_color_settings_title">Advanced line colors</string>
+    <string name="line_color_settings_help" formatted="false">Automatic colors color every line in advanced formats. You can also put %Q on a line to color only that line, even when automatic colors are off. Colors are chosen for black backgrounds; set the clock background to black for the clearest result.</string>
+    <string name="line_color_automatic">Automatically color all advanced-format lines</string>
+    <string name="line_color_profile_button">Color-vision profile: %1$s</string>
+    <string name="line_color_profile_title">Color-vision profile</string>
+    <string name="line_color_seed_label">Color seed</string>
+    <string name="line_color_seed_hint">Any text; the same seed gives the same line colors</string>
+    <string name="line_color_copy_seed">Copy seed</string>
+    <string name="line_color_regenerate_seed">Regenerate seed</string>
+    <string name="line_color_seed_copied">Color seed copied</string>
+    <string name="format_token_random_color" formatted="false">Random color for this line (%Q)</string>
+    <string-array name="line_color_profiles">
+        <item>Standard</item>
+        <item>Protanopia</item>
+        <item>Deuteranopia</item>
+        <item>Tritanopia</item>
+        <item>Monochrome</item>
+    </string-array>
     <string name="main_section_clock">Clock</string>
     <string name="main_section_widgets">Widgets</string>
     <string name="main_section_settings">Settings and backup</string>

@@ -42,6 +42,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.format.DateFormat;
+import android.text.style.CharacterStyle;
 import android.text.style.MetricAffectingSpan;
 import android.text.style.RelativeSizeSpan;
 import android.util.IntProperty;
@@ -94,6 +95,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private AnalogClockView m_checkboxAnalogView;
     private final List<AnalogClockView> m_advancedAnalogViews = new ArrayList<>();
     private final List<TextClock> m_advancedAnalogTextViews = new ArrayList<>();
+    private final List<Integer> m_advancedAnalogColors = new ArrayList<>();
+    private final List<Integer> m_advancedAnalogTextColors = new ArrayList<>();
+    private final List<Boolean> m_advancedAnalogColorized = new ArrayList<>();
+    private final List<Boolean> m_advancedAnalogTextColorized = new ArrayList<>();
+    private final List<LineColorSpan> m_advancedTextColorSpans = new ArrayList<>();
     private boolean m_customAnalogShowsSeconds;
     private boolean m_clockReceiverRegistered;
     private int m_fgcolour;
@@ -132,9 +138,25 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_weekdayView.setTextColor(colour);
         m_yearView.setTextColor(colour);
         if (m_customClockView != null) m_customClockView.setTextColor(colour);
-        for (TextClock view : m_advancedAnalogTextViews) view.setTextColor(colour);
+        int alpha = (colour >>> 24) & 0xFF;
+        for (LineColorSpan span : m_advancedTextColorSpans) {
+            span.setAlpha(alpha);
+        }
+        for (int index = 0; index < m_advancedAnalogTextViews.size(); ++index) {
+            m_advancedAnalogTextViews.get(index).setTextColor(
+                    m_advancedAnalogTextColorized.get(index)
+                            ? LineColors.withBaseAlpha(
+                                    m_advancedAnalogTextColors.get(index), colour)
+                            : colour);
+        }
         if (m_checkboxAnalogView != null) m_checkboxAnalogView.setColor(colour);
-        for (AnalogClockView view : m_advancedAnalogViews) view.setColor(colour);
+        for (int index = 0; index < m_advancedAnalogViews.size(); ++index) {
+            m_advancedAnalogViews.get(index).setColor(
+                    m_advancedAnalogColorized.get(index)
+                            ? LineColors.withBaseAlpha(
+                                    m_advancedAnalogColors.get(index), colour)
+                            : colour);
+        }
     }
 
     // Update the displayed RGB colour without resetting its dimming opacity.
@@ -519,6 +541,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
             AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.renderLines(
                     lines, nextAlarmTime);
             m_customAnalogShowsSeconds = rendered.hasSecondHand;
+            m_advancedAnalogColors.clear();
+            m_advancedAnalogTextColors.clear();
+            m_advancedAnalogColorized.clear();
+            m_advancedAnalogTextColorized.clear();
+            m_advancedTextColorSpans.clear();
             m_customFormatLayout = makeAdvancedAnalogLayout(rendered);
             m_customClockView = null;
             addView(m_customFormatLayout, new LinearLayout.LayoutParams(
@@ -530,6 +557,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_customFormatLayout = null;
         m_advancedAnalogViews.clear();
         m_advancedAnalogTextViews.clear();
+        m_advancedAnalogColors.clear();
+        m_advancedAnalogTextColors.clear();
+        m_advancedAnalogColorized.clear();
+        m_advancedAnalogTextColorized.clear();
+        m_advancedTextColorSpans.clear();
         m_customAnalogShowsSeconds = false;
         if (m_customClockView == null) m_customClockView = makeCustomClock(m_fgcolour);
         SpannableStringBuilder pattern = makeAdvancedPattern(lines, nextAlarmTime);
@@ -546,7 +578,14 @@ class ClockView extends LinearLayout implements SensorEventListener {
         TextPaint measurePaint = new TextPaint(m_customClockView == null
                 ? new TextPaint() : m_customClockView.getPaint());
         measurePaint.setTextSize(100.0F);
-        for (AnalogFormatRenderer.Line line : rendered.lines) {
+        for (int lineIndex = 0; lineIndex < rendered.lines.size(); ++lineIndex) {
+            AnalogFormatRenderer.Line line = rendered.lines.get(lineIndex);
+            boolean colorized = LineColors.shouldColor(m_prefs, line.randomColor);
+            int paletteColor = colorized
+                    ? LineColors.colorForLine(m_prefs, line.lineIndex) : m_fgcolour;
+            int lineColor = colorized
+                    ? LineColors.withBaseAlpha(paletteColor, m_fgcolour)
+                    : m_fgcolour;
             LinearLayout row = new LinearLayout(m_owner);
             row.setOrientation(HORIZONTAL);
             row.setGravity(Gravity.CENTER);
@@ -559,10 +598,12 @@ class ClockView extends LinearLayout implements SensorEventListener {
             for (AnalogFormatRenderer.Part part : line.parts) {
                 if (part.analog) {
                     AnalogClockView dial = new AnalogClockView(m_owner);
-                    dial.setColor(m_fgcolour);
+                    dial.setColor(lineColor);
                     dial.setHands(line.hands.hour,
                             line.hands.minute, line.hands.second);
                     m_advancedAnalogViews.add(dial);
+                    m_advancedAnalogColors.add(paletteColor);
+                    m_advancedAnalogColorized.add(colorized);
                     row.addView(dial, new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.WRAP_CONTENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
@@ -570,8 +611,10 @@ class ClockView extends LinearLayout implements SensorEventListener {
                     continue;
                 }
                 if (part.pattern.isEmpty()) continue;
-                TextClock text = makeCustomClock(m_fgcolour);
+                TextClock text = makeCustomClock(lineColor);
                 m_advancedAnalogTextViews.add(text);
+                m_advancedAnalogTextColors.add(paletteColor);
+                m_advancedAnalogTextColorized.add(colorized);
                 text.setSingleLine(true);
                 text.setLines(1);
                 SpannableStringBuilder pattern = new SpannableStringBuilder(part.pattern);
@@ -602,11 +645,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
     }
     private SpannableStringBuilder makeAdvancedPattern(
             List<FormatLineSplit.Line> lines, Long nextAlarmTime) {
+        m_advancedTextColorSpans.clear();
         List<AdvancedPatternLine> renderedLines = new ArrayList<>();
         TextPaint measurePaint = new TextPaint(m_customClockView.getPaint());
         measurePaint.setTextSize(100.0F);
         float widestLine = 0.0F;
-        for (FormatLineSplit.Line line : lines) {
+        for (int lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
+            FormatLineSplit.Line line = lines.get(lineIndex);
             DateCommandFormat.FormattedPattern converted =
                     DateCommandFormat.toTextClockPatternWithTimeRanges(
                             line.format, nextAlarmTime);
@@ -628,7 +673,9 @@ class ClockView extends LinearLayout implements SensorEventListener {
             float textWidth = measureStyledTextWidth(renderedText, measurePaint);
             widestLine = Math.max(widestLine, textWidth);
             renderedLines.add(new AdvancedPatternLine(
-                    linePattern, line.emphasized, textWidth));
+                    linePattern, line.emphasized, textWidth,
+                    LineColors.shouldColor(m_prefs, line.randomColor),
+                    LineColors.colorForLine(m_prefs, lineIndex)));
         }
 
         SpannableStringBuilder pattern = new SpannableStringBuilder();
@@ -642,6 +689,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 float scale = FormatLineSizing.relativeScale(
                         line.textWidth, widestLine);
                 pattern.setSpan(new RelativeSizeSpan(scale), start, end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (line.colored && end > start) {
+                LineColorSpan span = new LineColorSpan(
+                        line.color, (m_fgcolour >>> 24) & 0xFF);
+                m_advancedTextColorSpans.add(span);
+                pattern.setSpan(span, start, end,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
@@ -702,12 +756,35 @@ class ClockView extends LinearLayout implements SensorEventListener {
         final CharSequence pattern;
         final boolean emphasized;
         final float textWidth;
+        final boolean colored;
+        final int color;
 
-        AdvancedPatternLine(
-                CharSequence pattern, boolean emphasized, float textWidth) {
+        AdvancedPatternLine(CharSequence pattern, boolean emphasized,
+                            float textWidth, boolean colored, int color) {
             this.pattern = pattern;
             this.emphasized = emphasized;
             this.textWidth = textWidth;
+            this.colored = colored;
+            this.color = color;
+        }
+    }
+
+    private static final class LineColorSpan extends CharacterStyle {
+        private final int rgb;
+        private int alpha;
+
+        LineColorSpan(int color, int alpha) {
+            this.rgb = color & 0x00FFFFFF;
+            this.alpha = alpha;
+        }
+
+        void setAlpha(int alpha) {
+            this.alpha = alpha & 0xFF;
+        }
+
+        @Override
+        public void updateDrawState(TextPaint textPaint) {
+            textPaint.setColor((alpha << 24) | rgb);
         }
     }
 
@@ -762,6 +839,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_checkboxAnalogView = null;
         m_advancedAnalogViews.clear();
         m_advancedAnalogTextViews.clear();
+        m_advancedAnalogColors.clear();
+        m_advancedAnalogTextColors.clear();
+        m_advancedAnalogColorized.clear();
+        m_advancedAnalogTextColorized.clear();
+        m_advancedTextColorSpans.clear();
         m_customAnalogShowsSeconds = false;
         Configuration config = getResources().getConfiguration();
         boolean is24 = DateFormat.is24HourFormat(m_owner);
@@ -1149,6 +1231,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 }
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED);
+                filter.addAction(LineColors.ACTION_CHANGED);
                 filter.addAction(Intent.ACTION_TIME_CHANGED);
                 filter.addAction(Intent.ACTION_DATE_CHANGED);
                 filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);

@@ -646,6 +646,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
         result.setWeightSum(weightSum);
         for (int lineIndex = 0; lineIndex < rendered.lines.size(); ++lineIndex) {
             AnalogFormatRenderer.Line line = rendered.lines.get(lineIndex);
+            boolean colorized = LineColors.shouldColor(m_prefs, line.randomColor);
+            int lineColor = colorized
+                    ? LineColors.withBaseAlpha(
+                            LineColors.colorForLine(m_prefs, line.lineIndex), m_fgcolour)
+                    : m_fgcolour;
             StringBuilder linePattern = advancedPreviewLinePatternBuilder(line);
             boolean longText = line.hands == null && !line.emphasized
                     && linePattern.length() > 32;
@@ -660,7 +665,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
                 AnalogClockView clock = new AnalogClockView(this);
                 clock.setBackgroundColor(m_bgcolour);
-                clock.setColor(m_fgcolour);
+                clock.setColor(lineColor);
                 clock.setHands(line.hands.hour, line.hands.minute,
                         line.hands.second);
                 clock.setTime(Calendar.getInstance());
@@ -671,7 +676,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             addAdvancedFormatPreviewTextBlock(result, linePattern,
                     longText, line.emphasized,
                     line.emphasized && rendered.hasAnalog && lineIndex > 0,
-                    weight);
+                    weight, lineColor);
         }
         return result;
     }
@@ -693,12 +698,12 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private void addAdvancedFormatPreviewTextBlock(
             LinearLayout result, StringBuilder format,
             boolean longText, boolean emphasized, boolean alignToPrevious,
-            float weight) {
+            float weight, int textColor) {
         TextClock text = new TextClock(this);
         text.setIncludeFontPadding(false);
         text.setGravity(emphasized && alignToPrevious
                 ? Gravity.TOP | Gravity.CENTER_HORIZONTAL : Gravity.CENTER);
-        text.setTextColor(m_fgcolour);
+        text.setTextColor(textColor);
         text.setSingleLine(!longText || emphasized);
         text.setFormat12Hour(format.toString());
         text.setFormat24Hour(format.toString());
@@ -1002,6 +1007,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 new FormatToken(R.string.format_token_percent, "%%"), null);
         addFormatTokenRow(guide,
                 new FormatToken(R.string.format_token_analog_clock, "%C\n", 2), null);
+        addFormatTokenRow(guide,
+                new FormatToken(R.string.format_token_random_color, "%Q"), null);
         TextView analogHint = new TextView(this);
         analogHint.setText(R.string.widget_format_analog_hint);
         guide.addView(analogHint, lpMatchWrap);

@@ -317,6 +317,8 @@ public class ClockConfigureActivity extends ConfigureActivity
         TextView landscapeHint = new TextView(this);
         landscapeHint.setText(R.string.clock_format_landscape_emphasis_hint);
         guide.addView(landscapeHint, lpMatchWrap);
+        addClockTokenRow(guide,
+                R.string.format_token_random_color, "%Q", 2);
         addClockTokenSection(guide, R.string.widget_format_alarm_section);
         addClockTokenRow(guide, R.string.format_token_alarm, "%<%>", 2);
         addClockTokenRow(guide, R.string.format_token_alarm_alternative, "%|", 2);

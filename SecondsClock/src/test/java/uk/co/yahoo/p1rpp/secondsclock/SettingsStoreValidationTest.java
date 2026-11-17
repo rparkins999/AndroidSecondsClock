@@ -27,6 +27,12 @@ public class SettingsStoreValidationTest {
         assertNull(SettingsStore.invalidSetting(
                 Collections.singletonMap("analogMode", true),
                 SettingsTransferRules.CLOCK));
+        Map<String, Object> globalColors = new LinkedHashMap<>();
+        globalColors.put("lineColorsEnabled", true);
+        globalColors.put("lineColorProfile", LineColors.DEUTERANOPIA);
+        globalColors.put("lineColorSeed", "shared seed");
+        assertNull(SettingsStore.invalidSetting(
+                globalColors, SettingsTransferRules.GLOBALS));
     }
 
     @Test
@@ -43,6 +49,12 @@ public class SettingsStoreValidationTest {
         assertEquals("analogMode", SettingsStore.invalidSetting(
                 Collections.singletonMap("analogMode", 1),
                 SettingsTransferRules.WIDGET));
+        assertEquals("lineColorsEnabled", SettingsStore.invalidSetting(
+                Collections.singletonMap("lineColorsEnabled", 1),
+                SettingsTransferRules.GLOBALS));
+        assertEquals("lineColorProfile", SettingsStore.invalidSetting(
+                Collections.singletonMap("lineColorProfile", 99),
+                SettingsTransferRules.GLOBALS));
     }
 
     @Test
@@ -70,5 +82,19 @@ public class SettingsStoreValidationTest {
     public void rejectsSettingsFromAnUnknownComponentType() {
         assertEquals("component type", SettingsStore.invalidSetting(
                 Collections.emptyMap(), "other"));
+    }
+
+    @Test
+    public void colorPreferencesAreExportedAsGlobalSettingsOnly() {
+        Map<String, Object> defaults = SettingsStore.globalValues(
+                Collections.emptyMap());
+        assertEquals(false, defaults.get("lineColorsEnabled"));
+        assertEquals(LineColors.NORMAL, defaults.get("lineColorProfile"));
+        assertEquals(LineColors.DEFAULT_SEED, defaults.get("lineColorSeed"));
+        assertEquals(true, SettingsStore.globalValues(
+                Collections.singletonMap(LineColors.ENABLED_KEY, true))
+                .get("lineColorsEnabled"));
+        assertEquals(false, SettingsStore.widgetValues(
+                Collections.emptyMap(), 8).containsKey("lineColorsEnabled"));
     }
 }
