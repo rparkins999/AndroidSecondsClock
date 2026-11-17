@@ -45,6 +45,10 @@ final class SettingsStore {
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
             "showYear", "showNextAlarm", "format", "formatHorizontal",
             "formatVertical", "formatProfile"};
+    private static final String[] LINE_COLOR_SETTING_SUFFIXES = {
+            "lineColorsEnabled", "lineColorProfile", "lineColorSeed"};
+    private static final String[] GLOBAL_SETTING_SUFFIXES = combine(
+            WIDGET_SETTING_SUFFIXES, LINE_COLOR_SETTING_SUFFIXES);
     private static final String[] CLOCK_SETTING_SUFFIXES = {
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
             "analogMode",
@@ -55,11 +59,11 @@ final class SettingsStore {
             "showNextAlarm", "advancedLargeTime"};
     private static final String[] STRING_SETTINGS = {
             "format", "formatHorizontal", "formatVertical",
-            "formatPortrait", "formatLandscape"};
+            "formatPortrait", "formatLandscape", "lineColorSeed"};
     private static final String[] BOOLEAN_SETTINGS = {
             "formatSyncEnabled", "textStyleEmoji", "advancedFormatMode",
             "showNextAlarm", "analogMode", "showSeconds", "7seg", "forcevertical",
-            "advancedLargeTime"};
+            "advancedLargeTime", "lineColorsEnabled"};
 
     private SettingsStore() {}
 
@@ -229,6 +233,7 @@ final class SettingsStore {
         Map<String, Object> importedClock = readComponentSettings(
                 active.getJSONObject("clock"), SettingsTransferRules.CLOCK);
         addWidgetDefaults(importedGlobals);
+        addLineColorDefaults(importedGlobals);
         addClockDefaults(importedClock);
         List<ImportedWidget> importedWidgets = readWidgets(
                 active.getJSONArray("widgets"));
@@ -391,7 +396,7 @@ final class SettingsStore {
     }
 
     static Map<String, Object> globalValues(Map<String, ?> all) {
-        return settingsForSuffixes(all, "W", WIDGET_SETTING_SUFFIXES);
+        return settingsForSuffixes(all, "W", GLOBAL_SETTING_SUFFIXES);
     }
 
     /** Adds the app-wide alarm-age preference to active-global backups. */
@@ -427,6 +432,7 @@ final class SettingsStore {
         }
         if (prefix.equals("C")) addClockDefaults(result);
         else addWidgetDefaults(result);
+        if (prefix.equals("W")) addLineColorDefaults(result);
         return result;
     }
 
@@ -470,6 +476,12 @@ final class SettingsStore {
         putDefault(values, "forcevertical", false);
         putDefault(values, "showNextAlarm", false);
         putDefault(values, "advancedLargeTime", true);
+    }
+
+    private static void addLineColorDefaults(Map<String, Object> values) {
+        putDefault(values, "lineColorsEnabled", false);
+        putDefault(values, "lineColorProfile", LineColors.NORMAL);
+        putDefault(values, "lineColorSeed", LineColors.DEFAULT_SEED);
     }
 
     private static void putDefault(Map<String, Object> values,
@@ -696,6 +708,9 @@ final class SettingsStore {
         if (type.equals(SettingsPreset.GLOBALS)
                 || source.equals(SettingsTransferRules.WIDGET)) {
             addWidgetDefaults(values);
+            if (type.equals(SettingsPreset.GLOBALS)) {
+                addLineColorDefaults(values);
+            }
         } else {
             addClockDefaults(values);
         }
@@ -716,8 +731,9 @@ final class SettingsStore {
     /** Returns the first key with an unsupported component or value type. */
     static String invalidSetting(Map<String, ?> values, String source) {
         String[] allowed;
-        if (SettingsTransferRules.GLOBALS.equals(source)
-                || SettingsTransferRules.WIDGET.equals(source)) {
+        if (SettingsTransferRules.GLOBALS.equals(source)) {
+            allowed = GLOBAL_SETTING_SUFFIXES;
+        } else if (SettingsTransferRules.WIDGET.equals(source)) {
             allowed = WIDGET_SETTING_SUFFIXES;
         } else if (SettingsTransferRules.CLOCK.equals(source)) {
             allowed = CLOCK_SETTING_SUFFIXES;
@@ -744,6 +760,11 @@ final class SettingsStore {
                 if (!(value instanceof Boolean)) return key;
             } else if (!(value instanceof Integer)) {
                 // All other persisted settings are integer preferences.
+                return key;
+            }
+            if ("lineColorProfile".equals(key)
+                    && ((Integer) value < LineColors.NORMAL
+                    || (Integer) value >= LineColors.PROFILE_COUNT)) {
                 return key;
             }
         }
@@ -827,7 +848,7 @@ final class SettingsStore {
                                      String prefix,
                                      boolean rootWidgetDefaults) {
         String[] suffixes = rootWidgetDefaults
-                ? WIDGET_SETTING_SUFFIXES : CLOCK_SETTING_SUFFIXES;
+                ? GLOBAL_SETTING_SUFFIXES : CLOCK_SETTING_SUFFIXES;
         for (String suffix : suffixes) editor.remove(prefix + suffix);
     }
 
@@ -855,7 +876,7 @@ final class SettingsStore {
     private static boolean isAllowedSuffix(String prefix, String suffix) {
         String[] allowed;
         if (prefix.equals("W")) {
-            allowed = WIDGET_SETTING_SUFFIXES;
+            allowed = GLOBAL_SETTING_SUFFIXES;
         } else if (prefix.equals("C")) {
             allowed = CLOCK_SETTING_SUFFIXES;
         } else if (prefix.startsWith("W") && prefix.length() > 1
@@ -872,6 +893,12 @@ final class SettingsStore {
         return value instanceof String || value instanceof Boolean
                 || value instanceof Integer || value instanceof Long
                 || value instanceof Float;
+    }
+
+    private static String[] combine(String[] first, String[] second) {
+        String[] combined = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, combined, first.length, second.length);
+        return combined;
     }
 
     private static String widgetPresetBaseName(WidgetRecord widget) {

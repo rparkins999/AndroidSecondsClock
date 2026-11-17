@@ -37,6 +37,9 @@ public class SecondsClockWidgetRemoteViewsTest {
     private Context context;
     private SharedPreferences preferences;
     private String originalWidgetIds;
+    private Object originalLineColorsEnabled;
+    private Object originalLineColorProfile;
+    private Object originalLineColorSeed;
 
     @Before
     public void setUp() {
@@ -44,6 +47,9 @@ public class SecondsClockWidgetRemoteViewsTest {
         preferences = context.getSharedPreferences(
                 "SecondsClock", Context.MODE_PRIVATE);
         originalWidgetIds = preferences.getString("widgetIds", "");
+        originalLineColorsEnabled = preferences.getAll().get(LineColors.ENABLED_KEY);
+        originalLineColorProfile = preferences.getAll().get(LineColors.PROFILE_KEY);
+        originalLineColorSeed = preferences.getAll().get(LineColors.SEED_KEY);
         String widgetId = "[" + TEST_WIDGET_ID + "]";
         String widgetIds = originalWidgetIds.contains(widgetId)
                 ? originalWidgetIds : originalWidgetIds + widgetId;
@@ -56,12 +62,15 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putBoolean(WIDGET_KEY + "advancedFormatMode", true)
                 .putBoolean(WIDGET_KEY + "formatSyncEnabled", true)
                 .putBoolean(WIDGET_KEY + "textStyleEmoji", false)
+                .putBoolean(LineColors.ENABLED_KEY, false)
+                .putInt(LineColors.PROFILE_KEY, LineColors.NORMAL)
+                .putString(LineColors.SEED_KEY, "clock")
                 .commit();
     }
 
     @After
     public void tearDown() {
-        preferences.edit()
+        SharedPreferences.Editor editor = preferences.edit()
                 .remove(WIDGET_KEY + "bgcolour")
                 .remove(WIDGET_KEY + "fgcolour")
                 .remove(WIDGET_KEY + "touchaction")
@@ -71,8 +80,13 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .remove(WIDGET_KEY + "formatSyncEnabled")
                 .remove(WIDGET_KEY + "textStyleEmoji")
                 .remove(WIDGET_KEY + "format")
-                .putString("widgetIds", originalWidgetIds)
-                .commit();
+                .putString("widgetIds", originalWidgetIds);
+        restorePreference(editor, LineColors.ENABLED_KEY,
+                originalLineColorsEnabled);
+        restorePreference(editor, LineColors.PROFILE_KEY,
+                originalLineColorProfile);
+        restorePreference(editor, LineColors.SEED_KEY, originalLineColorSeed);
+        editor.commit();
     }
 
     @Test
@@ -127,6 +141,37 @@ public class SecondsClockWidgetRemoteViewsTest {
         assertTrue(analogRow.getTop() >= 0);
         assertTrue(analogRow.getBottom() <= container.getHeight());
         assertTrue(container.getChildAt(2) instanceof TextClock);
+    }
+
+    @Test
+    public void randomColorTokenChangesOnlyItsRemoteViewsLineColor() {
+        View root = renderFormat("%H:%M\n%Q%Y\n%S");
+        LinearLayout container = root.findViewById(
+                R.id.appwidget_format_container);
+
+        assertEquals(3, container.getChildCount());
+        assertEquals(Color.WHITE,
+                ((TextClock) container.getChildAt(0)).getCurrentTextColor());
+        assertEquals(LineColors.colorForLine(
+                        "clock", LineColors.NORMAL, 1),
+                ((TextClock) container.getChildAt(1)).getCurrentTextColor());
+        assertEquals(Color.WHITE,
+                ((TextClock) container.getChildAt(2)).getCurrentTextColor());
+    }
+
+    @Test
+    public void automaticColorsApplyToEveryAdvancedRemoteViewsLine() {
+        preferences.edit().putBoolean(LineColors.ENABLED_KEY, true).commit();
+        View root = renderFormat("%H:%M\n%Y");
+        LinearLayout container = root.findViewById(
+                R.id.appwidget_format_container);
+
+        assertEquals(LineColors.colorForLine(
+                        "clock", LineColors.NORMAL, 0),
+                ((TextClock) container.getChildAt(0)).getCurrentTextColor());
+        assertEquals(LineColors.colorForLine(
+                        "clock", LineColors.NORMAL, 1),
+                ((TextClock) container.getChildAt(1)).getCurrentTextColor());
     }
 
     @Test
@@ -227,5 +272,13 @@ public class SecondsClockWidgetRemoteViewsTest {
                 View.MeasureSpec.makeMeasureSpec(heightPx, View.MeasureSpec.EXACTLY));
         root.layout(0, 0, widthPx, heightPx);
         return root;
+    }
+
+    private static void restorePreference(
+            SharedPreferences.Editor editor, String key, Object value) {
+        if (value instanceof Boolean) editor.putBoolean(key, (Boolean) value);
+        else if (value instanceof Integer) editor.putInt(key, (Integer) value);
+        else if (value instanceof String) editor.putString(key, (String) value);
+        else editor.remove(key);
     }
 }
