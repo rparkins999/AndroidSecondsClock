@@ -35,11 +35,16 @@ final class AnalogFormatRenderer {
     static final class Line {
         final List<Part> parts;
         final boolean emphasized;
+        final boolean randomColor;
+        final int lineIndex;
         final AnalogFormat.Hands hands;
 
-        Line(List<Part> parts, boolean emphasized, AnalogFormat.Hands hands) {
+        Line(List<Part> parts, boolean emphasized, boolean randomColor,
+             int lineIndex, AnalogFormat.Hands hands) {
             this.parts = parts;
             this.emphasized = emphasized;
+            this.randomColor = randomColor;
+            this.lineIndex = lineIndex;
             this.hands = hands;
         }
     }
@@ -70,13 +75,16 @@ final class AnalogFormatRenderer {
         List<Line> lines = new ArrayList<>();
         boolean hasAnalog = false;
         boolean hasSecondHand = false;
+        int lineIndex = 0;
         for (FormatLineSplit.Line formatLine : formatLines) {
+            int currentLineIndex = lineIndex++;
             AnalogFormat.Hands hands =
                     AnalogFormat.handsForClockLine(
                             formatLine.format, nextAlarmTime);
             if (hands != null) {
                 lines.add(new Line(Collections.singletonList(Part.analog()),
-                        formatLine.emphasized, hands));
+                        formatLine.emphasized, formatLine.randomColor,
+                        currentLineIndex, hands));
                 hasAnalog = true;
                 hasSecondHand |= hands.second;
                 continue;
@@ -92,7 +100,9 @@ final class AnalogFormatRenderer {
             if (!converted.pattern.isEmpty()) {
                 parts.add(Part.text(converted.pattern, converted.timeRanges));
             }
-            lines.add(new Line(parts, formatLine.emphasized, null));
+            lines.add(new Line(
+                    parts, formatLine.emphasized, formatLine.randomColor,
+                    currentLineIndex, null));
         }
         return new Result(lines, hasAnalog, hasSecondHand);
     }

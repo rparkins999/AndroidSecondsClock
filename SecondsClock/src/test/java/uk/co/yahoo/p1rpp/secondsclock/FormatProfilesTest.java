@@ -63,6 +63,38 @@ public class FormatProfilesTest {
     }
 
     @Test
+    public void randomColorMarkerIsRemovedAndAppliesToOneLine() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "%H:%M\n%Q%L%Y\n%%Q literal");
+
+        assertEquals(3, lines.size());
+        assertEquals("%H:%M", lines.get(0).format);
+        assertFalse(lines.get(0).randomColor);
+        assertEquals("%Y", lines.get(1).format);
+        assertTrue(lines.get(1).randomColor);
+        assertTrue(lines.get(1).emphasized);
+        assertEquals("%%Q literal", lines.get(2).format);
+        assertFalse(lines.get(2).randomColor);
+
+        AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.render(
+                "%Q%C\n%Y", null, true);
+        assertTrue(rendered.lines.get(0).randomColor);
+        assertFalse(rendered.lines.get(1).randomColor);
+    }
+
+    @Test
+    public void randomColorMarkerSurvivesAlarmBlockLineSplits() {
+        List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
+                "%<%QAlarm %H:%M%nFallback%>");
+
+        assertEquals(2, lines.size());
+        assertTrue(lines.get(0).randomColor);
+        assertFalse(lines.get(1).randomColor);
+        assertEquals("%<Alarm %H:%M%>", lines.get(0).format);
+        assertEquals("%<Fallback%>", lines.get(1).format);
+    }
+
+    @Test
     public void landscapeEmphasisKeepsAlarmBlocksValidAcrossLineBreaks() {
         List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(
                 "%<Alarm:\n%L%H:%M%>");

@@ -178,7 +178,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
             }
             AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.render(
                     format, nextAlarmTime, true);
-            addAdvancedFormat(context, views, rendered, fgcolour,
+            addAdvancedFormat(context, views, rendered, prefs, fgcolour,
                     minWidth, maxHeight);
         } else if (checkboxAnalog) {
             boolean showSeconds = prefs.getBoolean(
@@ -261,7 +261,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
 
     private static void addAdvancedFormat(
             Context context, RemoteViews views,
-            AnalogFormatRenderer.Result rendered, int dialColor,
+            AnalogFormatRenderer.Result rendered, SharedPreferences prefs,
+            int dialColor,
             int minWidth, int maxHeight) {
         views.removeAllViews(R.id.appwidget_format_container);
         float totalWeight = advancedFormatWeight(
@@ -282,6 +283,11 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 "setWeightSum", weightSum);
         for (int lineIndex = 0; lineIndex < rendered.lines.size(); ++lineIndex) {
             AnalogFormatRenderer.Line line = rendered.lines.get(lineIndex);
+            boolean colorized = LineColors.shouldColor(prefs, line.randomColor);
+            int lineColor = colorized
+                    ? LineColors.withBaseAlpha(
+                            LineColors.colorForLine(prefs, line.lineIndex), dialColor)
+                    : dialColor;
             if (line.hands == null) {
                 StringBuilder linePattern = new StringBuilder();
                 for (AnalogFormatRenderer.Part part : line.parts) {
@@ -294,7 +300,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 addAdvancedTextLine(context, views, linePattern, longText,
                         line.emphasized, rendered.hasAnalog,
                         line.emphasized && rendered.hasAnalog && lineIndex > 0,
-                        dialColor);
+                        lineColor);
                 continue;
             }
 
@@ -303,8 +309,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
             RemoteViews analog = new RemoteViews(
                     context.getPackageName(), R.layout.analog_clock_widget_inline);
             analog.setImageViewBitmap(R.id.appwidget_analog_dial,
-                    AnalogClockFace.createBitmap(dialColor));
-            setAnalogHands(analog, context, dialColor,
+                    AnalogClockFace.createBitmap(lineColor));
+            setAnalogHands(analog, context, lineColor,
                     line.hands.hour, line.hands.minute,
                     line.hands.second,
                     R.id.appwidget_analog_hands,
@@ -446,6 +452,17 @@ public class SecondsClockWidget extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
+    }
+
+    static void requestUpdateAll(Context context) {
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        int[] widgetIds = manager.getAppWidgetIds(
+                new ComponentName(context, SecondsClockWidget.class));
+        if (widgetIds.length == 0) return;
+        Intent update = new Intent(context, SecondsClockWidget.class)
+                .setAction("uk.co.yahoo.p1rpp.UpdateWidget")
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+        context.sendBroadcast(update);
     }
 
     @SuppressLint("ApplySharedPref")

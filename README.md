@@ -41,13 +41,21 @@ Common tokens:
 | `%b`, `%B` | Short or full month name |
 | `%d`, `%e` | Zero-padded or unpadded day |
 | `%m`, `%Y` | Month number, year |
-| `%F`, `%x`, `%X` | ISO date, localized date or time |
+| `%F`, `%x`, `%X`, `%R` | ISO date, localized date or time, 24-hour `HH:mm` |
 | `%n`, `%%` | New line, literal percent sign |
 | `%C` | Full-row analog clock |
+| `%Q` | Give this advanced-format line a seeded palette color |
 
 Put `%C` on its own line for a full-row analog dial; that line renders no text. On it, `%H`, `%M`,
 and `%S` suppress the matching hands instead of printing time fields. Elsewhere they print normally.
 A real newline or `%n` ends the clock line.
+
+**Global Settings → Advanced line colors** can color every advanced-format line automatically, or
+use `%Q` to color only selected lines. The option supports standard, red-green color-vision,
+blue-yellow color-vision, and monochrome palettes. Colors are deterministic for a given editable
+seed; copy or regenerate it to share or change the palette assignment. Colors are designed for black
+backgrounds, so set the clock/widget background to black for the clearest result. `%R` remains the
+existing 24-hour time token; it is not used for color.
 
 To show optional alarm text, wrap it in `%<` and `%>`. Use `%|` to add fallback text for when no
 alarm is set:
@@ -90,8 +98,9 @@ The clock keeps the screen on while charging, in both Checkbox and Advanced mode
 ## Settings, backup, and presets
 
 The main menu groups widget actions and settings. **Global Settings** controls defaults for new
-widgets and the system-clock app override. **Settings Manager** copies settings between defaults, the
-full-screen clock, widgets, and presets. You can save components as presets, apply presets to
+widgets, advanced line colors, and the system-clock app override. **Settings Manager** copies
+settings between defaults, the full-screen clock, widgets, and presets. You can save
+components as presets, apply presets to
 compatible components, and rename or delete presets; resetting a component first saves its current
 settings as a preset.
 
