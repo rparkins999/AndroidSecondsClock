@@ -219,7 +219,10 @@ class Formatter {
         if (alarmManager == null) return null;
         android.app.AlarmManager.AlarmClockInfo nextAlarm = alarmManager.getNextAlarmClock();
         Long triggerTime = nextAlarm == null ? null : nextAlarm.getTriggerTime();
+        SharedPreferences preferences = context.getSharedPreferences(
+                "SecondsClock", Context.MODE_PRIVATE);
         return AlarmTimeRelevance.withinMaxAge(
-                triggerTime, System.currentTimeMillis());
+                triggerTime, System.currentTimeMillis(),
+                AlarmTimeRelevance.maxAgeHours(preferences));
     }
 }

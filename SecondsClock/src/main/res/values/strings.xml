@@ -59,7 +59,7 @@
     <string name="settings_manager">Settings Manager</string>
     <string name="settings_manager_help">Copy settings between current components and presets.</string>
     <string name="global_settings_button">Global Settings</string>
-    <string name="global_settings_help">Set the system clock app override or configure defaults for new widgets.</string>
+    <string name="global_settings_help">Set the system clock app override, choose how long reported alarm times remain relevant, or configure defaults for new widgets.</string>
     <string name="global_settings_done">Back to main menu</string>
     <string name="main_section_clock">Clock</string>
     <string name="main_section_widgets">Widgets</string>
@@ -68,6 +68,19 @@
     <string name="new_widget_defaults_title">New-widget defaults</string>
     <string name="new_widget_defaults_help">Choose the settings that will be used when you add a new widget.</string>
     <string name="configure_new_widget_defaults">Configure new-widget defaults</string>
+    <string name="alarm_age_settings_title">Alarm time age</string>
+    <string name="alarm_age_settings_help">Choose how long a reported alarm remains relevant after its time has passed. Always show keeps reported alarms visible regardless of age.</string>
+    <string name="alarm_max_age_button">Past alarm limit: %1$s</string>
+    <string name="alarm_max_age_dialog_title">When should a past alarm be treated as stale?</string>
+    <string-array name="alarm_max_age_options">
+        <item>Always show</item>
+        <item>1 hour</item>
+        <item>6 hours</item>
+        <item>12 hours</item>
+        <item>24 hours</item>
+        <item>48 hours</item>
+        <item>7 days</item>
+    </string-array>
     <string name="current_settings">Current settings</string>
     <string name="presets">Presets</string>
     <string name="global_settings">Global Settings</string>

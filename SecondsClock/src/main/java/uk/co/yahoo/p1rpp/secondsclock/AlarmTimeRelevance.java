@@ -4,15 +4,40 @@
 
 package uk.co.yahoo.p1rpp.secondsclock;
 
+import android.content.SharedPreferences;
+
 /** Filters stale timestamps returned by alarm-clock applications. */
 final class AlarmTimeRelevance {
-    static final long MAX_AGE_MILLIS = 24L * 60L * 60L * 1000L;
+    static final String MAX_AGE_KEY = "alarmMaxAgeHours";
+    static final int ALWAYS_SHOW = 0;
+    static final int DEFAULT_MAX_AGE_HOURS = ALWAYS_SHOW;
+    static final int[] MAX_AGE_HOURS_OPTIONS = {ALWAYS_SHOW, 1, 6, 12, 24, 48, 168};
+    private static final long HOUR_MILLIS = 60L * 60L * 1000L;
 
     private AlarmTimeRelevance() {}
 
-    static Long withinMaxAge(Long alarmTimeMillis, long nowMillis) {
-        if (alarmTimeMillis == null) return null;
-        return alarmTimeMillis < nowMillis - MAX_AGE_MILLIS
+    static int maxAgeHours(SharedPreferences preferences) {
+        try {
+            return preferences.getInt(MAX_AGE_KEY, DEFAULT_MAX_AGE_HOURS);
+        } catch (ClassCastException ignored) {
+            return DEFAULT_MAX_AGE_HOURS;
+        }
+    }
+
+    static int optionIndex(int maxAgeHours) {
+        for (int index = 0; index < MAX_AGE_HOURS_OPTIONS.length; ++index) {
+            if (MAX_AGE_HOURS_OPTIONS[index] == maxAgeHours) return index;
+        }
+        return 0;
+    }
+
+    static Long withinMaxAge(
+            Long alarmTimeMillis, long nowMillis, int maxAgeHours) {
+        if (alarmTimeMillis == null || maxAgeHours <= ALWAYS_SHOW) {
+            return alarmTimeMillis;
+        }
+        long maxAgeMillis = maxAgeHours * HOUR_MILLIS;
+        return alarmTimeMillis < nowMillis - maxAgeMillis
                 ? null : alarmTimeMillis;
     }
 }
