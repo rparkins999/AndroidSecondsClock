@@ -218,6 +218,8 @@ class Formatter {
                 (android.app.AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return null;
         android.app.AlarmManager.AlarmClockInfo nextAlarm = alarmManager.getNextAlarmClock();
-        return nextAlarm == null ? null : nextAlarm.getTriggerTime();
+        Long triggerTime = nextAlarm == null ? null : nextAlarm.getTriggerTime();
+        return AlarmTimeRelevance.withinMaxAge(
+                triggerTime, System.currentTimeMillis());
     }
 }
