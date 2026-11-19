@@ -5,7 +5,9 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.app.AlertDialog;
+import android.appwidget.AppWidgetManager;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.view.Gravity;
@@ -24,6 +26,7 @@ public class GlobalSettingsActivity extends Activity_common
     private static final int SYSTEM_CLOCK_RESET_ID = SYSTEM_CLOCK_HELP_ID + 2;
     private static final int NEW_WIDGET_DEFAULTS_ID = SYSTEM_CLOCK_HELP_ID + 3;
     private static final int DONE_ID = SYSTEM_CLOCK_HELP_ID + 4;
+    private static final int ALARM_MAX_AGE_ID = DONE_ID + 1;
 
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
@@ -66,6 +69,19 @@ public class GlobalSettingsActivity extends Activity_common
         reset.setEnabled(m_prefs.contains(SystemClockApp.OVERRIDE_KEY)
                 || m_prefs.getBoolean(SystemClockApp.DONT_ASK_KEY, false));
 
+        addHeading(page, R.string.alarm_age_settings_title, 0);
+        TextView alarmAgeHelp = new TextView(this);
+        alarmAgeHelp.setText(R.string.alarm_age_settings_help);
+        alarmAgeHelp.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(alarmAgeHelp, matchWrap());
+        String[] ageOptions = getResources().getStringArray(
+                R.array.alarm_max_age_options);
+        int selectedAge = AlarmTimeRelevance.optionIndex(
+                AlarmTimeRelevance.maxAgeHours(m_prefs));
+        addButton(page,
+                getString(R.string.alarm_max_age_button, ageOptions[selectedAge]),
+                ALARM_MAX_AGE_ID, R.string.alarm_age_settings_help);
+
         addHeading(page, R.string.new_widget_defaults_title, 0);
         TextView defaultsHelp = new TextView(this);
         defaultsHelp.setText(R.string.new_widget_defaults_help);
@@ -96,6 +112,10 @@ public class GlobalSettingsActivity extends Activity_common
             doToast(R.string.helpconfignewwidget);
             return true;
         }
+        if (view.getId() == ALARM_MAX_AGE_ID) {
+            doToast(R.string.alarm_age_settings_help);
+            return true;
+        }
         return false;
     }
 
@@ -115,6 +135,9 @@ public class GlobalSettingsActivity extends Activity_common
             case NEW_WIDGET_DEFAULTS_ID:
                 m_prefs.edit().putInt("Wview", CONFIGURE).apply();
                 startActivity(new Intent(this, WidgetConfigureActivity.class));
+                break;
+            case ALARM_MAX_AGE_ID:
+                chooseAlarmMaxAge();
                 break;
             case DONE_ID:
                 finish();
@@ -145,6 +168,11 @@ public class GlobalSettingsActivity extends Activity_common
 
     private Button addButton(LinearLayout parent, int label, int id,
                              int helpResource) {
+        return addButton(parent, getString(label), id, helpResource);
+    }
+
+    private Button addButton(LinearLayout parent, CharSequence label, int id,
+                             int helpResource) {
         Button button = new Button(this);
         button.setText(label);
         button.setId(id);
@@ -168,6 +196,34 @@ public class GlobalSettingsActivity extends Activity_common
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void chooseAlarmMaxAge() {
+        String[] options = getResources().getStringArray(
+                R.array.alarm_max_age_options);
+        int selected = AlarmTimeRelevance.optionIndex(
+                AlarmTimeRelevance.maxAgeHours(m_prefs));
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.alarm_max_age_dialog_title)
+                .setSingleChoiceItems(options, selected, (dialog, which) -> {
+                    int maxAgeHours =
+                            AlarmTimeRelevance.MAX_AGE_HOURS_OPTIONS[which];
+                    m_prefs.edit()
+                            .putInt(AlarmTimeRelevance.MAX_AGE_KEY, maxAgeHours)
+                            .apply();
+                    dialog.dismiss();
+                    refreshWidgets();
+                    renderAgain();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void refreshWidgets() {
+        AppWidgetManager manager = AppWidgetManager.getInstance(this);
+        int[] widgetIds = manager.getAppWidgetIds(
+                new ComponentName(this, SecondsClockWidget.class));
+        new SecondsClockWidget().onUpdate(this, manager, widgetIds);
     }
 
     private void confirmResetSystemClockSettings() {

@@ -58,6 +58,8 @@ alarm is set:
 
 When set, alarm tokens use the alarm time; fallback tokens use the current time. Without `%|`, the
 block is hidden when no alarm is set. Android doesn't provide the alarm's label.
+By default, reported alarm times are always shown. In **Global Settings**, choose **Always show** or
+ignore past alarm times after 1, 6, 12, 24, or 48 hours, or 7 days.
 
 ### Appearance and actions
 
