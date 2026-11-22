@@ -20,11 +20,12 @@ explicit. Ordinary Gradle configuration/builds do not edit files or stage Git ch
    ```
 
    This updates the literal `versionCode` and `versionName` in
-   `SecondsClock/build.gradle`, the version sentence in `README.md`, and creates
-   `fastlane/metadata/android/en-US/changelogs/87.txt`. Keep the Gradle values literal and the
-   canonical `applicationId` visible: F-Droid scrapes those values from release tags instead of
-   evaluating Gradle. The command never stages files and refuses to reuse a version code or overwrite
-   a changelog. Review and stage the changes yourself.
+   `SecondsClock/build.gradle`, the version sentence in `README.md`, adds a section to the root
+   `CHANGELOG.md`, and creates `fastlane/metadata/android/en-US/changelogs/87.txt`. The root entry and
+   F-Droid changelog use the same notes and are checked for consistency. Keep the Gradle values
+   literal and the canonical `applicationId` visible: F-Droid scrapes those values from release tags
+   instead of evaluating Gradle. The command never stages files and refuses to reuse a version code
+   or overwrite a changelog. Review and stage the changes yourself.
 4. Verify the metadata and run CI-equivalent checks:
 
    ```sh

@@ -1,8 +1,13 @@
-<i>SecondsClock</i> enables you to show a clock with seconds as a home screen widget or as a full screen night clock with dimming in low light.
+<i>SecondsClock</i> provides customizable clock widgets for your home screen and a full-screen night clock.
 
-<br><b>Features:</b>
+<br><br><b>Features:</b>
 
-* No Ads.
-* No requests for donations or in-app purchases.
-* Fully configurable.
-* Adjusts text size to make use of available space.
+<ul>
+<li>Choose digital or analog clocks with seconds and an optional next alarm.</li>
+<li>Use locale-aware layouts or create custom date and time formats.</li>
+<li>Give each widget its own layout, colours, and actions.</li>
+<li>Use low-light dimming and keep the full-screen clock on while charging.</li>
+<li>Save and reuse settings with presets or JSON backup and restore.</li>
+</ul>
+
+No ads, in-app purchases, or donation prompts.

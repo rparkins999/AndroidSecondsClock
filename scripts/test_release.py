@@ -22,6 +22,11 @@ class ReleaseMetadataTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.root / "README.md").write_text("# Test\n\nThis is version 2.6.0.\n", encoding="utf-8")
+        (self.root / "CHANGELOG.md").write_text(
+            "# Changelog\n\nRelease history, newest first.\n\n"
+            "## 2.6.0 (86)\n\n- Existing release notes.\n",
+            encoding="utf-8",
+        )
         (self.root / "fastlane/metadata/android/en-US/changelogs/86.txt").write_text(
             "- Existing release notes.\n", encoding="utf-8"
         )
@@ -50,11 +55,29 @@ class ReleaseMetadataTest(unittest.TestCase):
         self.assertIn("versionCode 87", build_file)
         self.assertIn('versionName "2.7.0"', build_file)
         self.assertIn("This is version 2.7.0.", (self.root / "README.md").read_text())
+        history = (self.root / "CHANGELOG.md").read_text()
+        self.assertIn("## 2.7.0 (87)\n\n- New feature.\n- Bug fix.", history)
+        self.assertLess(history.index("## 2.7.0 (87)"), history.index("## 2.6.0 (86)"))
         self.assertEqual(
             "- New feature.\n- Bug fix.\n",
             (self.root / "fastlane/metadata/android/en-US/changelogs/87.txt").read_text(),
         )
         self.assertEqual([], validate_release_metadata(self.root))
+
+    def test_check_reports_mismatched_root_changelog_entry(self):
+        history_file = self.root / "CHANGELOG.md"
+        history_file.write_text(
+            history_file.read_text().replace(
+                "- Existing release notes.", "- Different release notes."
+            ),
+            encoding="utf-8",
+        )
+
+        problems = validate_release_metadata(self.root)
+
+        self.assertTrue(
+            any("CHANGELOG.md entry does not match" in item for item in problems)
+        )
 
     def test_prepare_rejects_noncanonical_fdroid_application_id(self):
         build_file = self.root / "SecondsClock/build.gradle"
@@ -85,6 +108,16 @@ class ReleaseMetadataTest(unittest.TestCase):
         with self.assertRaisesRegex(ReleaseError, "Refusing to overwrite"):
             prepare_release(self.root, 87, "2.7.0", "- New release.")
 
+    def test_prepare_refuses_duplicate_root_changelog_version(self):
+        history_file = self.root / "CHANGELOG.md"
+        history_file.write_text(
+            history_file.read_text() + "\n## 2.7.0 (87)\n\n- Existing notes.\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ReleaseError, "Refusing to overwrite existing CHANGELOG.md"):
+            prepare_release(self.root, 87, "2.7.0", "- New release.")
+
     def test_prepare_rejects_changelog_over_500_characters(self):
         with self.assertRaisesRegex(ReleaseError, "500 characters"):
             prepare_release(self.root, 87, "2.7.0", "x" * 501)
@@ -112,14 +145,16 @@ class ReleaseMetadataTest(unittest.TestCase):
     def test_prepare_rolls_back_if_an_atomic_replace_fails(self):
         build_file = self.root / "SecondsClock/build.gradle"
         readme_file = self.root / "README.md"
+        history_file = self.root / "CHANGELOG.md"
         old_build = build_file.read_text(encoding="utf-8")
         old_readme = readme_file.read_text(encoding="utf-8")
+        old_history = history_file.read_text(encoding="utf-8")
         real_replace = release.os.replace
         failed = False
 
         def fail_once(source, destination):
             nonlocal failed
-            if Path(destination) == readme_file and not failed:
+            if Path(destination) == history_file and not failed:
                 failed = True
                 raise OSError("simulated replace failure")
             return real_replace(source, destination)
@@ -130,6 +165,7 @@ class ReleaseMetadataTest(unittest.TestCase):
 
         self.assertEqual(old_build, build_file.read_text(encoding="utf-8"))
         self.assertEqual(old_readme, readme_file.read_text(encoding="utf-8"))
+        self.assertEqual(old_history, history_file.read_text(encoding="utf-8"))
         self.assertFalse(
             (self.root / "fastlane/metadata/android/en-US/changelogs/87.txt").exists()
         )

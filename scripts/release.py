@@ -21,6 +21,9 @@ VERSION_CODE_PATTERN = re.compile(
 VERSION_NAME_PATTERN = re.compile(
     r'^([ \t]*versionName ")([^"]+)("[ \t]*)$', re.MULTILINE
 )
+CHANGELOG_ENTRY_PATTERN = re.compile(
+    r"^## (?P<version>\S+) \((?P<code>[0-9]+)\)[ \t]*$", re.MULTILINE
+)
 README_VERSION_PATTERN = re.compile(
     r"^(This is version )\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?(\.)$",
     re.MULTILINE,
@@ -33,11 +36,12 @@ class ReleaseError(Exception):
     """A release metadata operation could not be completed safely."""
 
 
-def _paths(root: Path) -> tuple[Path, Path, Path]:
+def _paths(root: Path) -> tuple[Path, Path, Path, Path]:
     return (
         root / "SecondsClock/build.gradle",
         root / "README.md",
         root / "fastlane/metadata/android/en-US/changelogs",
+        root / "CHANGELOG.md",
     )
 
 
@@ -48,15 +52,68 @@ def _single_match(pattern: re.Pattern[str], text: str, description: str) -> re.M
     return matches[0]
 
 
+def _changelog_entry(
+    text: str, version_name: str, version_code: int
+) -> tuple[re.Match[str], str]:
+    """Return a unique release-history heading and its notes."""
+    entries = list(CHANGELOG_ENTRY_PATTERN.finditer(text))
+    matches = [
+        entry
+        for entry in entries
+        if entry.group("version") == version_name
+        and int(entry.group("code")) == version_code
+    ]
+    if len(matches) != 1:
+        raise ReleaseError(
+            f"Expected exactly one CHANGELOG.md entry for "
+            f"{version_name} ({version_code}); found {len(matches)}"
+        )
+
+    entry = matches[0]
+    next_entry = next(
+        (candidate for candidate in entries if candidate.start() > entry.start()),
+        None,
+    )
+    end = next_entry.start() if next_entry else len(text)
+    return entry, text[entry.end() : end].strip()
+
+
+def _prepend_changelog_entry(
+    text: str, version_name: str, version_code: int, notes: str
+) -> str:
+    """Insert a release at the top of the root changelog, after its introduction."""
+    if not text.startswith("# Changelog\n"):
+        raise ReleaseError("CHANGELOG.md must start with '# Changelog'")
+
+    heading = f"## {version_name} ({version_code})"
+    entries = list(CHANGELOG_ENTRY_PATTERN.finditer(text))
+    if any(
+        entry.group("version") == version_name
+        or int(entry.group("code")) == version_code
+        for entry in entries
+    ):
+        raise ReleaseError(f"Refusing to overwrite existing CHANGELOG.md entry: {heading}")
+
+    insertion_point = entries[0].start() if entries else len(text.rstrip())
+    prefix = text[:insertion_point].rstrip()
+    suffix = text[insertion_point:].lstrip("\n")
+    new_entry = f"{heading}\n\n{notes.strip()}\n\n"
+    if suffix:
+        return f"{prefix}\n\n{new_entry}{suffix}"
+    return f"{prefix}\n\n{new_entry}"
+
+
 def validate_release_metadata(root: Path) -> list[str]:
-    """Return validation problems, or an empty list when metadata is consistent."""
-    build_file, readme_file, changelog_dir = _paths(root)
+    """Return validation problems, or an empty list when release metadata is consistent."""
+    build_file, readme_file, changelog_dir, history_file = _paths(root)
     problems: list[str] = []
 
     if not build_file.is_file():
         return [f"Missing {build_file.relative_to(root)}"]
     if not readme_file.is_file():
         return [f"Missing {readme_file.relative_to(root)}"]
+    if not history_file.is_file():
+        return [f"Missing {history_file.relative_to(root)}"]
 
     try:
         build_text = build_file.read_text(encoding="utf-8")
@@ -106,12 +163,25 @@ def validate_release_metadata(root: Path) -> list[str]:
                 f"Changelog exceeds {MAX_CHANGELOG_CHARS} characters: "
                 f"{changelog.relative_to(root)} ({len(changelog_text)} characters)"
             )
+        history_text = history_file.read_text(encoding="utf-8")
+        try:
+            _, history_entry = _changelog_entry(
+                history_text, version_name, version_code
+            )
+        except ReleaseError as error:
+            problems.append(str(error))
+        else:
+            if history_entry != changelog_text:
+                problems.append(
+                    "CHANGELOG.md entry does not match "
+                    f"{changelog.relative_to(root)}"
+                )
 
     return problems
 
 
 def prepare_release(root: Path, version_code: int, version_name: str, changelog: str) -> None:
-    """Update the app version, README version, and code-keyed changelog; never stage files."""
+    """Update release metadata and notes atomically; never stage files."""
     if version_code <= 0:
         raise ReleaseError("Version code must be a positive integer")
     if not SEMVER_PATTERN.fullmatch(version_name):
@@ -125,8 +195,8 @@ def prepare_release(root: Path, version_code: int, version_name: str, changelog:
             f"got {len(changelog)}"
         )
 
-    build_file, readme_file, changelog_dir = _paths(root)
-    if not build_file.is_file() or not readme_file.is_file():
+    build_file, readme_file, changelog_dir, history_file = _paths(root)
+    if not build_file.is_file() or not readme_file.is_file() or not history_file.is_file():
         raise ReleaseError("Run this command from a SecondsClock repository")
 
     build_text = build_file.read_text(encoding="utf-8")
@@ -150,6 +220,10 @@ def prepare_release(root: Path, version_code: int, version_name: str, changelog:
 
     readme_text = readme_file.read_text(encoding="utf-8")
     _single_match(README_VERSION_PATTERN, readme_text, "README version")
+    history_text = history_file.read_text(encoding="utf-8")
+    updated_history = _prepend_changelog_entry(
+        history_text, version_name, version_code, changelog
+    )
     changelog_path = changelog_dir / f"{version_code}.txt"
     if changelog_path.exists():
         raise ReleaseError(f"Refusing to overwrite existing changelog: {changelog_path}")
@@ -175,10 +249,12 @@ def prepare_release(root: Path, version_code: int, version_name: str, changelog:
         build_file: updated_build,
         readme_file: updated_readme,
         changelog_path: changelog + "\n",
+        history_file: updated_history,
     }
     old_contents = {
         build_file: build_text,
         readme_file: readme_text,
+        history_file: history_text,
     }
     staged: dict[Path, Path] = {}
     backups: dict[Path, Path] = {}
@@ -220,6 +296,7 @@ def prepare_release(root: Path, version_code: int, version_name: str, changelog:
     print(f"Prepared version {version_name} (code {version_code})")
     print(f"Updated {build_file.relative_to(root)}")
     print(f"Updated {readme_file.relative_to(root)}")
+    print(f"Updated {history_file.relative_to(root)}")
     print(f"Created {changelog_path.relative_to(root)}")
     print("Review the changes and stage them manually when ready.")
 
@@ -251,7 +328,9 @@ def _stage_text(path: Path, content: str) -> Path:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("check", help="check app version and F-Droid changelog consistency")
+    commands.add_parser(
+        "check", help="check app version, root changelog, and F-Droid notes consistency"
+    )
 
     prepare = commands.add_parser("prepare", help="explicitly update release metadata")
     prepare.add_argument("--version-code", type=int, required=True)
@@ -269,7 +348,7 @@ def main(argv: list[str] | None = None) -> int:
                 for problem in problems:
                     print(f"ERROR: {problem}", file=sys.stderr)
                 return 1
-            print("Release version and F-Droid changelog metadata are consistent.")
+            print("Release version and changelog metadata are consistent.")
             return 0
 
         changelog = args.changelog
