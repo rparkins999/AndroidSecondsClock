@@ -62,7 +62,7 @@
     <string name="global_settings_help">Set the system clock app override, choose how long reported alarm times remain relevant, configure advanced line colors, or set defaults for new widgets.</string>
     <string name="global_settings_done">Back to main menu</string>
     <string name="line_color_settings_title">Advanced line colors</string>
-    <string name="line_color_settings_help" formatted="false">Automatic colors color every line in advanced formats. You can also put %Q on a line to color only that line, even when automatic colors are off. Colors are chosen for black backgrounds; set the clock background to black for the clearest result.</string>
+    <string name="line_color_settings_help" formatted="false">Automatic colors color every line in advanced formats. You can also put %Q on a line to color only that line, even when automatic colors are off. Colors are chosen for black backgrounds; set the clock background to black for the clearest result. Analog widget hands follow the line color on Android 16 and later; on Android 8–15, the platform hands remain white.</string>
     <string name="line_color_automatic">Automatically color all advanced-format lines</string>
     <string name="line_color_profile_button">Color-vision profile: %1$s</string>
     <string name="line_color_profile_title">Color-vision profile</string>
@@ -211,7 +211,7 @@
     <string name="format_token_alarm" formatted="false">Alarm block (%&lt;…%&gt;)</string>
     <string name="format_token_alarm_alternative" formatted="false">No-alarm text (%|)</string>
     <string name="widget_format_alarm_hint" formatted="false">The next alarm from any app selects text before %|. Text after %| is the no-alarm fallback. Keep line breaks inside the markers.</string>
-    <string name="widget_format_analog_hint" formatted="false">Put %C on its own line. Add %H, %M, or %S on that line to hide the matching hand.</string>
+    <string name="widget_format_analog_hint" formatted="false">Put %C on its own line. Add %H, %M, or %S on that line to hide the matching hand. In widgets, the dial face follows the line color; hands match on Android 16 and later, but remain white on Android 8–15.</string>
     <string name="show_short_weekday">Short weekday</string>
     <string name="showshortweekdayhelp">Shows the localized short weekday in %1s.</string>
     <string name="show_long_weekday">Full weekday</string>

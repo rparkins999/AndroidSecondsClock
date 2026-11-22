@@ -54,8 +54,10 @@ A real newline or `%n` ends the clock line.
 use `%Q` to color only selected lines. The option supports standard, red-green color-vision,
 blue-yellow color-vision, and monochrome palettes. Colors are deterministic for a given editable
 seed; copy or regenerate it to share or change the palette assignment. Colors are designed for black
-backgrounds, so set the clock/widget background to black for the clearest result. `%R` remains the
-existing 24-hour time token; it is not used for color.
+backgrounds, so set the clock/widget background to black for the clearest result. Android 16 and
+later tint analog widget hands to match their line; on Android 8–15, the platform-provided hands
+remain white, while the dial face still uses the line color. `%R` remains the existing 24-hour time
+token; it is not used for color.
 
 To show optional alarm text, wrap it in `%<` and `%>`. Use `%|` to add fallback text for when no
 alarm is set:

@@ -401,6 +401,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 ? minute ? bothId : hourId
                 : minute ? minuteId : noneId;
         int[] clockIds = {bothId, hourId, minuteId, noneId};
+        // AnalogClock exposes RemoteViews hand tinting only on API 36+.
         ColorStateList handColors = Build.VERSION.SDK_INT >= 36
                 ? ColorStateList.valueOf(handColor) : null;
         for (int clockId : clockIds) {
