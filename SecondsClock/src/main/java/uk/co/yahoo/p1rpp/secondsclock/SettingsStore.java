@@ -174,7 +174,7 @@ final class SettingsStore {
         backup.put("version", BACKUP_VERSION);
 
         JSONObject active = new JSONObject();
-        active.put("globals", settingsJson(globalValues(all)));
+        active.put("globals", settingsJson(backupGlobalValues(all)));
         active.put("clock", settingsJson(clockValues(all)));
         JSONArray widgets = new JSONArray();
         for (WidgetRecord widget : activeWidgets(prefs, manager, widgetComponent)) {
@@ -224,6 +224,8 @@ final class SettingsStore {
         JSONObject active = backup.getJSONObject("active");
         Map<String, Object> importedGlobals = readComponentSettings(
                 active.getJSONObject("globals"), SettingsTransferRules.GLOBALS);
+        Object importedAlarmMaxAge = importedGlobals.remove(
+                AlarmTimeRelevance.MAX_AGE_KEY);
         Map<String, Object> importedClock = readComponentSettings(
                 active.getJSONObject("clock"), SettingsTransferRules.CLOCK);
         addWidgetDefaults(importedGlobals);
@@ -318,6 +320,10 @@ final class SettingsStore {
 
         replacePrefix(editor, "W", true);
         putValues(editor, "W", importedGlobals);
+        if (importedAlarmMaxAge instanceof Integer) {
+            editor.putInt(AlarmTimeRelevance.MAX_AGE_KEY,
+                    (Integer) importedAlarmMaxAge);
+        }
         replacePrefix(editor, "C", false);
         putValues(editor, "C", importedClock);
         for (Map.Entry<Integer, ImportedWidget> entry : matchedWidgets.entrySet()) {
@@ -386,6 +392,19 @@ final class SettingsStore {
 
     static Map<String, Object> globalValues(Map<String, ?> all) {
         return settingsForSuffixes(all, "W", WIDGET_SETTING_SUFFIXES);
+    }
+
+    /** Adds the app-wide alarm-age preference to active-global backups. */
+    static Map<String, Object> backupGlobalValues(Map<String, ?> all) {
+        Map<String, Object> result = globalValues(all);
+        Object value = all.get(AlarmTimeRelevance.MAX_AGE_KEY);
+        int maxAgeHours = value instanceof Integer
+                ? (Integer) value : AlarmTimeRelevance.DEFAULT_MAX_AGE_HOURS;
+        if (!AlarmTimeRelevance.isSupportedMaxAgeHours(maxAgeHours)) {
+            maxAgeHours = AlarmTimeRelevance.DEFAULT_MAX_AGE_HOURS;
+        }
+        result.put(AlarmTimeRelevance.MAX_AGE_KEY, maxAgeHours);
+        return result;
     }
 
     static Map<String, Object> clockValues(Map<String, ?> all) {
@@ -709,6 +728,15 @@ final class SettingsStore {
         for (Map.Entry<String, ?> entry : values.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
+            if (SettingsTransferRules.GLOBALS.equals(source)
+                    && AlarmTimeRelevance.MAX_AGE_KEY.equals(key)) {
+                if (!(value instanceof Integer)
+                        || !AlarmTimeRelevance.isSupportedMaxAgeHours(
+                                (Integer) value)) {
+                    return key;
+                }
+                continue;
+            }
             if (!contains(allowed, key)) return key;
             if (contains(STRING_SETTINGS, key)) {
                 if (!(value instanceof String)) return key;

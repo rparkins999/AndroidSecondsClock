@@ -92,6 +92,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     private TextClock m_customClockView;
     private LinearLayout m_customFormatLayout;
     private AnalogClockView m_checkboxAnalogView;
+    private boolean m_checkboxShowAlarmLine;
     private final List<AnalogClockView> m_advancedAnalogViews = new ArrayList<>();
     private final List<TextClock> m_advancedAnalogTextViews = new ArrayList<>();
     private boolean m_customAnalogShowsSeconds;
@@ -439,9 +440,17 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_secondsView.setText(DateFormat.format("ss", next));
         m_weekdayView.setText(DateFormat.format(m_weekdayFormat, next));
         m_yearView.setText(DateFormat.format("yyyy", next));
-        if (m_prefs.getBoolean("CshowNextAlarm", false)) {
-            m_alarmView.setText(formatNextAlarm(
-                    Formatter.getNextAlarmTime(m_owner)));
+        Long checkboxAlarmTime = m_prefs.getBoolean("CshowNextAlarm", false)
+                ? Formatter.getNextAlarmTime(m_owner) : null;
+        boolean showAlarmLine = checkboxAlarmTime != null;
+        if (showAlarmLine != m_checkboxShowAlarmLine) {
+            // The alarm can become stale while the checkbox layout is visible.
+            // Rebuild so its reserved row disappears at the cutoff.
+            updateLayout();
+            return next;
+        }
+        if (showAlarmLine) {
+            m_alarmView.setText(formatNextAlarm(checkboxAlarmTime));
         }
         return next;
     }
@@ -773,6 +782,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         m_customClockView = null;
         m_customFormatLayout = null;
         m_checkboxAnalogView = null;
+        m_checkboxShowAlarmLine = false;
         m_advancedAnalogViews.clear();
         m_advancedAnalogTextViews.clear();
         m_customAnalogShowsSeconds = false;
@@ -832,6 +842,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         Long checkboxAlarmTime = m_prefs.getBoolean("CshowNextAlarm", false)
                 ? Formatter.getNextAlarmTime(m_owner) : null;
         boolean showAlarmLine = checkboxAlarmTime != null;
+        m_checkboxShowAlarmLine = showAlarmLine;
         if (showAlarmLine) m_alarmView.setText(formatNextAlarm(checkboxAlarmTime));
         LinearLayout ll = new LinearLayout(m_owner);
         float timeWidth;

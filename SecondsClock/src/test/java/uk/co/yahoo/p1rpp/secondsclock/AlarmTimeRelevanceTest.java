@@ -73,6 +73,8 @@ public class AlarmTimeRelevanceTest {
     public void offersSeveralMaximumAgesAndAlwaysShow() {
         assertArrayEquals(new int[] {0, 1, 6, 12, 24, 48, 168},
                 AlarmTimeRelevance.MAX_AGE_HOURS_OPTIONS);
+        assertEquals(true, AlarmTimeRelevance.isSupportedMaxAgeHours(24));
+        assertEquals(false, AlarmTimeRelevance.isSupportedMaxAgeHours(3));
         assertEquals(4, AlarmTimeRelevance.optionIndex(24));
         assertEquals(6, AlarmTimeRelevance.optionIndex(168));
         assertEquals(0, AlarmTimeRelevance.optionIndex(2));

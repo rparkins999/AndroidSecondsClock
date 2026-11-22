@@ -43,6 +43,31 @@ public class SettingsStoreValidationTest {
         assertEquals("analogMode", SettingsStore.invalidSetting(
                 Collections.singletonMap("analogMode", 1),
                 SettingsTransferRules.WIDGET));
+        assertNull(SettingsStore.invalidSetting(Collections.singletonMap(
+                AlarmTimeRelevance.MAX_AGE_KEY, 24),
+                SettingsTransferRules.GLOBALS));
+        assertEquals(AlarmTimeRelevance.MAX_AGE_KEY,
+                SettingsStore.invalidSetting(Collections.singletonMap(
+                        AlarmTimeRelevance.MAX_AGE_KEY, 3),
+                        SettingsTransferRules.GLOBALS));
+        assertEquals(AlarmTimeRelevance.MAX_AGE_KEY,
+                SettingsStore.invalidSetting(Collections.singletonMap(
+                        AlarmTimeRelevance.MAX_AGE_KEY, 24),
+                        SettingsTransferRules.WIDGET));
+    }
+
+    @Test
+    public void alarmMaxAgeIsIncludedOnlyInActiveGlobalBackups() {
+        Map<String, Object> stored = new LinkedHashMap<>();
+        stored.put(AlarmTimeRelevance.MAX_AGE_KEY, 24);
+
+        assertEquals(24, SettingsStore.backupGlobalValues(stored)
+                .get(AlarmTimeRelevance.MAX_AGE_KEY));
+        assertEquals(AlarmTimeRelevance.DEFAULT_MAX_AGE_HOURS,
+                SettingsStore.backupGlobalValues(Collections.emptyMap())
+                        .get(AlarmTimeRelevance.MAX_AGE_KEY));
+        assertNull(SettingsStore.globalValues(stored)
+                .get(AlarmTimeRelevance.MAX_AGE_KEY));
     }
 
     @Test

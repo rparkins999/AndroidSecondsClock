@@ -18,10 +18,19 @@ final class AlarmTimeRelevance {
 
     static int maxAgeHours(SharedPreferences preferences) {
         try {
-            return preferences.getInt(MAX_AGE_KEY, DEFAULT_MAX_AGE_HOURS);
+            int maxAgeHours = preferences.getInt(MAX_AGE_KEY, DEFAULT_MAX_AGE_HOURS);
+            return isSupportedMaxAgeHours(maxAgeHours)
+                    ? maxAgeHours : DEFAULT_MAX_AGE_HOURS;
         } catch (ClassCastException ignored) {
             return DEFAULT_MAX_AGE_HOURS;
         }
+    }
+
+    static boolean isSupportedMaxAgeHours(int maxAgeHours) {
+        for (int option : MAX_AGE_HOURS_OPTIONS) {
+            if (option == maxAgeHours) return true;
+        }
+        return false;
     }
 
     static int optionIndex(int maxAgeHours) {
