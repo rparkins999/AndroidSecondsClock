@@ -118,6 +118,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
         }
     };
 
+    private final Runnable m_alarmAgeExpiryRefresh = () -> {
+        if (m_visible
+                && (m_customClockView != null || m_customFormatLayout != null)) {
+            updateCustomClockFormat();
+        }
+    };
+
     // Set the colour of all of our display objects.
     public void setColour(int colour) {
         m_ampmView.setTextColor(colour);
@@ -492,6 +499,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
     public void setHeight (int height) { m_height = height; }
 
     private void updateCustomClockFormat() {
+        m_handler.removeCallbacks(m_alarmAgeExpiryRefresh);
         if (m_customClockView == null && m_customFormatLayout == null) return;
         Configuration config = getResources().getConfiguration();
         String sync = m_prefs.getString("Cformat",
@@ -506,6 +514,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
             format = TextStyleEmoji.preferTextPresentation(format);
         }
         Long nextAlarmTime = Formatter.getNextAlarmTime(m_owner);
+        Long expiryTime = Formatter.getNextAlarmAgeExpiryTime(m_owner);
+        if (m_visible && expiryTime != null) {
+            long delay = expiryTime - System.currentTimeMillis();
+            if (delay > 0) m_handler.postDelayed(m_alarmAgeExpiryRefresh, delay);
+        }
         List<FormatLineSplit.Line> lines = FormatLineSplit.splitLines(format);
         boolean legacyLargeLandscapeTime =
                 config.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -1152,11 +1165,13 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 filter.addAction(Intent.ACTION_TIME_CHANGED);
                 filter.addAction(Intent.ACTION_DATE_CHANGED);
                 filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+                filter.addAction(Intent.ACTION_SCREEN_ON);
                 m_owner.registerReceiver(m_clockChangeReceiver, filter);
                 m_clockReceiverRegistered = true;
                 m_ticker.run();
             } else {
                 m_handler.removeCallbacks(m_ticker);
+                m_handler.removeCallbacks(m_alarmAgeExpiryRefresh);
                 m_sensorManager.unregisterListener(this);
                 if (m_clockReceiverRegistered) {
                     m_owner.unregisterReceiver(m_clockChangeReceiver);

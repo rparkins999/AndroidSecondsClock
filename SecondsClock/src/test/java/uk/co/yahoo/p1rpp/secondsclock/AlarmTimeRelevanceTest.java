@@ -27,6 +27,25 @@ public class AlarmTimeRelevanceTest {
     }
 
     @Test
+    public void expiresAtFirstMillisecondBeyondMaximumAge() {
+        int maxAgeHours = 1;
+        long alarmTime = NOW - maxAgeHours * 60L * 60L * 1000L;
+
+        assertEquals(Long.valueOf(NOW + 1),
+                AlarmTimeRelevance.expiryTimeMillis(alarmTime, maxAgeHours));
+        assertEquals(Long.valueOf(alarmTime),
+                AlarmTimeRelevance.withinMaxAge(alarmTime, NOW, maxAgeHours));
+        assertNull(AlarmTimeRelevance.withinMaxAge(
+                alarmTime, NOW + 1, maxAgeHours));
+    }
+
+    @Test
+    public void alwaysShowHasNoExpiry() {
+        assertNull(AlarmTimeRelevance.expiryTimeMillis(
+                NOW, AlarmTimeRelevance.ALWAYS_SHOW));
+    }
+
+    @Test
     public void ignoresAlarmOlderThanSelectedMaximumAge() {
         int maxAgeHours = 6;
         long staleAlarm = NOW - maxAgeHours * 60L * 60L * 1000L - 1;

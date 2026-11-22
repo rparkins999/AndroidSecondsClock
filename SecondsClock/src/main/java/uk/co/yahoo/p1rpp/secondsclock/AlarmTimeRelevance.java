@@ -33,11 +33,20 @@ final class AlarmTimeRelevance {
 
     static Long withinMaxAge(
             Long alarmTimeMillis, long nowMillis, int maxAgeHours) {
-        if (alarmTimeMillis == null || maxAgeHours <= ALWAYS_SHOW) {
-            return alarmTimeMillis;
-        }
-        long maxAgeMillis = maxAgeHours * HOUR_MILLIS;
-        return alarmTimeMillis < nowMillis - maxAgeMillis
+        if (alarmTimeMillis == null) return null;
+        Long expiryTimeMillis = expiryTimeMillis(alarmTimeMillis, maxAgeHours);
+        return expiryTimeMillis != null && nowMillis >= expiryTimeMillis
                 ? null : alarmTimeMillis;
+    }
+
+    /**
+     * Returns the first millisecond at which an alarm exceeds its maximum age.
+     * A null result means there is no configured cutoff (or no alarm).
+     */
+    static Long expiryTimeMillis(Long alarmTimeMillis, int maxAgeHours) {
+        if (alarmTimeMillis == null || maxAgeHours <= ALWAYS_SHOW) return null;
+        long maxAgeMillis = maxAgeHours * HOUR_MILLIS;
+        if (alarmTimeMillis > Long.MAX_VALUE - maxAgeMillis - 1) return null;
+        return alarmTimeMillis + maxAgeMillis + 1;
     }
 }
