@@ -41,6 +41,9 @@ import java.util.Objects;
  * Implementation of App Widget functionality.
  */
 public class SecondsClockWidget extends AppWidgetProvider {
+    private static final String ACTION_ALARM_AGE_EXPIRED =
+            "uk.co.yahoo.p1rpp.secondsclock.ALARM_AGE_EXPIRED";
+    private static final int ALARM_AGE_REFRESH_REQUEST_CODE = 4926;
 
     void updateAppWidget(
         Context context, AppWidgetManager appWidgetManager, int appWidgetId)
@@ -446,6 +449,36 @@ public class SecondsClockWidget extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
+        scheduleAlarmAgeRefresh(context, appWidgetManager);
+    }
+
+    private static void scheduleAlarmAgeRefresh(
+            Context context, AppWidgetManager appWidgetManager) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(
+                Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+
+        Intent intent = new Intent(context, SecondsClockWidget.class)
+                .setAction(ACTION_ALARM_AGE_EXPIRED);
+        PendingIntent refresh = PendingIntent.getBroadcast(
+                context, ALARM_AGE_REFRESH_REQUEST_CODE, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        int[] widgetIds = appWidgetManager.getAppWidgetIds(
+                new ComponentName(context, SecondsClockWidget.class));
+        Long expiryTime = widgetIds.length == 0
+                ? null : Formatter.getNextAlarmAgeExpiryTime(context);
+        if (expiryTime == null || expiryTime <= System.currentTimeMillis()) {
+            alarmManager.cancel(refresh);
+            return;
+        }
+
+        // This is an inexact wakeup, so it needs no exact-alarm access.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, expiryTime, refresh);
+        } else {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, expiryTime, refresh);
+        }
     }
 
     @SuppressLint("ApplySharedPref")
@@ -466,6 +499,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
             edit.remove("W" + i + "name");
         }
         edit.putString("widgetIds", widgetIds).commit();
+        scheduleAlarmAgeRefresh(
+                context, AppWidgetManager.getInstance(context));
     }
 
     @Override
@@ -480,7 +515,9 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     AppWidgetManager.getInstance(context);
             onUpdate(context, appWidgetManager,
             intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
-        } else if (Objects.equals(action,
+        } else if (Objects.equals(action, ACTION_ALARM_AGE_EXPIRED)
+                || Objects.equals(action, Intent.ACTION_BOOT_COMPLETED)
+                || Objects.equals(action,
                     AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED)
                 || Objects.equals(action, Intent.ACTION_TIME_CHANGED)
                 || Objects.equals(action, Intent.ACTION_DATE_CHANGED)

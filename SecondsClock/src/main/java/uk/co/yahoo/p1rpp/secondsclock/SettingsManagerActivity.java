@@ -778,7 +778,7 @@ public class SettingsManagerActivity extends Activity_common
             JSONObject backup = SettingsStore.readBackup(stream);
             SettingsStore.ImportResult result = SettingsStore.importBackup(
                     m_prefs, appWidgetManager, secondsClockWidget, backup);
-            if (result.appliedWidgets > 0) updateWidgets();
+            updateWidgets();
             loadPresets();
             renderAgain();
             doToast(getString(R.string.file_imported,

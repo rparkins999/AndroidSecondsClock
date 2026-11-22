@@ -214,6 +214,23 @@ class Formatter {
     }
 
     static Long getNextAlarmTime(Context context) {
+        Long triggerTime = getRawNextAlarmTime(context);
+        SharedPreferences preferences = context.getSharedPreferences(
+                "SecondsClock", Context.MODE_PRIVATE);
+        return AlarmTimeRelevance.withinMaxAge(
+                triggerTime, System.currentTimeMillis(),
+                AlarmTimeRelevance.maxAgeHours(preferences));
+    }
+
+    static Long getNextAlarmAgeExpiryTime(Context context) {
+        Long triggerTime = getRawNextAlarmTime(context);
+        SharedPreferences preferences = context.getSharedPreferences(
+                "SecondsClock", Context.MODE_PRIVATE);
+        return AlarmTimeRelevance.expiryTimeMillis(
+                triggerTime, AlarmTimeRelevance.maxAgeHours(preferences));
+    }
+
+    private static Long getRawNextAlarmTime(Context context) {
         android.app.AlarmManager alarmManager =
                 (android.app.AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return null;
