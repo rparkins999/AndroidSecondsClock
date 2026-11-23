@@ -50,6 +50,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
@@ -121,6 +122,8 @@ class ClockView extends LinearLayout implements SensorEventListener {
                 updateCustomClockFormat();
             } else if (m_prefs.getBoolean("CshowNextAlarm", false)) {
                 updateLayout();
+            } else {
+                setColour(m_fgcolour);
             }
         }
     };
@@ -165,6 +168,63 @@ class ClockView extends LinearLayout implements SensorEventListener {
                                     m_advancedAnalogColors.get(index), colour)
                             : colour);
         }
+        applyCheckboxLineColors(colour);
+    }
+
+    private void applyCheckboxLineColors(int foreground) {
+        if (m_prefs.getBoolean("CadvancedFormatMode", false)
+                || !LineColors.automaticEnabled(m_prefs)) {
+            return;
+        }
+
+        int lineIndex = 0;
+        if (m_checkboxAnalogView != null
+                && isInClockLayout(m_checkboxAnalogView)) {
+            m_checkboxAnalogView.setColor(
+                    LineColors.checkboxLineColor(m_prefs, lineIndex++, foreground));
+        } else if (isInClockLayout(m_timeView)) {
+            int color = LineColors.checkboxLineColor(m_prefs, lineIndex++, foreground);
+            m_timeView.setTextColor(color);
+            setTextColorIfInClockLayout(m_secondsView, color);
+            setTextColorIfInClockLayout(m_ampmView, color);
+        } else {
+            lineIndex = setCheckboxLineColor(m_hoursView, lineIndex, foreground);
+            lineIndex = setCheckboxLineColor(m_minutesView, lineIndex, foreground);
+            lineIndex = setCheckboxLineColor(m_secondsView, lineIndex, foreground);
+            lineIndex = setCheckboxLineColor(m_ampmView, lineIndex, foreground);
+        }
+
+        if (isInClockLayout(m_dateView)) {
+            lineIndex = setCheckboxLineColor(m_dateView, lineIndex, foreground);
+        } else {
+            lineIndex = setCheckboxLineColor(m_weekdayView, lineIndex, foreground);
+            lineIndex = setCheckboxLineColor(m_monthdayView, lineIndex, foreground);
+            lineIndex = setCheckboxLineColor(m_monthView, lineIndex, foreground);
+            lineIndex = setCheckboxLineColor(m_yearView, lineIndex, foreground);
+        }
+        setCheckboxLineColor(m_alarmView, lineIndex, foreground);
+    }
+
+    private int setCheckboxLineColor(
+            TextView view, int lineIndex, int foreground) {
+        if (!isInClockLayout(view)) return lineIndex;
+        view.setTextColor(LineColors.checkboxLineColor(
+                m_prefs, lineIndex, foreground));
+        return lineIndex + 1;
+    }
+
+    private void setTextColorIfInClockLayout(TextView view, int color) {
+        if (isInClockLayout(view)) view.setTextColor(color);
+    }
+
+    private boolean isInClockLayout(View view) {
+        View current = view;
+        while (current != null) {
+            if (current == this) return true;
+            ViewParent parent = current.getParent();
+            current = parent instanceof View ? (View) parent : null;
+        }
+        return false;
     }
 
     // Update the displayed RGB colour without resetting its dimming opacity.
@@ -602,7 +662,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
         measurePaint.setTextSize(100.0F);
         for (int lineIndex = 0; lineIndex < rendered.lines.size(); ++lineIndex) {
             AnalogFormatRenderer.Line line = rendered.lines.get(lineIndex);
-            boolean colorized = LineColors.shouldColor(m_prefs, line.randomColor);
+            boolean colorized = line.randomColor;
             int paletteColor = colorized
                     ? LineColors.colorForLine(m_prefs, line.lineIndex) : m_fgcolour;
             int lineColor = colorized
@@ -696,7 +756,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
             widestLine = Math.max(widestLine, textWidth);
             renderedLines.add(new AdvancedPatternLine(
                     linePattern, line.emphasized, textWidth,
-                    LineColors.shouldColor(m_prefs, line.randomColor),
+                    line.randomColor,
                     LineColors.colorForLine(m_prefs, lineIndex)));
         }
 
@@ -1192,6 +1252,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
                         (int) (m_height / space)));
             }
         }
+        applyCheckboxLineColors(m_fgcolour);
         m_ticker.run();
     }
 

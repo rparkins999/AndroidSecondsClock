@@ -76,6 +76,13 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .remove(WIDGET_KEY + "touchaction")
                 .remove(WIDGET_KEY + "analogMode")
                 .remove(WIDGET_KEY + "showSeconds")
+                .remove(WIDGET_KEY + "showTime")
+                .remove(WIDGET_KEY + "showWeekDay")
+                .remove(WIDGET_KEY + "showShortDate")
+                .remove(WIDGET_KEY + "showMonthDay")
+                .remove(WIDGET_KEY + "showMonth")
+                .remove(WIDGET_KEY + "showYear")
+                .remove(WIDGET_KEY + "showNextAlarm")
                 .remove(WIDGET_KEY + "advancedFormatMode")
                 .remove(WIDGET_KEY + "formatSyncEnabled")
                 .remove(WIDGET_KEY + "textStyleEmoji")
@@ -160,18 +167,86 @@ public class SecondsClockWidgetRemoteViewsTest {
     }
 
     @Test
-    public void automaticColorsApplyToEveryAdvancedRemoteViewsLine() {
+    public void automaticColorsDoNotOverrideAdvancedLineMarkers() {
         preferences.edit().putBoolean(LineColors.ENABLED_KEY, true).commit();
-        View root = renderFormat("%H:%M\n%Y");
+        View root = renderFormat("%H:%M\n%Q%Y");
         LinearLayout container = root.findViewById(
                 R.id.appwidget_format_container);
 
-        assertEquals(LineColors.colorForLine(
-                        "clock", LineColors.NORMAL, 0),
+        assertEquals(Color.WHITE,
                 ((TextClock) container.getChildAt(0)).getCurrentTextColor());
         assertEquals(LineColors.colorForLine(
                         "clock", LineColors.NORMAL, 1),
                 ((TextClock) container.getChildAt(1)).getCurrentTextColor());
+    }
+
+    @Test
+    public void automaticColorsApplyToCheckboxWidgetLines() {
+        preferences.edit()
+                .putBoolean(WIDGET_KEY + "advancedFormatMode", false)
+                .putBoolean(WIDGET_KEY + "analogMode", false)
+                .putInt(WIDGET_KEY + "showTime", 1)
+                .putInt(WIDGET_KEY + "showWeekDay", 2)
+                .putInt(WIDGET_KEY + "showShortDate", 0)
+                .putInt(WIDGET_KEY + "showMonthDay", 1)
+                .putInt(WIDGET_KEY + "showMonth", 0)
+                .putInt(WIDGET_KEY + "showYear", 1)
+                .putBoolean(WIDGET_KEY + "showNextAlarm", false)
+                .putBoolean(LineColors.ENABLED_KEY, true)
+                .commit();
+        Bundle options = new Bundle();
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, WIDTH_DP);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, HEIGHT_DP);
+        RemoteViews remoteViews = SecondsClockWidget.buildRemoteViews(
+                context, TEST_WIDGET_ID, options);
+        View root = remoteViews.apply(context, new FrameLayout(context));
+        LinearLayout container = root.findViewById(
+                R.id.appwidget_checkbox_format_container);
+
+        assertEquals(View.GONE,
+                root.findViewById(R.id.appwidget_textclock).getVisibility());
+        assertEquals(View.VISIBLE, container.getVisibility());
+        assertEquals(4, container.getChildCount());
+        for (int lineIndex = 0; lineIndex < container.getChildCount(); ++lineIndex) {
+            TextClock line = (TextClock) container.getChildAt(lineIndex);
+            assertEquals(LineColors.checkboxLineColor(
+                            preferences, lineIndex, Color.WHITE),
+                    line.getCurrentTextColor());
+        }
+    }
+
+    @Test
+    public void automaticColorsApplyAfterCheckboxAnalogDial() {
+        preferences.edit()
+                .putBoolean(WIDGET_KEY + "advancedFormatMode", false)
+                .putBoolean(WIDGET_KEY + "analogMode", true)
+                .putInt(WIDGET_KEY + "showWeekDay", 2)
+                .putInt(WIDGET_KEY + "showShortDate", 0)
+                .putInt(WIDGET_KEY + "showMonthDay", 1)
+                .putInt(WIDGET_KEY + "showMonth", 0)
+                .putInt(WIDGET_KEY + "showYear", 1)
+                .putBoolean(WIDGET_KEY + "showNextAlarm", false)
+                .putBoolean(LineColors.ENABLED_KEY, true)
+                .commit();
+        Bundle options = new Bundle();
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, WIDTH_DP);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, HEIGHT_DP);
+        RemoteViews remoteViews = SecondsClockWidget.buildRemoteViews(
+                context, TEST_WIDGET_ID, options);
+        View root = remoteViews.apply(context, new FrameLayout(context));
+        LinearLayout container = root.findViewById(
+                R.id.appwidget_checkbox_analog_date_container);
+
+        assertEquals(View.VISIBLE,
+                root.findViewById(R.id.appwidget_analogclock).getVisibility());
+        assertEquals(View.VISIBLE, container.getVisibility());
+        assertEquals(3, container.getChildCount());
+        for (int lineIndex = 0; lineIndex < container.getChildCount(); ++lineIndex) {
+            TextClock line = (TextClock) container.getChildAt(lineIndex);
+            assertEquals(LineColors.checkboxLineColor(
+                            preferences, lineIndex + 1, Color.WHITE),
+                    line.getCurrentTextColor());
+        }
     }
 
     @Test

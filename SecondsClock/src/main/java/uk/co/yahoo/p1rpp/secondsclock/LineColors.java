@@ -48,8 +48,11 @@ final class LineColors {
         return prefs.getBoolean(ENABLED_KEY, false);
     }
 
-    static boolean shouldColor(SharedPreferences prefs, boolean marked) {
-        return marked || automaticEnabled(prefs);
+    static int checkboxLineColor(
+            SharedPreferences prefs, int lineIndex, int baseColor) {
+        return automaticEnabled(prefs)
+                ? withBaseAlpha(colorForLine(prefs, lineIndex), baseColor)
+                : baseColor;
     }
 
     static int colorForLine(SharedPreferences prefs, int lineIndex) {

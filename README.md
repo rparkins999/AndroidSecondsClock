@@ -50,14 +50,14 @@ Put `%C` on its own line for a full-row analog dial; that line renders no text. 
 and `%S` suppress the matching hands instead of printing time fields. Elsewhere they print normally.
 A real newline or `%n` ends the clock line.
 
-**Global Settings → Advanced line colors** can color every advanced-format line automatically, or
-use `%Q` to color only selected lines. The option supports standard, red-green color-vision,
-blue-yellow color-vision, and monochrome palettes. Colors are deterministic for a given editable
-seed; copy or regenerate it to share or change the palette assignment. Colors are designed for black
-backgrounds, so set the clock/widget background to black for the clearest result. Android 16 and
-later tint analog widget hands to match their line; on Android 8–15, the platform-provided hands
-remain white, while the dial face still uses the line color. `%R` remains the existing 24-hour time
-token; it is not used for color.
+**Global Settings → Line colors** can automatically color lines in Checkbox mode. In Advanced
+mode, use `%Q` on individual lines to color them explicitly. The option supports standard, red-green
+color-vision, blue-yellow color-vision, and monochrome palettes. Colors are deterministic for a given
+editable seed; copy or regenerate it to share or change the palette assignment. Colors are designed
+for black backgrounds, so set the clock/widget background to black for the clearest result. Android
+16 and later tint analog widget hands to match their line; on Android 8–15, the platform-provided
+hands remain white, while the dial face still uses the line color. `%R` remains the existing 24-hour
+time token; it is not used for color.
 
 To show optional alarm text, wrap it in `%<` and `%>`. Use `%|` to add fallback text for when no
 alarm is set:
@@ -102,7 +102,7 @@ The clock keeps the screen on while charging, in both Checkbox and Advanced mode
 ## Settings, backup, and presets
 
 The main menu groups widget actions and settings. **Global Settings** controls defaults for new
-widgets, advanced line colors, and the system-clock app override. **Settings Manager** copies
+widgets, line colors, and the system-clock app override. **Settings Manager** copies
 settings between defaults, the full-screen clock, widgets, and presets. You can save
 components as presets, apply presets to
 compatible components, and rename or delete presets; resetting a component first saves its current

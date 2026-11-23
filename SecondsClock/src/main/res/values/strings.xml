@@ -59,11 +59,11 @@
     <string name="settings_manager">Settings Manager</string>
     <string name="settings_manager_help">Copy settings between current components and presets.</string>
     <string name="global_settings_button">Global Settings</string>
-    <string name="global_settings_help">Set the system clock app override, choose how long reported alarm times remain relevant, configure advanced line colors, or set defaults for new widgets.</string>
+    <string name="global_settings_help">Set the system clock app override, choose how long reported alarm times remain relevant, configure line colors, or set defaults for new widgets.</string>
     <string name="global_settings_done">Back to main menu</string>
-    <string name="line_color_settings_title">Advanced line colors</string>
-    <string name="line_color_settings_help" formatted="false">Automatic colors color every line in advanced formats. You can also put %Q on a line to color only that line, even when automatic colors are off. Colors are chosen for black backgrounds; set the clock background to black for the clearest result. Analog widget hands follow the line color on Android 16 and later; on Android 8–15, the platform hands remain white.</string>
-    <string name="line_color_automatic">Automatically color all advanced-format lines</string>
+    <string name="line_color_settings_title">Line colors</string>
+    <string name="line_color_settings_help" formatted="false">Automatically color each line in Checkbox mode. In Advanced mode, put %Q on a line to color that line explicitly. Colors are chosen for black backgrounds; set the clock background to black for the clearest result. Analog widget hands follow the line color on Android 16 and later; on Android 8–15, the platform hands remain white.</string>
+    <string name="line_color_automatic">Automatically color Checkbox-mode lines</string>
     <string name="line_color_profile_button">Color-vision profile: %1$s</string>
     <string name="line_color_profile_title">Color-vision profile</string>
     <string name="line_color_seed_label">Color seed</string>
@@ -71,7 +71,7 @@
     <string name="line_color_copy_seed">Copy seed</string>
     <string name="line_color_regenerate_seed">Regenerate seed</string>
     <string name="line_color_seed_copied">Color seed copied</string>
-    <string name="format_token_random_color" formatted="false">Random color for this line (%Q)</string>
+    <string name="format_token_random_color" formatted="false">Palette color for this line (%Q)</string>
     <string-array name="line_color_profiles">
         <item>Standard</item>
         <item>Protanopia</item>

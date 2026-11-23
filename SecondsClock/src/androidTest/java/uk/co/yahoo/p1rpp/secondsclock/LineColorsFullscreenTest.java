@@ -8,6 +8,7 @@ import android.text.style.CharacterStyle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextClock;
+import android.widget.TextView;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -18,10 +19,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -61,9 +65,39 @@ public class LineColorsFullscreenTest {
     }
 
     @Test
-    public void automaticColorsApplyToEveryFullscreenLineWithForegroundAlpha() {
+    public void automaticSettingDoesNotColorUnmarkedAdvancedLines() {
         assertRenderedColors("%H:%M\n%Y", true,
-                new int[] {0, 1}, new int[0]);
+                new int[0], new int[] {0, 1});
+    }
+
+    @Test
+    public void explicitAdvancedMarkerStillWorksWhenAutomaticColorsAreEnabled() {
+        assertRenderedColors("%Q%H:%M\n%Y", true,
+                new int[] {0}, new int[] {1});
+    }
+
+    @Test
+    public void automaticColorsApplyToCheckboxModeLines() {
+        setCheckboxMode(true);
+        try (ActivityScenario<ClockActivity> scenario =
+                     ActivityScenario.launch(ClockActivity.class)) {
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity -> {
+                ClockView clock = findClockView(
+                        activity.findViewById(R.id.genericlayout));
+                assertNotNull(clock);
+                List<TextView> lines = new ArrayList<>();
+                collectTextViews(clock, lines);
+                assertTrue("checkbox mode should display several separate lines",
+                        lines.size() >= 6);
+                for (int lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
+                    assertEquals("checkbox line " + lineIndex,
+                            LineColors.checkboxLineColor(
+                                    preferences, lineIndex, FOREGROUND),
+                            lines.get(lineIndex).getCurrentTextColor());
+                }
+            });
+        }
     }
 
     private void setClockFormat(String format, boolean automaticColors) {
@@ -74,6 +108,25 @@ public class LineColorsFullscreenTest {
                 .putBoolean("CadvancedLargeTime", false)
                 .putBoolean("C7seg", false)
                 .putBoolean("CtextStyleEmoji", false)
+                .putBoolean("CshowNextAlarm", false)
+                .putInt("Cfgcolour", FOREGROUND)
+                .putBoolean(LineColors.ENABLED_KEY, automaticColors)
+                .putInt(LineColors.PROFILE_KEY, PROFILE)
+                .putString(LineColors.SEED_KEY, SEED)
+                .commit();
+    }
+
+    private void setCheckboxMode(boolean automaticColors) {
+        preferences.edit()
+                .putBoolean("CadvancedFormatMode", false)
+                .putBoolean("CanalogMode", false)
+                .putBoolean("Cforcevertical", true)
+                .putInt("CsecondsSize", 0)
+                .putInt("CshowWeekDay", 2)
+                .putInt("CshowShortDate", 0)
+                .putInt("CshowMonthDay", 1)
+                .putInt("CshowMonth", 2)
+                .putInt("CshowYear", 1)
                 .putBoolean("CshowNextAlarm", false)
                 .putInt("Cfgcolour", FOREGROUND)
                 .putBoolean(LineColors.ENABLED_KEY, automaticColors)
@@ -165,6 +218,29 @@ public class LineColorsFullscreenTest {
             if (found != null) return found;
         }
         return null;
+    }
+
+    private static ClockView findClockView(View view) {
+        if (view instanceof ClockView) return (ClockView) view;
+        if (!(view instanceof ViewGroup)) return null;
+        ViewGroup group = (ViewGroup) view;
+        for (int index = 0; index < group.getChildCount(); ++index) {
+            ClockView found = findClockView(group.getChildAt(index));
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private static void collectTextViews(View view, List<TextView> result) {
+        if (view instanceof TextView) {
+            TextView text = (TextView) view;
+            if (text.getText().length() > 0) result.add(text);
+        }
+        if (!(view instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) view;
+        for (int index = 0; index < group.getChildCount(); ++index) {
+            collectTextViews(group.getChildAt(index), result);
+        }
     }
 
     private static void putPreference(

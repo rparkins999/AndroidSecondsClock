@@ -21,6 +21,14 @@
         android:autoSizeMinTextSize="16px"
         android:autoSizeTextType="uniform" />
 
+    <LinearLayout
+        android:id="@+id/appwidget_checkbox_format_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
     <include
         layout="@layout/analog_clock_widget"
         android:layout_width="match_parent"
@@ -37,6 +45,14 @@
         android:gravity="center"
         android:autoSizeMinTextSize="12px"
         android:autoSizeTextType="uniform"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/appwidget_checkbox_analog_date_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:orientation="vertical"
         android:visibility="gone" />
 
     <LinearLayout
