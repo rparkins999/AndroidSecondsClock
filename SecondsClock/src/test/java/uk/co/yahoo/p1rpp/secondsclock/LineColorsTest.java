@@ -19,7 +19,7 @@ public class LineColorsTest {
         assertFalse(LineColors.colorForLine("clock", LineColors.NORMAL, 0)
                 == LineColors.colorForLine("clock", LineColors.TRITANOPIA, 0));
         assertFalse(LineColors.colorForLine(
-                "clock", LineColors.NORMAL, 1) == 0xFFFFFFFF);
+                "clock", LineColors.NORMAL, 0) == 0xFFFFFFFF);
     }
 
     @Test
@@ -38,27 +38,56 @@ public class LineColorsTest {
 
     @Test
     public void nonAdjacentPaletteColorsRemainPerceptuallySeparated() {
+        String[] seeds = {
+                LineColors.DEFAULT_SEED, "clock", "other", "palette-spacing"
+        };
         for (int profile = 0; profile < LineColors.PROFILE_COUNT; ++profile) {
-            int[] colors = new int[8];
-            for (int line = 0; line < colors.length; ++line) {
-                colors[line] = LineColors.colorForLine(
-                        "palette-spacing", profile, line);
-            }
-
-            double minimumDistance = Double.MAX_VALUE;
-            for (int left = 0; left < colors.length; ++left) {
-                for (int right = left + 1; right < colors.length; ++right) {
-                    minimumDistance = Math.min(minimumDistance,
-                            perceptualDistance(colors[left], colors[right]));
+            for (String seed : seeds) {
+                int[] colors = new int[8];
+                for (int line = 0; line < colors.length; ++line) {
+                    colors[line] = LineColors.colorForLine(
+                            seed, profile, line);
                 }
-            }
 
-            double requiredDistance = profile == LineColors.MONOCHROME
-                    ? 7.5 : 20.0;
-            assertTrue("profile " + profile + " has colors that are too close: "
-                            + minimumDistance,
-                    minimumDistance >= requiredDistance);
+                double minimumDistance = Double.MAX_VALUE;
+                for (int left = 0; left < colors.length; ++left) {
+                    for (int right = left + 1; right < colors.length; ++right) {
+                        minimumDistance = Math.min(minimumDistance,
+                                perceptualDistance(
+                                        colors[left], colors[right]));
+                    }
+                }
+
+                double requiredDistance = profile == LineColors.MONOCHROME
+                        ? 7.5 : 20.0;
+                assertTrue("seed " + seed + ", profile " + profile
+                                + " has colors that are too close: "
+                                + minimumDistance,
+                        minimumDistance >= requiredDistance);
+
+                double minimumNeighborDistance = Double.MAX_VALUE;
+                for (int line = 0; line < colors.length; ++line) {
+                    int nextLine = (line + 1) % colors.length;
+                    minimumNeighborDistance = Math.min(minimumNeighborDistance,
+                            perceptualDistance(
+                                    colors[line], colors[nextLine]));
+                }
+                assertTrue("seed " + seed + ", profile " + profile
+                                + " has neighboring colors that are too close: "
+                                + minimumNeighborDistance,
+                        minimumNeighborDistance >= 20.0);
+            }
         }
+    }
+
+    @Test
+    public void defaultStandardOrderAlternatesOrangeGreenYellow() {
+        assertEquals(0xFFD55E00, LineColors.colorForLine(
+                LineColors.DEFAULT_SEED, LineColors.NORMAL, 0));
+        assertEquals(0xFF009E73, LineColors.colorForLine(
+                LineColors.DEFAULT_SEED, LineColors.NORMAL, 1));
+        assertEquals(0xFFF0E442, LineColors.colorForLine(
+                LineColors.DEFAULT_SEED, LineColors.NORMAL, 2));
     }
 
     @Test

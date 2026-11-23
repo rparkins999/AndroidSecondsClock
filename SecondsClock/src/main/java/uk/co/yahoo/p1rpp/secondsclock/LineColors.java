@@ -25,19 +25,19 @@ final class LineColors {
     static final int PROFILE_COUNT = 5;
     static final String DEFAULT_SEED = "seconds-clock";
 
-    // Bright palettes selected to remain legible on black, with profiles that
-    // prioritize alternative hue families for different color-vision needs.
+    // Each palette is an ordered cycle with well-separated neighbors. Seeds
+    // rotate or reverse it while preserving the neighboring-color spacing.
     private static final int[][] PALETTES = {
-            {0xFFE69F00, 0xFF56B4E9, 0xFF009E73, 0xFFF0E442,
-                    0xFF0072B2, 0xFFD55E00, 0xFFCC79A7, 0xFFFFFFFF},
-            {0xFF56B4E9, 0xFFF0E442, 0xFF0072B2, 0xFFE69F00,
-                    0xFFCC79A7, 0xFF8DD3C7, 0xFFFFFFFF, 0xFFFFD8A8},
-            {0xFF0072B2, 0xFFE69F00, 0xFF56B4E9, 0xFFF0E442,
-                    0xFFCC79A7, 0xFFFFFFFF, 0xFFF000A8, 0xFFFFCB77},
-            {0xFFD55E00, 0xFF009E73, 0xFFCC79A7, 0xFFE69F00,
-                    0xFFFFFFFF, 0xFFE31A1C, 0xFF59A14F, 0xFFFF9DA7},
-            {0xFF636363, 0xFF777777, 0xFF8B8B8B, 0xFFA0A0A0,
-                    0xFFB6B6B6, 0xFFCCCCCC, 0xFFE2E2E2, 0xFFF9F9F9}
+            {0xFFD55E00, 0xFF009E73, 0xFFF0E442, 0xFF56B4E9,
+                    0xFFCC79A7, 0xFFE69F00, 0xFF0072B2, 0xFFFFFFFF},
+            {0xFF56B4E9, 0xFFF0E442, 0xFFCC79A7, 0xFF8DD3C7,
+                    0xFFE69F00, 0xFFFFFFFF, 0xFF0072B2, 0xFFFFD8A8},
+            {0xFF0072B2, 0xFFF0E442, 0xFFCC79A7, 0xFFE69F00,
+                    0xFFFFFFFF, 0xFFF000A8, 0xFF56B4E9, 0xFFFFCB77},
+            {0xFFD55E00, 0xFF009E73, 0xFFFF9DA7, 0xFF59A14F,
+                    0xFFE31A1C, 0xFFFFFFFF, 0xFFE69F00, 0xFFCC79A7},
+            {0xFF636363, 0xFFB6B6B6, 0xFF777777, 0xFFCCCCCC,
+                    0xFF8B8B8B, 0xFFE2E2E2, 0xFFA0A0A0, 0xFFF9F9F9}
     };
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -63,15 +63,15 @@ final class LineColors {
                 ? profile : NORMAL;
         int[] palette = PALETTES[selectedProfile];
         long seedHash = hashSeed(seed == null ? DEFAULT_SEED : seed);
-        long profileHash = mix64(seedHash
-                ^ (0x9E3779B97F4A7C15L * selectedProfile));
-        int offset = (int) Long.remainderUnsigned(profileHash, palette.length);
-        long strideHash = mix64(profileHash ^ 0xD1B54A32D192ED03L);
-        int stride = 1 + (int) Long.remainderUnsigned(
-                strideHash, palette.length - 1);
-        while (greatestCommonDivisor(stride, palette.length) != 1) {
-            stride = stride % (palette.length - 1) + 1;
-        }
+        long defaultSeedHash = hashSeed(DEFAULT_SEED);
+        long profileSalt = 0x9E3779B97F4A7C15L * selectedProfile;
+        long profileHash = mix64(seedHash ^ profileSalt);
+        long defaultProfileHash = mix64(
+                defaultSeedHash ^ profileSalt);
+        int offset = (int) Long.remainderUnsigned(
+                profileHash - defaultProfileHash, palette.length);
+        int stride = ((seedHash ^ defaultSeedHash) & 1L) == 0L
+                ? 1 : palette.length - 1;
         int index = Math.floorMod(
                 offset + Math.max(0, lineIndex) * stride, palette.length);
         return palette[index];
@@ -112,14 +112,5 @@ final class LineColors {
         value = (value ^ (value >>> 30)) * 0xbf58476d1ce4e5b9L;
         value = (value ^ (value >>> 27)) * 0x94d049bb133111ebL;
         return value ^ (value >>> 31);
-    }
-
-    private static int greatestCommonDivisor(int left, int right) {
-        while (right != 0) {
-            int remainder = left % right;
-            left = right;
-            right = remainder;
-        }
-        return left;
     }
 }
