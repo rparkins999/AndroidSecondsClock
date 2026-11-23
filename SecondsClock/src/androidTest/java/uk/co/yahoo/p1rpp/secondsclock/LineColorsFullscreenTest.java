@@ -93,8 +93,29 @@ public class LineColorsFullscreenTest {
                 for (int lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
                     assertEquals("checkbox line " + lineIndex,
                             LineColors.checkboxLineColor(
-                                    preferences, lineIndex, FOREGROUND),
+                                    preferences, "C", lineIndex, FOREGROUND),
                             lines.get(lineIndex).getCurrentTextColor());
+                }
+            });
+        }
+    }
+
+    @Test
+    public void fullscreenColorSettingIsIndependentOfWidgetDefaults() {
+        preferences.edit().putBoolean(
+                LineColors.enabledKey("W"), true).commit();
+        setCheckboxMode(false);
+        try (ActivityScenario<ClockActivity> scenario =
+                     ActivityScenario.launch(ClockActivity.class)) {
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity -> {
+                ClockView clock = findClockView(
+                        activity.findViewById(R.id.genericlayout));
+                List<TextView> lines = new ArrayList<>();
+                collectTextViews(clock, lines);
+                assertTrue(lines.size() >= 6);
+                for (TextView line : lines) {
+                    assertEquals(FOREGROUND, line.getCurrentTextColor());
                 }
             });
         }
@@ -110,7 +131,7 @@ public class LineColorsFullscreenTest {
                 .putBoolean("CtextStyleEmoji", false)
                 .putBoolean("CshowNextAlarm", false)
                 .putInt("Cfgcolour", FOREGROUND)
-                .putBoolean(LineColors.ENABLED_KEY, automaticColors)
+                .putBoolean(LineColors.enabledKey("C"), automaticColors)
                 .putInt(LineColors.PROFILE_KEY, PROFILE)
                 .putString(LineColors.SEED_KEY, SEED)
                 .commit();
@@ -129,7 +150,7 @@ public class LineColorsFullscreenTest {
                 .putInt("CshowYear", 1)
                 .putBoolean("CshowNextAlarm", false)
                 .putInt("Cfgcolour", FOREGROUND)
-                .putBoolean(LineColors.ENABLED_KEY, automaticColors)
+                .putBoolean(LineColors.enabledKey("C"), automaticColors)
                 .putInt(LineColors.PROFILE_KEY, PROFILE)
                 .putString(LineColors.SEED_KEY, SEED)
                 .commit();

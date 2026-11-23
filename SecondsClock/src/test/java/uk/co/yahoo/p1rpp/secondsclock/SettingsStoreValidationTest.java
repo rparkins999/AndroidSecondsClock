@@ -110,16 +110,24 @@ public class SettingsStoreValidationTest {
     }
 
     @Test
-    public void colorPreferencesAreExportedAsGlobalSettingsOnly() {
+    public void automaticColorSwitchIsStoredPerDisplayAndPaletteIsShared() {
         Map<String, Object> defaults = SettingsStore.globalValues(
                 Collections.emptyMap());
         assertEquals(false, defaults.get("lineColorsEnabled"));
         assertEquals(LineColors.NORMAL, defaults.get("lineColorProfile"));
         assertEquals(LineColors.DEFAULT_SEED, defaults.get("lineColorSeed"));
         assertEquals(true, SettingsStore.globalValues(
-                Collections.singletonMap(LineColors.ENABLED_KEY, true))
+                Collections.singletonMap(LineColors.enabledKey("W"), true))
                 .get("lineColorsEnabled"));
         assertEquals(false, SettingsStore.widgetValues(
-                Collections.emptyMap(), 8).containsKey("lineColorsEnabled"));
+                Collections.emptyMap(), 8).get("lineColorsEnabled"));
+        assertEquals(true, SettingsStore.widgetValues(
+                Collections.singletonMap(LineColors.enabledKey("W8"), true), 8)
+                .get("lineColorsEnabled"));
+        assertEquals(false, SettingsStore.clockValues(
+                Collections.emptyMap()).get("lineColorsEnabled"));
+        assertEquals(true, SettingsStore.clockValues(
+                Collections.singletonMap(LineColors.enabledKey("C"), true))
+                .get("lineColorsEnabled"));
     }
 }

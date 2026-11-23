@@ -43,10 +43,10 @@ final class SettingsStore {
             "formatSyncEnabled",
             "textStyleEmoji", "advancedFormatMode", "showTime", "showSeconds",
             "showWeekDay", "showShortDate", "showMonthDay", "showMonth",
-            "showYear", "showNextAlarm", "format", "formatHorizontal",
-            "formatVertical", "formatProfile"};
+            "showYear", "showNextAlarm", "lineColorsEnabled", "format",
+            "formatHorizontal", "formatVertical", "formatProfile"};
     private static final String[] LINE_COLOR_SETTING_SUFFIXES = {
-            "lineColorsEnabled", "lineColorProfile", "lineColorSeed"};
+            "lineColorProfile", "lineColorSeed"};
     private static final String[] GLOBAL_SETTING_SUFFIXES = combine(
             WIDGET_SETTING_SUFFIXES, LINE_COLOR_SETTING_SUFFIXES);
     private static final String[] CLOCK_SETTING_SUFFIXES = {
@@ -56,7 +56,7 @@ final class SettingsStore {
             "formatPortrait", "formatLandscape", "formatSyncEnabled",
             "formatProfile", "textStyleEmoji", "fgcolour", "minBright",
             "alpha", "threshold", "onlyalpha", "7seg", "forcevertical",
-            "showNextAlarm", "advancedLargeTime"};
+            "showNextAlarm", "advancedLargeTime", "lineColorsEnabled"};
     private static final String[] STRING_SETTINGS = {
             "format", "formatHorizontal", "formatVertical",
             "formatPortrait", "formatLandscape", "lineColorSeed"};
@@ -454,6 +454,7 @@ final class SettingsStore {
         putDefault(values, "showMonth", 2);
         putDefault(values, "showYear", 1);
         putDefault(values, "showNextAlarm", false);
+        putDefault(values, "lineColorsEnabled", false);
         putDefault(values, "formatProfile", 0);
     }
 
@@ -476,10 +477,10 @@ final class SettingsStore {
         putDefault(values, "forcevertical", false);
         putDefault(values, "showNextAlarm", false);
         putDefault(values, "advancedLargeTime", true);
+        putDefault(values, "lineColorsEnabled", false);
     }
 
     private static void addLineColorDefaults(Map<String, Object> values) {
-        putDefault(values, "lineColorsEnabled", false);
         putDefault(values, "lineColorProfile", LineColors.NORMAL);
         putDefault(values, "lineColorSeed", LineColors.DEFAULT_SEED);
     }

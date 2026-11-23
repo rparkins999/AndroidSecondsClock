@@ -38,6 +38,7 @@ public class SecondsClockWidgetRemoteViewsTest {
     private SharedPreferences preferences;
     private String originalWidgetIds;
     private Object originalLineColorsEnabled;
+    private Object originalWidgetDefaultColorsEnabled;
     private Object originalLineColorProfile;
     private Object originalLineColorSeed;
 
@@ -47,7 +48,10 @@ public class SecondsClockWidgetRemoteViewsTest {
         preferences = context.getSharedPreferences(
                 "SecondsClock", Context.MODE_PRIVATE);
         originalWidgetIds = preferences.getString("widgetIds", "");
-        originalLineColorsEnabled = preferences.getAll().get(LineColors.ENABLED_KEY);
+        originalLineColorsEnabled = preferences.getAll().get(
+                LineColors.enabledKey(WIDGET_KEY));
+        originalWidgetDefaultColorsEnabled = preferences.getAll().get(
+                LineColors.enabledKey("W"));
         originalLineColorProfile = preferences.getAll().get(LineColors.PROFILE_KEY);
         originalLineColorSeed = preferences.getAll().get(LineColors.SEED_KEY);
         String widgetId = "[" + TEST_WIDGET_ID + "]";
@@ -62,7 +66,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putBoolean(WIDGET_KEY + "advancedFormatMode", true)
                 .putBoolean(WIDGET_KEY + "formatSyncEnabled", true)
                 .putBoolean(WIDGET_KEY + "textStyleEmoji", false)
-                .putBoolean(LineColors.ENABLED_KEY, false)
+                .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
                 .putInt(LineColors.PROFILE_KEY, LineColors.NORMAL)
                 .putString(LineColors.SEED_KEY, "clock")
                 .commit();
@@ -88,8 +92,10 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .remove(WIDGET_KEY + "textStyleEmoji")
                 .remove(WIDGET_KEY + "format")
                 .putString("widgetIds", originalWidgetIds);
-        restorePreference(editor, LineColors.ENABLED_KEY,
+        restorePreference(editor, LineColors.enabledKey(WIDGET_KEY),
                 originalLineColorsEnabled);
+        restorePreference(editor, LineColors.enabledKey("W"),
+                originalWidgetDefaultColorsEnabled);
         restorePreference(editor, LineColors.PROFILE_KEY,
                 originalLineColorProfile);
         restorePreference(editor, LineColors.SEED_KEY, originalLineColorSeed);
@@ -168,7 +174,8 @@ public class SecondsClockWidgetRemoteViewsTest {
 
     @Test
     public void automaticColorsDoNotOverrideAdvancedLineMarkers() {
-        preferences.edit().putBoolean(LineColors.ENABLED_KEY, true).commit();
+        preferences.edit().putBoolean(
+                LineColors.enabledKey(WIDGET_KEY), true).commit();
         View root = renderFormat("%H:%M\n%Q%Y");
         LinearLayout container = root.findViewById(
                 R.id.appwidget_format_container);
@@ -192,7 +199,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putInt(WIDGET_KEY + "showMonth", 0)
                 .putInt(WIDGET_KEY + "showYear", 1)
                 .putBoolean(WIDGET_KEY + "showNextAlarm", false)
-                .putBoolean(LineColors.ENABLED_KEY, true)
+                .putBoolean(LineColors.enabledKey(WIDGET_KEY), true)
                 .commit();
         Bundle options = new Bundle();
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, WIDTH_DP);
@@ -210,9 +217,35 @@ public class SecondsClockWidgetRemoteViewsTest {
         for (int lineIndex = 0; lineIndex < container.getChildCount(); ++lineIndex) {
             TextClock line = (TextClock) container.getChildAt(lineIndex);
             assertEquals(LineColors.checkboxLineColor(
-                            preferences, lineIndex, Color.WHITE),
+                            preferences, WIDGET_KEY, lineIndex, Color.WHITE),
                     line.getCurrentTextColor());
         }
+    }
+
+    @Test
+    public void widgetColorSettingIsIndependentOfWidgetDefaults() {
+        preferences.edit()
+                .putBoolean(LineColors.enabledKey("W"), true)
+                .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
+                .putBoolean(WIDGET_KEY + "advancedFormatMode", false)
+                .putBoolean(WIDGET_KEY + "analogMode", false)
+                .putInt(WIDGET_KEY + "showTime", 1)
+                .putInt(WIDGET_KEY + "showWeekDay", 0)
+                .putBoolean(WIDGET_KEY + "showNextAlarm", false)
+                .commit();
+        Bundle options = new Bundle();
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, WIDTH_DP);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, HEIGHT_DP);
+        RemoteViews remoteViews = SecondsClockWidget.buildRemoteViews(
+                context, TEST_WIDGET_ID, options);
+        View root = remoteViews.apply(context, new FrameLayout(context));
+
+        assertEquals(View.GONE, root.findViewById(
+                R.id.appwidget_checkbox_format_container).getVisibility());
+        assertEquals(View.VISIBLE,
+                root.findViewById(R.id.appwidget_textclock).getVisibility());
+        assertEquals(Color.WHITE, ((TextClock) root.findViewById(
+                R.id.appwidget_textclock)).getCurrentTextColor());
     }
 
     @Test
@@ -226,7 +259,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putInt(WIDGET_KEY + "showMonth", 0)
                 .putInt(WIDGET_KEY + "showYear", 1)
                 .putBoolean(WIDGET_KEY + "showNextAlarm", false)
-                .putBoolean(LineColors.ENABLED_KEY, true)
+                .putBoolean(LineColors.enabledKey(WIDGET_KEY), true)
                 .commit();
         Bundle options = new Bundle();
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, WIDTH_DP);
@@ -244,7 +277,7 @@ public class SecondsClockWidgetRemoteViewsTest {
         for (int lineIndex = 0; lineIndex < container.getChildCount(); ++lineIndex) {
             TextClock line = (TextClock) container.getChildAt(lineIndex);
             assertEquals(LineColors.checkboxLineColor(
-                            preferences, lineIndex + 1, Color.WHITE),
+                            preferences, WIDGET_KEY, lineIndex + 1, Color.WHITE),
                     line.getCurrentTextColor());
         }
     }

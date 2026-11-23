@@ -50,7 +50,8 @@ public class LineColorsBackupRoundTripTest {
     @Test
     public void automaticColorSettingsSurviveBackupImportRoundTrip() throws Exception {
         preferences.edit()
-                .putBoolean(LineColors.ENABLED_KEY, true)
+                .putBoolean(LineColors.enabledKey("W"), false)
+                .putBoolean(LineColors.enabledKey("C"), true)
                 .putInt(LineColors.PROFILE_KEY, LineColors.DEUTERANOPIA)
                 .putString(LineColors.SEED_KEY, "backup-round-trip-seed")
                 .commit();
@@ -59,7 +60,11 @@ public class LineColorsBackupRoundTripTest {
                 preferences, widgetManager, widgetComponent);
         JSONObject globals = backup.getJSONObject("active")
                 .getJSONObject("globals");
-        assertEquals(true, globals.getJSONObject("lineColorsEnabled")
+        JSONObject clock = backup.getJSONObject("active")
+                .getJSONObject("clock");
+        assertEquals(false, globals.getJSONObject("lineColorsEnabled")
+                .getBoolean("value"));
+        assertEquals(true, clock.getJSONObject("lineColorsEnabled")
                 .getBoolean("value"));
         assertEquals(LineColors.DEUTERANOPIA,
                 globals.getJSONObject("lineColorProfile").getInt("value"));
@@ -67,7 +72,8 @@ public class LineColorsBackupRoundTripTest {
                 .getJSONObject("lineColorSeed").getString("value"));
 
         preferences.edit()
-                .putBoolean(LineColors.ENABLED_KEY, false)
+                .putBoolean(LineColors.enabledKey("W"), true)
+                .putBoolean(LineColors.enabledKey("C"), false)
                 .putInt(LineColors.PROFILE_KEY, LineColors.NORMAL)
                 .putString(LineColors.SEED_KEY, "changed-after-export")
                 .commit();
@@ -75,7 +81,10 @@ public class LineColorsBackupRoundTripTest {
         SettingsStore.importBackup(
                 preferences, widgetManager, widgetComponent, backup);
 
-        assertEquals(true, preferences.getBoolean(LineColors.ENABLED_KEY, false));
+        assertEquals(false, preferences.getBoolean(
+                LineColors.enabledKey("W"), true));
+        assertEquals(true, preferences.getBoolean(
+                LineColors.enabledKey("C"), false));
         assertEquals(LineColors.DEUTERANOPIA,
                 preferences.getInt(LineColors.PROFILE_KEY, LineColors.NORMAL));
         assertEquals("backup-round-trip-seed",

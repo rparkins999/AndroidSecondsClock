@@ -62,8 +62,9 @@
     <string name="global_settings_help">Set the system clock app override, choose how long reported alarm times remain relevant, configure line colors, or set defaults for new widgets.</string>
     <string name="global_settings_done">Back to main menu</string>
     <string name="line_color_settings_title">Line colors</string>
-    <string name="line_color_settings_help" formatted="false">Automatically color each line in Checkbox mode. In Advanced mode, put %Q on a line to color that line explicitly. Colors are chosen for black backgrounds; set the clock background to black for the clearest result. Analog widget hands follow the line color on Android 16 and later; on Android 8–15, the platform hands remain white.</string>
+    <string name="line_color_settings_help" formatted="false">Choose the shared palette profile and seed used by automatic Checkbox-mode colors and by %Q lines in Advanced mode. Colors are chosen for black backgrounds; set the clock/widget background to black for the clearest result. Analog widget hands follow the line color on Android 16 and later; on Android 8–15, the platform hands remain white.</string>
     <string name="line_color_automatic">Automatically color Checkbox-mode lines</string>
+    <string name="line_color_automatic_help" formatted="false">This setting applies only to this clock or widget in Checkbox mode. Advanced mode colors only lines marked with %Q. The shared palette profile and seed are in Global Settings → Line colors.</string>
     <string name="line_color_profile_button">Color-vision profile: %1$s</string>
     <string name="line_color_profile_title">Color-vision profile</string>
     <string name="line_color_seed_label">Color seed</string>

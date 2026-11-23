@@ -10,11 +10,12 @@ import android.content.SharedPreferences;
 
 import java.security.SecureRandom;
 
-/** Deterministic, high-contrast colors for advanced-format lines. */
+/** Deterministic, high-contrast colors for clock and widget lines. */
 final class LineColors {
-    static final String ENABLED_KEY = "WlineColorsEnabled";
+    static final String ENABLED_SUFFIX = "lineColorsEnabled";
     static final String PROFILE_KEY = "WlineColorProfile";
     static final String SEED_KEY = "WlineColorSeed";
+    private static final String WIDGET_DEFAULT_PREFIX = "W";
     static final String ACTION_CHANGED =
             "uk.co.yahoo.p1rpp.secondsclock.LINE_COLORS_CHANGED";
     static final int NORMAL = 0;
@@ -44,13 +45,27 @@ final class LineColors {
 
     private LineColors() {}
 
-    static boolean automaticEnabled(SharedPreferences prefs) {
-        return prefs.getBoolean(ENABLED_KEY, false);
+    static String enabledKey(String preferencePrefix) {
+        return preferencePrefix + ENABLED_SUFFIX;
+    }
+
+    static boolean automaticEnabled(
+            SharedPreferences prefs, String preferencePrefix) {
+        String key = enabledKey(preferencePrefix);
+        if (prefs.contains(key)) return prefs.getBoolean(key, false);
+
+        // Older versions stored one shared switch in the widget-defaults
+        // preference. Seed each clock/widget once so it becomes independent.
+        boolean inherited = prefs.getBoolean(
+                enabledKey(WIDGET_DEFAULT_PREFIX), false);
+        prefs.edit().putBoolean(key, inherited).apply();
+        return inherited;
     }
 
     static int checkboxLineColor(
-            SharedPreferences prefs, int lineIndex, int baseColor) {
-        return automaticEnabled(prefs)
+            SharedPreferences prefs, String preferencePrefix,
+            int lineIndex, int baseColor) {
+        return automaticEnabled(prefs, preferencePrefix)
                 ? withBaseAlpha(colorForLine(prefs, lineIndex), baseColor)
                 : baseColor;
     }

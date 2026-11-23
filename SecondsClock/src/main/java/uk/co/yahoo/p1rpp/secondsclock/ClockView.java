@@ -173,7 +173,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
 
     private void applyCheckboxLineColors(int foreground) {
         if (m_prefs.getBoolean("CadvancedFormatMode", false)
-                || !LineColors.automaticEnabled(m_prefs)) {
+                || !LineColors.automaticEnabled(m_prefs, "C")) {
             return;
         }
 
@@ -181,9 +181,11 @@ class ClockView extends LinearLayout implements SensorEventListener {
         if (m_checkboxAnalogView != null
                 && isInClockLayout(m_checkboxAnalogView)) {
             m_checkboxAnalogView.setColor(
-                    LineColors.checkboxLineColor(m_prefs, lineIndex++, foreground));
+                    LineColors.checkboxLineColor(
+                            m_prefs, "C", lineIndex++, foreground));
         } else if (isInClockLayout(m_timeView)) {
-            int color = LineColors.checkboxLineColor(m_prefs, lineIndex++, foreground);
+            int color = LineColors.checkboxLineColor(
+                    m_prefs, "C", lineIndex++, foreground);
             m_timeView.setTextColor(color);
             setTextColorIfInClockLayout(m_secondsView, color);
             setTextColorIfInClockLayout(m_ampmView, color);
@@ -209,7 +211,7 @@ class ClockView extends LinearLayout implements SensorEventListener {
             TextView view, int lineIndex, int foreground) {
         if (!isInClockLayout(view)) return lineIndex;
         view.setTextColor(LineColors.checkboxLineColor(
-                m_prefs, lineIndex, foreground));
+                m_prefs, "C", lineIndex, foreground));
         return lineIndex + 1;
     }
 

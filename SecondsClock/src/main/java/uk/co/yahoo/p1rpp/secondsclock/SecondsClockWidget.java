@@ -104,6 +104,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     .putInt(key + "showYear", prefs.getInt("WshowYear", 1))
                     .putBoolean(key + "showNextAlarm",
                             prefs.getBoolean("WshowNextAlarm", false))
+                    .putBoolean(LineColors.enabledKey(key),
+                            LineColors.automaticEnabled(prefs, "W"))
                     .putInt(key + "bgcolour", bgcolour)
                     .putInt(key + "fgcolour", fgcolour)
                     .putInt(key + "touchaction", touchaction)
@@ -166,7 +168,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
         }
         boolean checkboxAnalog = analogMode && !advancedFormatMode;
         boolean checkboxAutomaticColors = !advancedFormatMode
-                && LineColors.automaticEnabled(prefs);
+                && LineColors.automaticEnabled(prefs, key);
         views.setViewVisibility(R.id.appwidget_analogclock,
                 checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_analog_dateclock,
@@ -196,7 +198,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
         } else if (checkboxAnalog) {
             boolean showSeconds = prefs.getBoolean(
                     key + "showSeconds", prefs.getInt(key + "showTime", 2) == 2);
-            int dialColor = LineColors.checkboxLineColor(prefs, 0, fgcolour);
+            int dialColor = LineColors.checkboxLineColor(
+                    prefs, key, 0, fgcolour);
             views.setImageViewBitmap(R.id.appwidget_analog_dial,
                     AnalogClockFace.createBitmap(dialColor));
             setAnalogHands(views, context, dialColor, true, true,
@@ -216,7 +219,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
             if (checkboxAutomaticColors) {
                 addCheckboxLines(context, views,
                         R.id.appwidget_checkbox_analog_date_container,
-                        f.rest, f.rest, 1, prefs, fgcolour);
+                        f.rest, f.rest, 1, key, prefs, fgcolour);
             } else {
                 views.setCharSequence(R.id.appwidget_analog_dateclock,
                         "setFormat12Hour", f.time12 + f.rest);
@@ -240,7 +243,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
             if (checkboxAutomaticColors) {
                 addCheckboxLines(context, views,
                         R.id.appwidget_checkbox_format_container,
-                        f.time12 + f.rest, f.time24 + f.rest, 0, prefs, fgcolour);
+                        f.time12 + f.rest, f.time24 + f.rest, 0,
+                        key, prefs, fgcolour);
             } else {
                 views.setCharSequence(R.id.appwidget_textclock,
                         "setFormat12Hour", f.time12 + f.rest);
@@ -264,7 +268,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
     private static void addCheckboxLines(
             Context context, RemoteViews parent, int containerId,
             String format12, String format24, int firstLineIndex,
-            SharedPreferences prefs, int baseColor) {
+            String preferencePrefix, SharedPreferences prefs, int baseColor) {
         List<CheckboxFormatLines.Line> lines =
                 CheckboxFormatLines.split(format12, format24);
         for (int index = 0; index < lines.size(); ++index) {
@@ -273,7 +277,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     context.getPackageName(), R.layout.widget_checkbox_clock_line);
             text.setTextColor(R.id.widget_checkbox_line_clock,
                     LineColors.checkboxLineColor(
-                            prefs, firstLineIndex + index, baseColor));
+                            prefs, preferencePrefix,
+                            firstLineIndex + index, baseColor));
             text.setCharSequence(R.id.widget_checkbox_line_clock,
                     "setFormat12Hour", line.format12);
             text.setCharSequence(R.id.widget_checkbox_line_clock,

@@ -57,6 +57,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private static final int TEXT_STYLE_EMOJI = FORMATPROFILE_VERTICAL + 1;
     private static final int WIDGET_NAME = TEXT_STYLE_EMOJI + 1;
     private static final int ANALOG_MODE = WIDGET_NAME + 1;
+    private static final int LINE_COLORS = ANALOG_MODE + 1;
 
     private int widgetId;
     private int maxHeight = 121;
@@ -104,6 +105,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private CheckBox showSecondsCheckBox;
     private CheckBox showNextAlarmCheckBox;
     private CheckBox analogModeCheckBox;
+    private CheckBox lineColorsCheckBox;
     private Button bgButton;
     private Button fgButton;
     private Button chooseButton;
@@ -154,6 +156,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case FORMATHELP: doToast(R.string.widget_format_help); return true;
             case NEXTALARM: doToast(R.string.next_alarm_source_help); return true;
             case ANALOG_MODE: doToast(R.string.widget_analog_mode_help); return true;
+            case LINE_COLORS:
+                doToast(R.string.line_color_automatic_help); return true;
             case FORMATMODE: doToast(R.string.widgetconfighelp); return true;
             case WIDGET_NAME: doToast(R.string.widget_name_help); return true;
             case DONEBUTTON: doToast(R.string.donehelp); return true;
@@ -216,6 +220,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (buttonView.getId() == NEXTALARM) {
             m_prefs.edit().putBoolean(m_key + "showNextAlarm", isChecked).apply();
             updateFromCheckBox();
+            return;
+        }
+        if (buttonView.getId() == LINE_COLORS) {
+            m_prefs.edit().putBoolean(
+                    LineColors.enabledKey(m_key), isChecked).apply();
+            updateDemo();
+            updateWidget();
             return;
         }
         if (buttonView.getId() == TEXT_STYLE_EMOJI) {
@@ -554,7 +565,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.setMinimumHeight(height);
         analogPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
         analogDemo.setColor(checkboxAnalog
-                ? LineColors.checkboxLineColor(m_prefs, 0, m_fgcolour)
+                ? LineColors.checkboxLineColor(
+                        m_prefs, m_key, 0, m_fgcolour)
                 : m_fgcolour);
         showPreview();
     }
@@ -730,7 +742,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         } else if (analogMode && !advancedFormatMode) {
             rebuildCheckboxAnalogPreview();
             demobox.addView(analogPreview);
-        } else if (LineColors.automaticEnabled(m_prefs)) {
+        } else if (LineColors.automaticEnabled(m_prefs, m_key)) {
             demobox.addView(makeCheckboxFormatPreview());
         } else {
             demobox.addView(demo);
@@ -742,7 +754,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.removeAllViews();
         analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
-        if (LineColors.automaticEnabled(m_prefs)) {
+        if (LineColors.automaticEnabled(m_prefs, m_key)) {
             addCheckboxPreviewLines(analogPreview, checkboxPreviewLines, 1, 1.5F);
         } else {
             analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
@@ -776,7 +788,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             clock.setGravity(Gravity.CENTER);
             clock.setSingleLine(true);
             clock.setTextColor(LineColors.checkboxLineColor(
-                    m_prefs, firstLineIndex + index, m_fgcolour));
+                    m_prefs, m_key, firstLineIndex + index, m_fgcolour));
             clock.setFormat12Hour(line.format12);
             clock.setFormat24Hour(line.format24);
             clock.setAutoSizeTextTypeUniformWithConfiguration(
@@ -818,7 +830,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (analogDateDemo != null) analogDateDemo.setTextColor(m_fgcolour);
         if (analogDemo != null) {
             analogDemo.setColor(!advancedFormatMode && analogMode
-                    ? LineColors.checkboxLineColor(m_prefs, 0, m_fgcolour)
+                    ? LineColors.checkboxLineColor(
+                            m_prefs, m_key, 0, m_fgcolour)
                     : m_fgcolour);
         }
         if (demobox != null && demobox.getChildCount() > 0) showPreview();
@@ -971,6 +984,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         editor.addView(showLongMonthCheckBox, lpWrapWrap);
         editor.addView(showYearCheckBox, lpWrapWrap);
         editor.addView(showNextAlarmCheckBox, lpWrapWrap);
+        editor.addView(lineColorsCheckBox, lpWrapWrap);
         TextView alarmHelp = new TextView(this);
         alarmHelp.setText(R.string.next_alarm_source_help);
         editor.addView(alarmHelp, lpMatchWrap);
@@ -1461,6 +1475,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 m_prefs.getBoolean(m_key + "showNextAlarm", false));
         showNextAlarmCheckBox.setOnCheckedChangeListener(this);
         showNextAlarmCheckBox.setOnLongClickListener(this);
+        lineColorsCheckBox = new CheckBox(this);
+        lineColorsCheckBox.setId(LINE_COLORS);
+        lineColorsCheckBox.setText(R.string.line_color_automatic);
+        lineColorsCheckBox.setChecked(
+                LineColors.automaticEnabled(m_prefs, m_key));
+        lineColorsCheckBox.setOnCheckedChangeListener(this);
+        lineColorsCheckBox.setOnLongClickListener(this);
         analogModeCheckBox = new CheckBox(this);
         analogModeCheckBox.setId(ANALOG_MODE);
         analogModeCheckBox.setText(R.string.widget_analog_mode);

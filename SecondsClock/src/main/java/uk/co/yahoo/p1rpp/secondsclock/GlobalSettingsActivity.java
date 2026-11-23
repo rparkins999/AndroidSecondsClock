@@ -19,7 +19,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -207,20 +206,6 @@ public class GlobalSettingsActivity extends Activity_common
         help.setText(R.string.line_color_settings_help);
         help.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(help, matchWrap());
-
-        CheckBox automatic = new CheckBox(this);
-        automatic.setText(R.string.line_color_automatic);
-        automatic.setChecked(m_prefs.getBoolean(
-                LineColors.ENABLED_KEY, false));
-        automatic.setOnCheckedChangeListener((button, checked) -> {
-            m_prefs.edit().putBoolean(LineColors.ENABLED_KEY, checked).apply();
-            LineColors.notifyChanged(this);
-        });
-        automatic.setOnLongClickListener(view -> {
-            doToast(R.string.line_color_settings_help);
-            return true;
-        });
-        page.addView(automatic, matchWrap());
 
         Button profile = addButton(page, R.string.line_color_profile_button,
                 LINE_COLOR_PROFILE_ID, R.string.line_color_settings_help);

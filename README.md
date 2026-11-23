@@ -50,14 +50,15 @@ Put `%C` on its own line for a full-row analog dial; that line renders no text. 
 and `%S` suppress the matching hands instead of printing time fields. Elsewhere they print normally.
 A real newline or `%n` ends the clock line.
 
-**Global Settings → Line colors** can automatically color lines in Checkbox mode. In Advanced
-mode, use `%Q` on individual lines to color them explicitly. The option supports standard, red-green
-color-vision, blue-yellow color-vision, and monochrome palettes. Colors are deterministic for a given
-editable seed; copy or regenerate it to share or change the palette assignment. Colors are designed
-for black backgrounds, so set the clock/widget background to black for the clearest result. Android
-16 and later tint analog widget hands to match their line; on Android 8–15, the platform-provided
-hands remain white, while the dial face still uses the line color. `%R` remains the existing 24-hour
-time token; it is not used for color.
+Checkbox mode has a separate automatic-color setting for the full-screen clock and for each widget.
+In Advanced mode, use `%Q` on individual lines to color them explicitly. **Global Settings → Line
+colors** selects the shared standard, red-green color-vision, blue-yellow color-vision, or monochrome
+palette and its seed. Colors are deterministic for a given editable seed; copy or regenerate it to
+share or change the palette assignment. Colors are designed for black backgrounds, so set the
+clock/widget background to black for the clearest result. Android 16 and later tint analog widget
+hands to match their line; on Android 8–15, the platform-provided hands remain white, while the dial
+face still uses the line color. `%R` remains the existing 24-hour time token; it is not used for
+color.
 
 To show optional alarm text, wrap it in `%<` and `%>`. Use `%|` to add fallback text for when no
 alarm is set:

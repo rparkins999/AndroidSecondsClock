@@ -87,6 +87,7 @@ public class ClockConfigureActivity extends ConfigureActivity
     private static final int TEXT_STYLE_EMOJI = SHOW_NEXT_ALARM + 1;
     private static final int ANALOG_MODE = TEXT_STYLE_EMOJI + 1;
     private static final int SHOW_SECONDS = ANALOG_MODE + 1;
+    private static final int LINE_COLORS = SHOW_SECONDS + 1;
 
     // Conversion between threshold slider and numeric value
     private int m_fgcolour;
@@ -425,6 +426,8 @@ public class ClockConfigureActivity extends ConfigureActivity
             case SHOW_NEXT_ALARM: doToast(R.string.next_alarm_source_help); return true;
             case ANALOG_MODE: doToast(R.string.clock_analog_mode_help); return true;
             case SHOW_SECONDS: doToast(R.string.clock_show_seconds_help); return true;
+            case LINE_COLORS:
+                doToast(R.string.line_color_automatic_help); return true;
             case DISPLAYBUTTON: doToast(R.string.setdisplayhelp); return true;
             case DIMBUTTON: doToast(R.string.setdimminghelp); return true;
             case CURRENTLUX: doToast(R.string.luxhelp); return true;
@@ -576,6 +579,11 @@ public class ClockConfigureActivity extends ConfigureActivity
                 m_prefs.edit().putBoolean("CshowNextAlarm", isChecked).commit();
                 m_clockView.updateLayout();
                 break;
+            case LINE_COLORS:
+                m_prefs.edit().putBoolean(
+                        LineColors.enabledKey("C"), isChecked).commit();
+                m_clockView.updateLayout();
+                break;
             case ANALOG_MODE:
                 m_prefs.edit().putBoolean("CanalogMode", isChecked).commit();
                 m_clockView.updateLayout();
@@ -659,6 +667,14 @@ public class ClockConfigureActivity extends ConfigureActivity
             showNextAlarm.setOnLongClickListener(this);
             showNextAlarm.setOnCheckedChangeListener(this);
             lboxes.addView(showNextAlarm);
+            CheckBox automaticColors = new CheckBox(this);
+            automaticColors.setId(LINE_COLORS);
+            automaticColors.setText(R.string.line_color_automatic);
+            automaticColors.setChecked(
+                    LineColors.automaticEnabled(m_prefs, "C"));
+            automaticColors.setOnLongClickListener(this);
+            automaticColors.setOnCheckedChangeListener(this);
+            lboxes.addView(automaticColors);
             CheckBox analogMode = new CheckBox(this);
             analogMode.setId(ANALOG_MODE);
             analogMode.setText(R.string.clock_analog_mode);
