@@ -219,7 +219,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
             if (checkboxAutomaticColors) {
                 addCheckboxLines(context, views,
                         R.id.appwidget_checkbox_analog_date_container,
-                        f.rest, f.rest, 1, key, prefs, fgcolour);
+                        f.rest, f.rest, 1, key, minWidth, maxHeight,
+                        true, prefs, fgcolour);
             } else {
                 views.setCharSequence(R.id.appwidget_analog_dateclock,
                         "setFormat12Hour", f.time12 + f.rest);
@@ -244,7 +245,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 addCheckboxLines(context, views,
                         R.id.appwidget_checkbox_format_container,
                         f.time12 + f.rest, f.time24 + f.rest, 0,
-                        key, prefs, fgcolour);
+                        key, minWidth, maxHeight,
+                        false, prefs, fgcolour);
             } else {
                 views.setCharSequence(R.id.appwidget_textclock,
                         "setFormat12Hour", f.time12 + f.rest);
@@ -268,13 +270,19 @@ public class SecondsClockWidget extends AppWidgetProvider {
     private static void addCheckboxLines(
             Context context, RemoteViews parent, int containerId,
             String format12, String format24, int firstLineIndex,
-            String preferencePrefix, SharedPreferences prefs, int baseColor) {
+            String preferencePrefix, int minWidth, int maxHeight,
+            boolean analogCheckboxMode,
+            SharedPreferences prefs, int baseColor) {
         List<CheckboxFormatLines.Line> lines =
                 CheckboxFormatLines.split(format12, format24);
+        float textSizeSp = CheckboxFormatLines.textSizeSp(
+                minWidth, maxHeight, lines.size(), analogCheckboxMode);
         for (int index = 0; index < lines.size(); ++index) {
             CheckboxFormatLines.Line line = lines.get(index);
             RemoteViews text = new RemoteViews(
                     context.getPackageName(), R.layout.widget_checkbox_clock_line);
+            text.setFloat(R.id.widget_checkbox_line_clock,
+                    "setTextSize", textSizeSp);
             text.setTextColor(R.id.widget_checkbox_line_clock,
                     LineColors.checkboxLineColor(
                             prefs, preferencePrefix,

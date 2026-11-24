@@ -755,7 +755,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
         if (LineColors.automaticEnabled(m_prefs, m_key)) {
-            addCheckboxPreviewLines(analogPreview, checkboxPreviewLines, 1, 1.5F);
+            addCheckboxPreviewLines(
+                    analogPreview, checkboxPreviewLines, 1, 1.5F, true);
         } else {
             analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.5F));
@@ -772,13 +773,15 @@ public class WidgetConfigureActivity extends ConfigureActivity
         result.setMinimumWidth(width);
         result.setMinimumHeight(height);
         result.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-        addCheckboxPreviewLines(result, checkboxPreviewLines, 0, 1.0F);
+        addCheckboxPreviewLines(
+                result, checkboxPreviewLines, 0, 1.0F, false);
         return result;
     }
 
     private void addCheckboxPreviewLines(
             LinearLayout parent, List<CheckboxFormatLines.Line> lines,
-            int firstLineIndex, float totalWeight) {
+            int firstLineIndex, float totalWeight,
+            boolean analogCheckboxMode) {
         if (lines.isEmpty()) return;
         float rowWeight = totalWeight / lines.size();
         for (int index = 0; index < lines.size(); ++index) {
@@ -787,12 +790,14 @@ public class WidgetConfigureActivity extends ConfigureActivity
             clock.setIncludeFontPadding(false);
             clock.setGravity(Gravity.CENTER);
             clock.setSingleLine(true);
+            clock.setTextSize(TypedValue.COMPLEX_UNIT_SP,
+                    CheckboxFormatLines.textSizeSp(
+                            minWidth, maxHeight, lines.size(),
+                            analogCheckboxMode));
             clock.setTextColor(LineColors.checkboxLineColor(
                     m_prefs, m_key, firstLineIndex + index, m_fgcolour));
             clock.setFormat12Hour(line.format12);
             clock.setFormat24Hour(line.format24);
-            clock.setAutoSizeTextTypeUniformWithConfiguration(
-                    10, 3000, 3, TypedValue.COMPLEX_UNIT_PX);
             parent.addView(clock, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, 0, rowWeight));
         }

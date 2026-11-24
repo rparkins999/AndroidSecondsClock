@@ -4,8 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="0dp"
     android:layout_weight="1"
-    android:autoSizeMinTextSize="12px"
-    android:autoSizeTextType="uniform"
     android:gravity="center"
     android:includeFontPadding="false"
-    android:singleLine="true" />
+    android:singleLine="true"
+    android:textSize="8sp" />

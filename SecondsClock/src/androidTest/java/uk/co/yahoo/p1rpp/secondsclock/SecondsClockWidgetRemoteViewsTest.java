@@ -249,6 +249,74 @@ public class SecondsClockWidgetRemoteViewsTest {
     }
 
     @Test
+    public void checkboxColorRowsDoNotEllipsizeAtCompactWidgetWidth() {
+        preferences.edit()
+                .putBoolean(WIDGET_KEY + "advancedFormatMode", false)
+                .putBoolean(WIDGET_KEY + "analogMode", false)
+                .putBoolean(LineColors.enabledKey(WIDGET_KEY), true)
+                .putInt(WIDGET_KEY + "showTime", 2)
+                .putInt(WIDGET_KEY + "showWeekDay", 2)
+                .putInt(WIDGET_KEY + "showShortDate", 0)
+                .putInt(WIDGET_KEY + "showMonthDay", 1)
+                .putInt(WIDGET_KEY + "showMonth", 2)
+                .putInt(WIDGET_KEY + "showYear", 1)
+                .putBoolean(WIDGET_KEY + "showNextAlarm", false)
+                .commit();
+        View root = renderCheckboxRowsAtWidth(52, 150);
+        LinearLayout container = root.findViewById(
+                R.id.appwidget_checkbox_format_container);
+
+        assertEquals(View.VISIBLE, container.getVisibility());
+        assertTrue(container.getChildCount() >= 5);
+        float compactTextSize = ((TextClock) container.getChildAt(0))
+                .getTextSize();
+        assertEquals(52 / 5.5F * context.getResources()
+                        .getDisplayMetrics().scaledDensity,
+                compactTextSize, 1.0F);
+        for (int index = 0; index < container.getChildCount(); ++index) {
+            TextClock line = (TextClock) container.getChildAt(index);
+            assertNotNull("checkbox row should have a measured text layout",
+                    line.getLayout());
+            assertEquals("checkbox row " + index + " must fit without ellipsis; "
+                            + "row=" + line.getWidth() + "x" + line.getHeight()
+                            + ", textSize=" + line.getTextSize()
+                            + ", text=" + line.getText(),
+                    0, line.getLayout().getEllipsisCount(0));
+        }
+
+        View wideRoot = renderCheckboxRowsAtWidth(120, 150);
+        LinearLayout wideContainer = wideRoot.findViewById(
+                R.id.appwidget_checkbox_format_container);
+        TextClock wideFirstLine = (TextClock) wideContainer.getChildAt(0);
+        assertTrue("text should scale up for a wider widget",
+                wideFirstLine.getTextSize() > compactTextSize);
+        for (int index = 0; index < wideContainer.getChildCount(); ++index) {
+            TextClock line = (TextClock) wideContainer.getChildAt(index);
+            assertEquals("wide checkbox row " + index + " must fit without ellipsis",
+                    0, line.getLayout().getEllipsisCount(0));
+        }
+    }
+
+    private View renderCheckboxRowsAtWidth(int widthDp, int heightDp) {
+        Bundle options = new Bundle();
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDp);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDp);
+        RemoteViews remoteViews = SecondsClockWidget.buildRemoteViews(
+                context, TEST_WIDGET_ID, options);
+        View root = remoteViews.apply(context, new FrameLayout(context));
+        float density = context.getResources().getDisplayMetrics().density;
+        int widthPx = Math.round(widthDp * density);
+        int heightPx = Math.round(heightDp * density);
+        root.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                        widthPx, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(
+                        heightPx, View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, widthPx, heightPx);
+        return root;
+    }
+
+    @Test
     public void automaticColorsApplyAfterCheckboxAnalogDial() {
         preferences.edit()
                 .putBoolean(WIDGET_KEY + "advancedFormatMode", false)

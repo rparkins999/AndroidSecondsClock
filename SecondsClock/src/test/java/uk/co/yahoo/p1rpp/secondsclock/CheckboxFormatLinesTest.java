@@ -31,4 +31,14 @@ public class CheckboxFormatLinesTest {
         assertEquals("", lines.get(1).format12);
         assertEquals("", lines.get(1).format24);
     }
+
+    @Test
+    public void sizesRowsToBothWidgetWidthAndAvailableHeight() {
+        assertEquals(52 / 5.5F,
+                CheckboxFormatLines.textSizeSp(52, 150, 5, false), 0.001F);
+        assertEquals(120 / 5.5F,
+                CheckboxFormatLines.textSizeSp(120, 150, 5, false), 0.001F);
+        assertEquals(4.0F,
+                CheckboxFormatLines.textSizeSp(300, 40, 3, true), 0.001F);
+    }
 }
