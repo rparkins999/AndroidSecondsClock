@@ -275,8 +275,9 @@ public class SecondsClockWidget extends AppWidgetProvider {
             SharedPreferences prefs, int baseColor) {
         List<CheckboxFormatLines.Line> lines =
                 CheckboxFormatLines.split(format12, format24);
-        float textSizeSp = CheckboxFormatLines.textSizeSp(
-                minWidth, maxHeight, lines.size(), analogCheckboxMode);
+        float textSizeSp = CheckboxFormatTextSizing.widgetTextSizeSp(
+                context, minWidth, maxHeight,
+                format12, format24, lines.size(), analogCheckboxMode);
         for (int index = 0; index < lines.size(); ++index) {
             CheckboxFormatLines.Line line = lines.get(index);
             RemoteViews text = new RemoteViews(

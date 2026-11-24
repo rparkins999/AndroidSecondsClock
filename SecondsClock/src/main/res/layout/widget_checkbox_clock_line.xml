@@ -6,5 +6,5 @@
     android:layout_weight="1"
     android:gravity="center"
     android:includeFontPadding="false"
-    android:singleLine="true"
+    android:maxLines="1"
     android:textSize="8sp" />

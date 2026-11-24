@@ -37,17 +37,6 @@ final class CheckboxFormatLines {
         return lines;
     }
 
-    static float textSizeSp(
-            int minWidthDp, int maxHeightDp, int lineCount,
-            boolean analogCheckboxMode) {
-        float lineHeightDp = maxHeightDp / (float) Math.max(1, lineCount);
-        if (analogCheckboxMode) lineHeightDp *= 1.5F / 4.0F;
-        float widthLimit = minWidthDp / 5.5F;
-        float heightLimit = lineHeightDp * 0.8F;
-        return Math.max(1.0F, Math.min(40.0F,
-                Math.min(widthLimit, heightLimit)));
-    }
-
     private static List<String> splitFormat(String format) {
         if (format == null || format.isEmpty()) return Collections.emptyList();
         // Formatter quotes the newline in compact time-only formats so that

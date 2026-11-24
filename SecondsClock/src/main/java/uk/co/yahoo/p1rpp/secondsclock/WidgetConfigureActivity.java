@@ -784,16 +784,28 @@ public class WidgetConfigureActivity extends ConfigureActivity
             boolean analogCheckboxMode) {
         if (lines.isEmpty()) return;
         float rowWeight = totalWeight / lines.size();
+        StringBuilder format12 = new StringBuilder();
+        StringBuilder format24 = new StringBuilder();
+        for (int index = 0; index < lines.size(); ++index) {
+            if (index > 0) {
+                format12.append('\n');
+                format24.append('\n');
+            }
+            format12.append(lines.get(index).format12);
+            format24.append(lines.get(index).format24);
+        }
+        float textSizeSp = CheckboxFormatTextSizing.previewTextSizeSp(
+                this, minWidth, maxHeight,
+                format12.toString(), format24.toString(),
+                lines.size(), analogCheckboxMode);
         for (int index = 0; index < lines.size(); ++index) {
             CheckboxFormatLines.Line line = lines.get(index);
             TextClock clock = new TextClock(this);
             clock.setIncludeFontPadding(false);
             clock.setGravity(Gravity.CENTER);
-            clock.setSingleLine(true);
+            clock.setMaxLines(1);
             clock.setTextSize(TypedValue.COMPLEX_UNIT_SP,
-                    CheckboxFormatLines.textSizeSp(
-                            minWidth, maxHeight, lines.size(),
-                            analogCheckboxMode));
+                    textSizeSp);
             clock.setTextColor(LineColors.checkboxLineColor(
                     m_prefs, m_key, firstLineIndex + index, m_fgcolour));
             clock.setFormat12Hour(line.format12);

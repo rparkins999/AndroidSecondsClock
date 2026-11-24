@@ -19,6 +19,8 @@
         android:layout_weight="1"
         android:gravity="center"
         android:autoSizeMinTextSize="16px"
+        android:autoSizeMaxTextSize="112sp"
+        android:autoSizeStepGranularity="1px"
         android:autoSizeTextType="uniform" />
 
     <LinearLayout
@@ -44,6 +46,8 @@
         android:layout_weight="1.5"
         android:gravity="center"
         android:autoSizeMinTextSize="12px"
+        android:autoSizeMaxTextSize="112sp"
+        android:autoSizeStepGranularity="1px"
         android:autoSizeTextType="uniform"
         android:visibility="gone" />
 
