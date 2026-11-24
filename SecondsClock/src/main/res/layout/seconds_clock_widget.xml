@@ -5,23 +5,17 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/appwidget_root"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextClock
-        tools:ignore="PxUsage"
+    <uk.co.yahoo.p1rpp.secondsclock.CheckboxTextClock
         android:id="@+id/appwidget_textclock"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center"
-        android:autoSizeMinTextSize="16px"
-        android:autoSizeMaxTextSize="112sp"
-        android:autoSizeStepGranularity="1px"
-        android:autoSizeTextType="uniform" />
+        android:gravity="center" />
 
     <include
         layout="@layout/analog_clock_widget"
@@ -30,17 +24,12 @@
         android:layout_weight="2.5"
         android:visibility="gone" />
 
-    <TextClock
-        tools:ignore="PxUsage"
+    <uk.co.yahoo.p1rpp.secondsclock.CheckboxTextClock
         android:id="@+id/appwidget_analog_dateclock"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1.5"
         android:gravity="center"
-        android:autoSizeMinTextSize="12px"
-        android:autoSizeMaxTextSize="112sp"
-        android:autoSizeStepGranularity="1px"
-        android:autoSizeTextType="uniform"
         android:visibility="gone" />
 
     <LinearLayout

@@ -1494,7 +1494,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         formatModeButton.setAllCaps(false);
         formatModeButton.setOnClickListener(this);
         formatModeButton.setOnLongClickListener(this);
-        demo = new TextClock(this);
+        demo = new CheckboxTextClock(this);
         demo.setId(WIDGETDEMO);
         demo.setGravity(Gravity.CENTER_HORIZONTAL);
         demo.setBackgroundColor(m_bgcolour);
@@ -1511,7 +1511,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.setBackgroundColor(m_bgcolour);
         analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
-        analogDateDemo = new TextClock(this);
+        analogDateDemo = new CheckboxTextClock(this);
         analogDateDemo.setGravity(Gravity.CENTER);
         analogDateDemo.setTextColor(m_fgcolour);
         analogDateDemo.setAutoSizeTextTypeUniformWithConfiguration(

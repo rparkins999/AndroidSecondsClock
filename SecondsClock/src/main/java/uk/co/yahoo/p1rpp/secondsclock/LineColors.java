@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.SpannedString;
 import android.text.style.ForegroundColorSpan;
 
 import java.security.SecureRandom;
@@ -96,6 +97,45 @@ final class LineColors {
             lineStart = index + 1;
         }
         return colored;
+    }
+
+    static CharSequence colorFormattedText(
+            CharSequence text, CharSequence format) {
+        if (text == null || text.length() == 0 || !(format instanceof Spanned)) {
+            return text;
+        }
+
+        Spanned styledFormat = (Spanned) format;
+        SpannableStringBuilder coloredText = new SpannableStringBuilder(text);
+        int formatLineStart = 0;
+        int textLineStart = 0;
+        while (formatLineStart <= format.length()
+                && textLineStart <= text.length()) {
+            int formatLineEnd = lineEnd(format, formatLineStart);
+            int textLineEnd = lineEnd(text, textLineStart);
+            ForegroundColorSpan[] spans = styledFormat.getSpans(
+                    formatLineStart, formatLineEnd, ForegroundColorSpan.class);
+            if (formatLineStart < formatLineEnd
+                    && textLineStart < textLineEnd && spans.length > 0) {
+                coloredText.setSpan(new ForegroundColorSpan(
+                                spans[0].getForegroundColor()),
+                        textLineStart, textLineEnd,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (formatLineEnd == format.length()
+                    || textLineEnd == text.length()) {
+                break;
+            }
+            formatLineStart = formatLineEnd + 1;
+            textLineStart = textLineEnd + 1;
+        }
+        return new SpannedString(coloredText);
+    }
+
+    private static int lineEnd(CharSequence text, int start) {
+        int end = start;
+        while (end < text.length() && text.charAt(end) != '\n') ++end;
+        return end;
     }
 
     static int colorForLine(SharedPreferences prefs, int lineIndex) {

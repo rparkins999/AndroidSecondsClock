@@ -211,6 +211,11 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     nextAlarmTime);
             CharSequence format12 = f.time12 + f.rest;
             CharSequence format24 = f.time24 + f.rest;
+            views.setFloat(R.id.appwidget_analog_dateclock, "setTextSize",
+                    CheckboxFormatTextSizing.widgetTextSizeSp(
+                            context, minWidth, maxHeight,
+                            format12.toString(), format24.toString(),
+                            f.lines, true));
             if (checkboxAutomaticColors) {
                 format12 = LineColors.colorCheckboxFormat(
                         format12, prefs, key, 1, fgcolour);
@@ -237,6 +242,11 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     nextAlarmTime);
             CharSequence format12 = f.time12 + f.rest;
             CharSequence format24 = f.time24 + f.rest;
+            views.setFloat(R.id.appwidget_textclock, "setTextSize",
+                    CheckboxFormatTextSizing.widgetTextSizeSp(
+                            context, minWidth, maxHeight,
+                            format12.toString(), format24.toString(),
+                            f.lines, false));
             if (checkboxAutomaticColors) {
                 format12 = LineColors.colorCheckboxFormat(
                         format12, prefs, key, 0, fgcolour);
