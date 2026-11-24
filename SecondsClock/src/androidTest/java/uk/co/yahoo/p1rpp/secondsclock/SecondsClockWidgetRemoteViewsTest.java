@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class SecondsClockWidgetRemoteViewsTest {
     private static final int TEST_WIDGET_ID = -19734123;
+    private static final int COMPACT_WIDTH_DP = 90;
     private static final int WIDTH_DP = 300;
     private static final int HEIGHT_DP = 600;
     private static final String WIDGET_KEY = "W" + TEST_WIDGET_ID;
@@ -263,7 +264,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putInt(WIDGET_KEY + "showYear", 1)
                 .putBoolean(WIDGET_KEY + "showNextAlarm", false)
                 .commit();
-        View root = renderCheckboxRowsAtWidth(52, 150);
+        View root = renderCheckboxRowsAtWidth(COMPACT_WIDTH_DP, 150);
         LinearLayout container = root.findViewById(
                 R.id.appwidget_checkbox_format_container);
 
@@ -274,7 +275,7 @@ public class SecondsClockWidgetRemoteViewsTest {
         preferences.edit()
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
                 .commit();
-        View plainRoot = renderCheckboxRowsAtWidth(52, 150);
+        View plainRoot = renderCheckboxRowsAtWidth(COMPACT_WIDTH_DP, 150);
         TextClock plainClock = plainRoot.findViewById(R.id.appwidget_textclock);
         measureCurrentClockText(plainClock);
         float plainTextSize = plainClock.getTextSize();
