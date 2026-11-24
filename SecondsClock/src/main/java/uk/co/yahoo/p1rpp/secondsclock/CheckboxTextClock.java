@@ -7,19 +7,17 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import android.content.Context;
 import android.text.Spanned;
 import android.util.AttributeSet;
-import android.widget.RemoteViews;
 import android.widget.TextClock;
 
-/** A TextClock that restores line colors on Android releases that drop format spans. */
-@RemoteViews.RemoteView
-public class CheckboxTextClock extends TextClock {
+/** Restores formatted line colors in the local configuration preview on older Android. */
+final class CheckboxTextClock extends TextClock {
     private boolean applyingLineColors;
 
-    public CheckboxTextClock(Context context) {
+    CheckboxTextClock(Context context) {
         super(context);
     }
 
-    public CheckboxTextClock(Context context, AttributeSet attrs) {
+    CheckboxTextClock(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -32,12 +30,12 @@ public class CheckboxTextClock extends TextClock {
         CharSequence format = android.text.format.DateFormat.is24HourFormat(getContext())
                 ? getFormat24Hour() : getFormat12Hour();
         if (!(format instanceof Spanned)) return;
-        CharSequence coloredText = LineColors.colorFormattedText(text, format);
-        if (coloredText == text) return;
+        CharSequence colored = LineColors.colorFormattedText(text, format);
+        if (colored == text) return;
 
         applyingLineColors = true;
         try {
-            setText(coloredText, BufferType.SPANNABLE);
+            setText(colored, BufferType.SPANNABLE);
         } finally {
             applyingLineColors = false;
         }

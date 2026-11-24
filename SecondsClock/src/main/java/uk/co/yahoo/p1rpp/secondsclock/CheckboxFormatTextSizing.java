@@ -31,6 +31,7 @@ final class CheckboxFormatTextSizing {
 
         TextClock sizingClock = new TextClock(context);
         sizingClock.setGravity(Gravity.CENTER);
+        sizingClock.setIncludeFontPadding(false);
         sizingClock.setFormat12Hour(format12);
         sizingClock.setFormat24Hour(format24);
         sizingClock.setLines(Math.max(1, lineCount));

@@ -172,12 +172,19 @@ public class SecondsClockWidget extends AppWidgetProvider {
         views.setViewVisibility(R.id.appwidget_analogclock,
                 checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_analog_dateclock,
-                checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
+                checkboxAnalog && !checkboxAutomaticColors
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_checkbox_format_container,
+                !checkboxAnalog && checkboxAutomaticColors
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_checkbox_analog_date_container,
+                checkboxAnalog && checkboxAutomaticColors
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_format_container,
                 advancedFormatMode
                         ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_textclock,
-                checkboxAnalog || advancedFormatMode
+                checkboxAnalog || advancedFormatMode || checkboxAutomaticColors
                         ? android.view.View.GONE : android.view.View.VISIBLE);
 
         if (advancedFormatMode) {
@@ -211,25 +218,27 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     nextAlarmTime);
             CharSequence format12 = f.time12 + f.rest;
             CharSequence format24 = f.time24 + f.rest;
-            views.setFloat(R.id.appwidget_analog_dateclock, "setTextSize",
-                    CheckboxFormatTextSizing.widgetTextSizeSp(
-                            context, minWidth, maxHeight,
-                            format12.toString(), format24.toString(),
-                            f.lines, true));
+            float textSizeSp = CheckboxFormatTextSizing.widgetTextSizeSp(
+                    context, minWidth, maxHeight,
+                    format12.toString(), format24.toString(),
+                    f.lines, true);
             if (checkboxAutomaticColors) {
-                format12 = LineColors.colorCheckboxFormat(
-                        format12, prefs, key, 1, fgcolour);
-                format24 = LineColors.colorCheckboxFormat(
-                        format24, prefs, key, 1, fgcolour);
+                addCheckboxLines(context, views,
+                        R.id.appwidget_checkbox_analog_date_container,
+                        format12.toString(), format24.toString(), 1,
+                        key, textSizeSp, prefs, fgcolour);
+            } else {
+                views.setFloat(R.id.appwidget_analog_dateclock,
+                        "setTextSize", textSizeSp);
+                views.setCharSequence(R.id.appwidget_analog_dateclock,
+                        "setFormat12Hour", format12);
+                views.setCharSequence(R.id.appwidget_analog_dateclock,
+                        "setFormat24Hour", format24);
+                views.setInt(R.id.appwidget_analog_dateclock, "setLines", f.lines);
+                views.setViewVisibility(R.id.appwidget_analog_dateclock,
+                        f.rest.isEmpty()
+                                ? android.view.View.GONE : android.view.View.VISIBLE);
             }
-            views.setCharSequence(R.id.appwidget_analog_dateclock,
-                    "setFormat12Hour", format12);
-            views.setCharSequence(R.id.appwidget_analog_dateclock,
-                    "setFormat24Hour", format24);
-            views.setInt(R.id.appwidget_analog_dateclock, "setLines", f.lines);
-            views.setViewVisibility(R.id.appwidget_analog_dateclock,
-                    f.rest.isEmpty()
-                            ? android.view.View.GONE : android.view.View.VISIBLE);
         } else {
             f.setCheckboxes(context, minWidth, maxHeight,
                     prefs.getInt(key + "showTime", 2),
@@ -242,22 +251,23 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     nextAlarmTime);
             CharSequence format12 = f.time12 + f.rest;
             CharSequence format24 = f.time24 + f.rest;
-            views.setFloat(R.id.appwidget_textclock, "setTextSize",
-                    CheckboxFormatTextSizing.widgetTextSizeSp(
-                            context, minWidth, maxHeight,
-                            format12.toString(), format24.toString(),
-                            f.lines, false));
+            float textSizeSp = CheckboxFormatTextSizing.widgetTextSizeSp(
+                    context, minWidth, maxHeight,
+                    format12.toString(), format24.toString(),
+                    f.lines, false);
             if (checkboxAutomaticColors) {
-                format12 = LineColors.colorCheckboxFormat(
-                        format12, prefs, key, 0, fgcolour);
-                format24 = LineColors.colorCheckboxFormat(
-                        format24, prefs, key, 0, fgcolour);
+                addCheckboxLines(context, views,
+                        R.id.appwidget_checkbox_format_container,
+                        format12.toString(), format24.toString(), 0,
+                        key, textSizeSp, prefs, fgcolour);
+            } else {
+                views.setFloat(R.id.appwidget_textclock, "setTextSize", textSizeSp);
+                views.setCharSequence(R.id.appwidget_textclock,
+                        "setFormat12Hour", format12);
+                views.setCharSequence(R.id.appwidget_textclock,
+                        "setFormat24Hour", format24);
+                views.setInt(R.id.appwidget_textclock, "setLines", f.lines);
             }
-            views.setCharSequence(R.id.appwidget_textclock,
-                    "setFormat12Hour", format12);
-            views.setCharSequence(R.id.appwidget_textclock,
-                    "setFormat24Hour", format24);
-            views.setInt(R.id.appwidget_textclock, "setLines", f.lines);
         }
 
         // Make a click anywhere on the widget go to the switch in MainActivity.
@@ -269,6 +279,32 @@ public class SecondsClockWidget extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.appwidget_root, pi);
 
         return views;
+    }
+
+    private static void addCheckboxLines(
+            Context context, RemoteViews parent, int containerId,
+            String format12, String format24, int firstLineIndex,
+            String preferencePrefix, float textSizeSp,
+            SharedPreferences prefs, int baseColor) {
+        List<CheckboxFormatLines.Line> lines =
+                CheckboxFormatLines.split(format12, format24);
+        for (int index = 0; index < lines.size(); ++index) {
+            CheckboxFormatLines.Line line = lines.get(index);
+            RemoteViews text = new RemoteViews(
+                    context.getPackageName(), R.layout.widget_checkbox_clock_line);
+            text.setFloat(R.id.widget_checkbox_line_clock,
+                    "setTextSize", textSizeSp);
+            text.setTextColor(R.id.widget_checkbox_line_clock,
+                    LineColors.checkboxLineColor(
+                            prefs, preferencePrefix,
+                            firstLineIndex + index, baseColor));
+            text.setCharSequence(R.id.widget_checkbox_line_clock,
+                    "setFormat12Hour", line.format12);
+            text.setCharSequence(R.id.widget_checkbox_line_clock,
+                    "setFormat24Hour", line.format24);
+            text.setInt(R.id.widget_checkbox_line_clock, "setLines", 1);
+            parent.addView(containerId, text);
+        }
     }
 
     private static boolean setRemoteViewIcon(

@@ -101,35 +101,30 @@ final class LineColors {
 
     static CharSequence colorFormattedText(
             CharSequence text, CharSequence format) {
-        if (text == null || text.length() == 0 || !(format instanceof Spanned)) {
+        if (text == null || format == null || !(format instanceof Spanned)) {
             return text;
         }
 
         Spanned styledFormat = (Spanned) format;
-        SpannableStringBuilder coloredText = new SpannableStringBuilder(text);
-        int formatLineStart = 0;
-        int textLineStart = 0;
-        while (formatLineStart <= format.length()
-                && textLineStart <= text.length()) {
-            int formatLineEnd = lineEnd(format, formatLineStart);
-            int textLineEnd = lineEnd(text, textLineStart);
+        SpannableStringBuilder colored = new SpannableStringBuilder(text);
+        int formatStart = 0;
+        int textStart = 0;
+        while (formatStart < format.length() && textStart < text.length()) {
+            int formatEnd = lineEnd(format, formatStart);
+            int textEnd = lineEnd(text, textStart);
             ForegroundColorSpan[] spans = styledFormat.getSpans(
-                    formatLineStart, formatLineEnd, ForegroundColorSpan.class);
-            if (formatLineStart < formatLineEnd
-                    && textLineStart < textLineEnd && spans.length > 0) {
-                coloredText.setSpan(new ForegroundColorSpan(
+                    formatStart, formatEnd, ForegroundColorSpan.class);
+            if (formatEnd > formatStart && textEnd > textStart
+                    && spans.length > 0) {
+                colored.setSpan(new ForegroundColorSpan(
                                 spans[0].getForegroundColor()),
-                        textLineStart, textLineEnd,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        textStart, textEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            if (formatLineEnd == format.length()
-                    || textLineEnd == text.length()) {
-                break;
-            }
-            formatLineStart = formatLineEnd + 1;
-            textLineStart = textLineEnd + 1;
+            if (formatEnd == format.length() || textEnd == text.length()) break;
+            formatStart = formatEnd + 1;
+            textStart = textEnd + 1;
         }
-        return new SpannedString(coloredText);
+        return new SpannedString(colored);
     }
 
     private static int lineEnd(CharSequence text, int start) {

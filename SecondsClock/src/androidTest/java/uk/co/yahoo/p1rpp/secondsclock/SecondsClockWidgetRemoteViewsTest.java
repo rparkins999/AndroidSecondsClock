@@ -6,8 +6,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import android.text.format.DateFormat;
 import android.view.Gravity;
 import android.view.View;
@@ -27,6 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -212,9 +211,13 @@ public class SecondsClockWidgetRemoteViewsTest {
                 context, TEST_WIDGET_ID, options);
         View root = remoteViews.apply(context, new FrameLayout(context));
         TextClock clock = root.findViewById(R.id.appwidget_textclock);
+        LinearLayout lineContainer = root.findViewById(
+                R.id.appwidget_checkbox_format_container);
 
-        assertEquals(View.VISIBLE, clock.getVisibility());
-        assertDisplayLineColors(clock, 0, 4);
+        assertEquals(View.GONE, clock.getVisibility());
+        assertEquals(View.VISIBLE, lineContainer.getVisibility());
+        assertEquals(4, lineContainer.getChildCount());
+        assertDisplayLineColors(lineContainer, 0);
     }
 
     @Test
@@ -231,16 +234,24 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putBoolean(WIDGET_KEY + "showNextAlarm", false)
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), true)
                 .commit();
-        TextClock clock = renderCheckboxWidgetAtWidth(90, 150)
-                .findViewById(R.id.appwidget_textclock);
-        CharSequence activeFormat = DateFormat.is24HourFormat(context)
-                ? clock.getFormat24Hour() : clock.getFormat12Hour();
-
-        assertTrue(activeFormat.toString().contains("'\n'"));
-        measureCurrentClockText(clock);
-        assertEquals(2, clock.getLayout().getLineCount());
-        assertCurrentTextFits(clock, "time-only checkbox text");
-        assertDisplayLineColors(clock, 0, 2);
+        View root = renderCheckboxWidgetAtWidth(90, 150);
+        LinearLayout lineContainer = root.findViewById(
+                R.id.appwidget_checkbox_format_container);
+        assertEquals(2, lineContainer.getChildCount());
+        TextClock firstLine = (TextClock) lineContainer.getChildAt(0);
+        TextClock secondLine = (TextClock) lineContainer.getChildAt(1);
+        assertTrue(firstLine.getFormat24Hour().toString().contains("HH"));
+        assertFalse(firstLine.getFormat24Hour().toString().contains("\n"));
+        assertTrue(secondLine.getFormat24Hour().toString().contains("ss"));
+        assertFalse(secondLine.getFormat24Hour().toString().contains("\n"));
+        long renderTime = System.currentTimeMillis();
+        setClockTextAt(firstLine, renderTime);
+        setClockTextAt(secondLine, renderTime);
+        measureCurrentClockText(firstLine);
+        measureCurrentClockText(secondLine);
+        assertCurrentTextFits(firstLine, "first time-only checkbox line");
+        assertCurrentTextFits(secondLine, "seconds checkbox line");
+        assertDisplayLineColors(lineContainer, 0);
     }
 
     @Test
@@ -281,41 +292,47 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putBoolean(WIDGET_KEY + "showNextAlarm", false)
                 .commit();
         View coloredRoot = renderCheckboxWidgetAtWidth(COMPACT_WIDTH_DP, 150);
-        TextClock coloredClock = coloredRoot.findViewById(
-                R.id.appwidget_textclock);
-        assertEquals(View.VISIBLE, coloredClock.getVisibility());
-        measureCurrentClockText(coloredClock);
-        assertCurrentTextFits(coloredClock, "compact checkbox text");
-        float compactTextSize = coloredClock.getTextSize();
-        String compactText = coloredClock.getText().toString();
-        assertDisplayLineColors(
-                coloredClock, 0, coloredClock.getLayout().getLineCount());
+        LinearLayout coloredContainer = coloredRoot.findViewById(
+                R.id.appwidget_checkbox_format_container);
+        TextClock coloredClock = coloredRoot.findViewById(R.id.appwidget_textclock);
+        assertEquals(View.GONE, coloredClock.getVisibility());
+        assertEquals(View.VISIBLE, coloredContainer.getVisibility());
+        long renderTime = System.currentTimeMillis();
+        setCheckboxLineTextAt(coloredContainer, renderTime);
+        measureCheckboxLines(coloredContainer);
+        assertCheckboxLinesFit(coloredContainer, "compact checkbox text");
+        assertDisplayLineColors(coloredContainer, 0);
+        float compactTextSize = ((TextClock) coloredContainer.getChildAt(0))
+                .getTextSize();
 
         preferences.edit()
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
                 .commit();
         View plainRoot = renderCheckboxWidgetAtWidth(COMPACT_WIDTH_DP, 150);
         TextClock plainClock = plainRoot.findViewById(R.id.appwidget_textclock);
+        setClockTextAt(plainClock, renderTime);
         measureCurrentClockText(plainClock);
         float plainTextSize = plainClock.getTextSize();
         assertEquals("colored checkbox text should match plain autosizing; "
                         + "colored=" + compactTextSize
                         + ", plain=" + plainTextSize,
                 plainTextSize, compactTextSize, 1.0F);
-        assertSameTextPlacement(coloredClock, plainClock, compactText);
+        assertSameTextPlacement(coloredContainer, plainClock);
 
         preferences.edit()
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), true)
                 .commit();
         View wideColoredRoot = renderCheckboxWidgetAtWidth(120, 150);
-        TextClock wideColoredClock = wideColoredRoot.findViewById(
-                R.id.appwidget_textclock);
-        measureCurrentClockText(wideColoredClock);
-        assertCurrentTextFits(wideColoredClock, "wide checkbox text");
+        LinearLayout wideColoredContainer = wideColoredRoot.findViewById(
+                R.id.appwidget_checkbox_format_container);
+        setCheckboxLineTextAt(wideColoredContainer, renderTime);
+        measureCheckboxLines(wideColoredContainer);
+        assertCheckboxLinesFit(wideColoredContainer, "wide checkbox text");
+        TextClock wideColoredClock =
+                (TextClock) wideColoredContainer.getChildAt(0);
         assertTrue("text should scale up for a wider widget",
                 wideColoredClock.getTextSize() > compactTextSize);
-        assertDisplayLineColors(wideColoredClock, 0,
-                wideColoredClock.getLayout().getLineCount());
+        assertDisplayLineColors(wideColoredContainer, 0);
 
         preferences.edit()
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
@@ -323,12 +340,12 @@ public class SecondsClockWidgetRemoteViewsTest {
         View plainWideRoot = renderCheckboxWidgetAtWidth(120, 150);
         TextClock plainWideClock = plainWideRoot.findViewById(
                 R.id.appwidget_textclock);
+        setClockTextAt(plainWideClock, renderTime);
         measureCurrentClockText(plainWideClock);
         float plainWideTextSize = plainWideClock.getTextSize();
         assertEquals("wide colored text should match plain checkbox autosizing",
                 plainWideTextSize, wideColoredClock.getTextSize(), 1.0F);
-        assertSameTextPlacement(wideColoredClock, plainWideClock,
-                wideColoredClock.getText().toString());
+        assertSameTextPlacement(wideColoredContainer, plainWideClock);
     }
 
     private View renderCheckboxWidgetAtWidth(int widthDp, int heightDp) {
@@ -351,19 +368,45 @@ public class SecondsClockWidgetRemoteViewsTest {
     }
 
     private void measureCurrentClockText(TextClock clock) {
-        CharSequence format = DateFormat.is24HourFormat(context)
-                ? clock.getFormat24Hour() : clock.getFormat12Hour();
-        if (format != null) {
-            clock.setText(DateFormat.format(
-                    format, System.currentTimeMillis()));
-        }
         int width = clock.getWidth();
         int height = clock.getHeight();
         clock.measure(
                 View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
-        clock.layout(0, 0, width, height);
+        clock.layout(clock.getLeft(), clock.getTop(),
+                clock.getLeft() + width, clock.getTop() + height);
         assertNotNull(clock.getLayout());
+    }
+
+    private void setClockTextAt(TextClock clock, long timeMillis) {
+        CharSequence format = DateFormat.is24HourFormat(context)
+                ? clock.getFormat24Hour() : clock.getFormat12Hour();
+        if (format != null) {
+            clock.setText(DateFormat.format(format, timeMillis));
+        }
+    }
+
+    private void setCheckboxLineTextAt(
+            LinearLayout lineContainer, long timeMillis) {
+        for (int index = 0; index < lineContainer.getChildCount(); ++index) {
+            setClockTextAt((TextClock) lineContainer.getChildAt(index), timeMillis);
+        }
+    }
+
+    private void measureCheckboxLines(LinearLayout lineContainer) {
+        for (int index = 0; index < lineContainer.getChildCount(); ++index) {
+            measureCurrentClockText((TextClock) lineContainer.getChildAt(index));
+        }
+    }
+
+    private void assertCheckboxLinesFit(
+            LinearLayout lineContainer, String description) {
+        for (int index = 0; index < lineContainer.getChildCount(); ++index) {
+            TextClock clock = (TextClock) lineContainer.getChildAt(index);
+            assertCurrentTextFits(clock, description + " line " + index);
+            assertEquals("each remote checkbox clock should render one line",
+                    1, clock.getLayout().getLineCount());
+        }
     }
 
     private void assertCurrentTextFits(TextClock clock, String description) {
@@ -385,49 +428,49 @@ public class SecondsClockWidgetRemoteViewsTest {
     }
 
     private void assertSameTextPlacement(
-            TextClock coloredClock, TextClock plainClock, String expectedText) {
-        assertEquals(expectedText, coloredClock.getText().toString());
-        assertEquals(expectedText, plainClock.getText().toString());
-        assertEquals(plainClock.getTextSize(), coloredClock.getTextSize(), 0.0F);
-        assertEquals(plainClock.getGravity(), coloredClock.getGravity());
-        assertEquals(plainClock.getWidth(), coloredClock.getWidth());
-        assertEquals(plainClock.getHeight(), coloredClock.getHeight());
-        assertEquals(plainClock.getLayout().getLineCount(),
-                coloredClock.getLayout().getLineCount());
-        for (int line = 0; line < plainClock.getLayout().getLineCount(); ++line) {
-            assertEquals(plainClock.getLayout().getLineTop(line),
-                    coloredClock.getLayout().getLineTop(line));
-            assertEquals(plainClock.getLayout().getLineBottom(line),
-                    coloredClock.getLayout().getLineBottom(line));
-            assertEquals(plainClock.getLayout().getLineBaseline(line),
-                    coloredClock.getLayout().getLineBaseline(line));
+            LinearLayout coloredContainer, TextClock plainClock) {
+        StringBuilder coloredText = new StringBuilder();
+        int plainLineCount = plainClock.getLayout().getLineCount();
+        assertEquals(plainLineCount, coloredContainer.getChildCount());
+        for (int line = 0; line < plainLineCount; ++line) {
+            TextClock coloredLine = (TextClock) coloredContainer.getChildAt(line);
+            if (line > 0) coloredText.append('\n');
+            coloredText.append(coloredLine.getText());
+            assertEquals(plainClock.getTextSize(), coloredLine.getTextSize(), 0.0F);
+            assertEquals(plainClock.getWidth(), coloredLine.getWidth());
             assertEquals(plainClock.getLayout().getLineLeft(line),
-                    coloredClock.getLayout().getLineLeft(line), 0.0F);
+                    coloredLine.getLayout().getLineLeft(0), 0.0F);
+            int plainBaseline = plainClock.getTop() + plainClock.getBaseline()
+                    + plainClock.getLayout().getLineBaseline(line)
+                    - plainClock.getLayout().getLineBaseline(0);
+            int coloredBaseline = coloredContainer.getTop()
+                    + coloredLine.getTop() + coloredLine.getBaseline();
+            assertEquals("colored line " + line + " baseline should match plain text: "
+                            + "plainTop=" + plainClock.getTop()
+                            + ", plainHeight=" + plainClock.getHeight()
+                            + ", plainLines=" + plainLineCount
+                            + ", coloredContainerTop=" + coloredContainer.getTop()
+                            + ", coloredContainerHeight=" + coloredContainer.getHeight()
+                            + ", coloredLineTop=" + coloredLine.getTop()
+                            + ", coloredLineHeight=" + coloredLine.getHeight()
+                            + ", coloredLineBaseline=" + coloredLine.getBaseline()
+                            + ", plainBaseline=" + plainClock.getLayout()
+                                    .getLineBaseline(line),
+                    plainBaseline, coloredBaseline);
         }
+        assertEquals(plainClock.getText().toString(), coloredText.toString());
     }
 
     private void assertDisplayLineColors(
-            TextClock clock, int firstLineIndex, int lineCount) {
-        CharSequence text = clock.getText();
-        assertTrue("checkbox colors must survive TextClock formatting",
-                text instanceof Spanned);
-        String[] displayLines = text.toString().split("\n", -1);
-        assertEquals(lineCount, displayLines.length);
-        Spanned styledText = (Spanned) text;
-        int lineStart = 0;
-        for (int lineIndex = 0; lineIndex < displayLines.length; ++lineIndex) {
-            String line = displayLines[lineIndex];
-            if (!line.isEmpty()) {
-                ForegroundColorSpan[] spans = styledText.getSpans(
-                        lineStart, lineStart + 1, ForegroundColorSpan.class);
-                assertTrue("line " + lineIndex + " should have a color span",
-                        spans.length > 0);
-                assertEquals(LineColors.checkboxLineColor(
-                                preferences, WIDGET_KEY,
-                                firstLineIndex + lineIndex, Color.WHITE),
-                        spans[0].getForegroundColor());
-            }
-            lineStart += line.length() + 1;
+            LinearLayout lineContainer, int firstLineIndex) {
+        for (int lineIndex = 0;
+                lineIndex < lineContainer.getChildCount(); ++lineIndex) {
+            TextClock line = (TextClock) lineContainer.getChildAt(lineIndex);
+            assertEquals("checkbox line " + lineIndex + " should use its palette color",
+                    LineColors.checkboxLineColor(
+                            preferences, WIDGET_KEY,
+                            firstLineIndex + lineIndex, Color.WHITE),
+                    line.getCurrentTextColor());
         }
     }
 
@@ -447,26 +490,32 @@ public class SecondsClockWidgetRemoteViewsTest {
         View root = renderCheckboxWidgetAtWidth(WIDTH_DP, HEIGHT_DP);
         TextClock coloredDateClock = root.findViewById(
                 R.id.appwidget_analog_dateclock);
+        LinearLayout coloredDateContainer = root.findViewById(
+                R.id.appwidget_checkbox_analog_date_container);
+        long renderTime = System.currentTimeMillis();
 
         assertEquals(View.VISIBLE,
                 root.findViewById(R.id.appwidget_analogclock).getVisibility());
-        assertEquals(View.VISIBLE, coloredDateClock.getVisibility());
-        measureCurrentClockText(coloredDateClock);
-        assertCurrentTextFits(coloredDateClock, "colored analog date text");
-        assertDisplayLineColors(coloredDateClock, 1, 3);
-        float coloredTextSize = coloredDateClock.getTextSize();
+        assertEquals(View.GONE, coloredDateClock.getVisibility());
+        assertEquals(View.VISIBLE, coloredDateContainer.getVisibility());
+        setCheckboxLineTextAt(coloredDateContainer, renderTime);
+        measureCheckboxLines(coloredDateContainer);
+        assertCheckboxLinesFit(coloredDateContainer, "colored analog date text");
+        assertDisplayLineColors(coloredDateContainer, 1);
+        float coloredTextSize =
+                ((TextClock) coloredDateContainer.getChildAt(0)).getTextSize();
         preferences.edit()
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
                 .commit();
         View plainRoot = renderCheckboxWidgetAtWidth(WIDTH_DP, HEIGHT_DP);
         TextClock plainDateClock = plainRoot.findViewById(
                 R.id.appwidget_analog_dateclock);
+        setClockTextAt(plainDateClock, renderTime);
         measureCurrentClockText(plainDateClock);
         assertEquals("colored analog text should match plain checkbox autosizing",
                 plainDateClock.getTextSize(), coloredTextSize, 1.0F);
         assertCurrentTextFits(plainDateClock, "plain analog date text");
-        assertSameTextPlacement(coloredDateClock, plainDateClock,
-                plainDateClock.getText().toString());
+        assertSameTextPlacement(coloredDateContainer, plainDateClock);
     }
 
     @Test
