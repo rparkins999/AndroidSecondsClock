@@ -289,6 +289,7 @@ public class SecondsClockWidgetRemoteViewsTest {
         for (int index = 0; index < container.getChildCount(); ++index) {
             TextClock line = (TextClock) container.getChildAt(index);
             measureCurrentClockText(line);
+            assertCurrentTextFits(line, "compact checkbox row " + index);
             assertEquals("every colored row should use the plain-mode size",
                     plainTextSize, line.getTextSize(), 1.0F);
             assertNotNull("checkbox row should have a measured text layout",
@@ -324,6 +325,7 @@ public class SecondsClockWidgetRemoteViewsTest {
         for (int index = 0; index < wideContainer.getChildCount(); ++index) {
             TextClock line = (TextClock) wideContainer.getChildAt(index);
             measureCurrentClockText(line);
+            assertCurrentTextFits(line, "wide checkbox row " + index);
             assertEquals("every wide colored row should share the plain-mode size",
                     plainWideTextSize, line.getTextSize(), 1.0F);
             assertEquals("wide checkbox row " + index + " must fit without ellipsis",
@@ -366,10 +368,16 @@ public class SecondsClockWidgetRemoteViewsTest {
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
         clock.layout(0, 0, width, height);
         assertNotNull(clock.getLayout());
-        assertTrue("text should fit without clipping: " + clock.getText()
+    }
+
+    private void assertCurrentTextFits(TextClock clock, String description) {
+        String displayText = clock.getText().toString().replace('\n', '|');
+        int width = clock.getWidth();
+        assertTrue("text should fit without clipping: " + displayText
                         + " (lineWidth=" + clock.getLayout().getLineWidth(0)
                         + ", viewWidth=" + width
-                        + ", textSize=" + clock.getTextSize() + ")",
+                        + ", textSize=" + clock.getTextSize()
+                        + ", " + description + ")",
                 clock.getLayout().getLineWidth(0) <= width);
     }
 
@@ -414,6 +422,7 @@ public class SecondsClockWidgetRemoteViewsTest {
         for (int lineIndex = 0; lineIndex < container.getChildCount(); ++lineIndex) {
             TextClock line = (TextClock) container.getChildAt(lineIndex);
             measureCurrentClockText(line);
+            assertCurrentTextFits(line, "analog checkbox row " + lineIndex);
             assertEquals("every colored analog row should share the plain-mode size",
                     plainDateClock.getTextSize(), line.getTextSize(), 1.0F);
         }
