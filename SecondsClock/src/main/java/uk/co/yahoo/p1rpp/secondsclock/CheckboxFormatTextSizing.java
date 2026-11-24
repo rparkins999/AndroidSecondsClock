@@ -5,6 +5,7 @@
 package uk.co.yahoo.p1rpp.secondsclock;
 
 import android.content.Context;
+import android.text.format.DateFormat;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -58,6 +59,17 @@ final class CheckboxFormatTextSizing {
         sizingClock.setFormat12Hour(format12);
         sizingClock.setFormat24Hour(format24);
         sizingClock.setLines(Math.max(1, lineCount));
+        boolean is24Hour = DateFormat.is24HourFormat(context);
+        CharSequence activeFormat = is24Hour ? format24 : format12;
+        if (activeFormat == null) {
+            activeFormat = is24Hour
+                    ? sizingClock.getFormat24Hour()
+                    : sizingClock.getFormat12Hour();
+        }
+        if (activeFormat != null) {
+            sizingClock.setText(DateFormat.format(
+                    activeFormat, System.currentTimeMillis()));
+        }
         sizingClock.setAutoSizeTextTypeUniformWithConfiguration(
                 minTextSizePx, maxTextSizePx, stepPx, TypedValue.COMPLEX_UNIT_PX);
         sizingClock.measure(

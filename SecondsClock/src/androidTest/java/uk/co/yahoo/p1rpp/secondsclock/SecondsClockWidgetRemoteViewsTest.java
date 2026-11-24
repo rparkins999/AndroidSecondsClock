@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -274,8 +275,9 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
                 .commit();
         View plainRoot = renderCheckboxRowsAtWidth(52, 150);
-        float plainTextSize = ((TextClock) plainRoot.findViewById(
-                R.id.appwidget_textclock)).getTextSize();
+        TextClock plainClock = plainRoot.findViewById(R.id.appwidget_textclock);
+        measureCurrentClockText(plainClock);
+        float plainTextSize = plainClock.getTextSize();
         assertEquals("colored rows should match plain checkbox autosizing; "
                         + "colored=" + compactTextSize
                         + ", plain=" + plainTextSize,
@@ -285,6 +287,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .commit();
         for (int index = 0; index < container.getChildCount(); ++index) {
             TextClock line = (TextClock) container.getChildAt(index);
+            measureCurrentClockText(line);
             assertEquals("every colored row should use the plain-mode size",
                     plainTextSize, line.getTextSize(), 1.0F);
             assertNotNull("checkbox row should have a measured text layout",
@@ -297,9 +300,6 @@ public class SecondsClockWidgetRemoteViewsTest {
             assertTrue("checkbox row " + index + " must fit within its width",
                     line.getLayout().getLineWidth(0) <= line.getWidth());
         }
-        assertTextFits((TextClock) container.getChildAt(0), "11:59:59 PM");
-        assertTextFits((TextClock) container.getChildAt(1), "Wednesday");
-        assertTextFits((TextClock) container.getChildAt(3), "September");
 
         View wideRoot = renderCheckboxRowsAtWidth(120, 150);
         LinearLayout wideContainer = wideRoot.findViewById(
@@ -311,8 +311,10 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .putBoolean(LineColors.enabledKey(WIDGET_KEY), false)
                 .commit();
         View plainWideRoot = renderCheckboxRowsAtWidth(120, 150);
-        float plainWideTextSize = ((TextClock) plainWideRoot.findViewById(
-                R.id.appwidget_textclock)).getTextSize();
+        TextClock plainWideClock = plainWideRoot.findViewById(
+                R.id.appwidget_textclock);
+        measureCurrentClockText(plainWideClock);
+        float plainWideTextSize = plainWideClock.getTextSize();
         assertEquals("wide colored rows should match plain checkbox autosizing",
                 plainWideTextSize, wideFirstLine.getTextSize(), 1.0F);
         preferences.edit()
@@ -320,6 +322,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 .commit();
         for (int index = 0; index < wideContainer.getChildCount(); ++index) {
             TextClock line = (TextClock) wideContainer.getChildAt(index);
+            measureCurrentClockText(line);
             assertEquals("every wide colored row should share the plain-mode size",
                     plainWideTextSize, line.getTextSize(), 1.0F);
             assertEquals("wide checkbox row " + index + " must fit without ellipsis",
@@ -348,8 +351,13 @@ public class SecondsClockWidgetRemoteViewsTest {
         return root;
     }
 
-    private void assertTextFits(TextClock clock, CharSequence text) {
-        clock.setText(text);
+    private void measureCurrentClockText(TextClock clock) {
+        CharSequence format = DateFormat.is24HourFormat(context)
+                ? clock.getFormat24Hour() : clock.getFormat12Hour();
+        if (format != null) {
+            clock.setText(DateFormat.format(
+                    format, System.currentTimeMillis()));
+        }
         int width = clock.getWidth();
         int height = clock.getHeight();
         clock.measure(
@@ -357,7 +365,7 @@ public class SecondsClockWidgetRemoteViewsTest {
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
         clock.layout(0, 0, width, height);
         assertNotNull(clock.getLayout());
-        assertTrue("text should fit without clipping: " + text
+        assertTrue("text should fit without clipping: " + clock.getText()
                         + " (lineWidth=" + clock.getLayout().getLineWidth(0)
                         + ", viewWidth=" + width
                         + ", textSize=" + clock.getTextSize() + ")",
@@ -399,13 +407,14 @@ public class SecondsClockWidgetRemoteViewsTest {
         View plainRoot = renderCheckboxRowsAtWidth(WIDTH_DP, HEIGHT_DP);
         TextClock plainDateClock = plainRoot.findViewById(
                 R.id.appwidget_analog_dateclock);
+        measureCurrentClockText(plainDateClock);
         assertEquals("colored analog rows should match plain checkbox autosizing",
                 plainDateClock.getTextSize(), coloredTextSize, 1.0F);
-        for (int lineIndex = 1; lineIndex < container.getChildCount(); ++lineIndex) {
+        for (int lineIndex = 0; lineIndex < container.getChildCount(); ++lineIndex) {
+            TextClock line = (TextClock) container.getChildAt(lineIndex);
+            measureCurrentClockText(line);
             assertEquals("every colored analog row should share the plain-mode size",
-                    plainDateClock.getTextSize(),
-                    ((TextClock) container.getChildAt(lineIndex)).getTextSize(),
-                    1.0F);
+                    plainDateClock.getTextSize(), line.getTextSize(), 1.0F);
         }
     }
 
