@@ -7,8 +7,12 @@ package uk.co.yahoo.p1rpp.secondsclock;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 /** Deterministic, high-contrast colors for clock and widget lines. */
 final class LineColors {
@@ -68,6 +72,30 @@ final class LineColors {
         return automaticEnabled(prefs, preferencePrefix)
                 ? withBaseAlpha(colorForLine(prefs, lineIndex), baseColor)
                 : baseColor;
+    }
+
+    static CharSequence colorCheckboxFormat(
+            CharSequence format, SharedPreferences prefs,
+            String preferencePrefix, int firstLineIndex, int baseColor) {
+        if (format == null || format.length() == 0) return format;
+
+        List<CheckboxFormatLines.Line> lines =
+                CheckboxFormatLines.split(format.toString(), format.toString());
+        SpannableStringBuilder colored = new SpannableStringBuilder(format);
+        int lineStart = 0;
+        int lineIndex = 0;
+        for (int index = 0; index <= format.length(); ++index) {
+            if (index < format.length() && format.charAt(index) != '\n') continue;
+            if (index > lineStart && lineIndex < lines.size()) {
+                colored.setSpan(new ForegroundColorSpan(checkboxLineColor(
+                                prefs, preferencePrefix,
+                                firstLineIndex + lineIndex, baseColor)),
+                        lineStart, index, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            ++lineIndex;
+            lineStart = index + 1;
+        }
+        return colored;
     }
 
     static int colorForLine(SharedPreferences prefs, int lineIndex) {

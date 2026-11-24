@@ -41,8 +41,6 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
 
 public class WidgetConfigureActivity extends ConfigureActivity
 {
@@ -67,8 +65,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private TextClock analogDateDemo;
     private AnalogClockView analogDemo;
     private LinearLayout analogPreview;
-    private List<CheckboxFormatLines.Line> checkboxPreviewLines =
-            Collections.emptyList();
     private int m_fgcolour;
     private String widgetFormat;
     private int showTime;
@@ -525,10 +521,17 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     showWeekDay, showShortDate, showMonthDay, showMonth,
                     showYear, showNextAlarmCheckBox != null
                             && showNextAlarmCheckBox.isChecked(), nextAlarm);
-            checkboxPreviewLines = CheckboxFormatLines.split(f.rest, f.rest);
+            CharSequence dateFormat12 = f.time12 + f.rest;
+            CharSequence dateFormat24 = f.time24 + f.rest;
+            if (LineColors.automaticEnabled(m_prefs, m_key)) {
+                dateFormat12 = LineColors.colorCheckboxFormat(
+                        dateFormat12, m_prefs, m_key, 1, m_fgcolour);
+                dateFormat24 = LineColors.colorCheckboxFormat(
+                        dateFormat24, m_prefs, m_key, 1, m_fgcolour);
+            }
             analogDateDemo.setTextColor(m_fgcolour);
-            analogDateDemo.setFormat12Hour(f.time12 + f.rest);
-            analogDateDemo.setFormat24Hour(f.time24 + f.rest);
+            analogDateDemo.setFormat12Hour(dateFormat12);
+            analogDateDemo.setFormat24Hour(dateFormat24);
             analogDateDemo.setLines(f.lines);
             analogDateDemo.setVisibility(f.rest.isEmpty() ? View.GONE : View.VISIBLE);
             configureAnalogPreviewHands(analogDemo, true, true, showSeconds);
@@ -540,14 +543,21 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     showWeekDay, showShortDate, showMonthDay, showMonth,
                     showYear, showNextAlarmCheckBox != null
                             && showNextAlarmCheckBox.isChecked(), nextAlarm);
-            checkboxPreviewLines = CheckboxFormatLines.split(
-                    f.time12 + f.rest, f.time24 + f.rest);
         }
         demo.setTextColor(m_fgcolour);
         if (!checkboxAnalog
                 && !(advancedFormatMode && AnalogFormat.containsClock(format))) {
-            demo.setFormat12Hour(f.time12 + f.rest);
-            demo.setFormat24Hour(f.time24 + f.rest);
+            CharSequence demoFormat12 = f.time12 + f.rest;
+            CharSequence demoFormat24 = f.time24 + f.rest;
+            if (!advancedFormatMode
+                    && LineColors.automaticEnabled(m_prefs, m_key)) {
+                demoFormat12 = LineColors.colorCheckboxFormat(
+                        demoFormat12, m_prefs, m_key, 0, m_fgcolour);
+                demoFormat24 = LineColors.colorCheckboxFormat(
+                        demoFormat24, m_prefs, m_key, 0, m_fgcolour);
+            }
+            demo.setFormat12Hour(demoFormat12);
+            demo.setFormat24Hour(demoFormat24);
             demo.setLines(f.lines);
         }
         int width = (int)(minWidth * m_density);
@@ -742,8 +752,6 @@ public class WidgetConfigureActivity extends ConfigureActivity
         } else if (analogMode && !advancedFormatMode) {
             rebuildCheckboxAnalogPreview();
             demobox.addView(analogPreview);
-        } else if (LineColors.automaticEnabled(m_prefs, m_key)) {
-            demobox.addView(makeCheckboxFormatPreview());
         } else {
             demobox.addView(demo);
         }
@@ -754,65 +762,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.removeAllViews();
         analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
-        if (LineColors.automaticEnabled(m_prefs, m_key)) {
-            addCheckboxPreviewLines(
-                    analogPreview, checkboxPreviewLines, 1, 1.5F, true);
-        } else {
-            analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.5F));
-        }
-    }
-
-    private View makeCheckboxFormatPreview() {
-        int width = (int) (minWidth * m_density);
-        int height = (int) (maxHeight * m_density);
-        LinearLayout result = new LinearLayout(this);
-        result.setOrientation(LinearLayout.VERTICAL);
-        result.setGravity(Gravity.CENTER_HORIZONTAL);
-        result.setBackgroundColor(m_bgcolour);
-        result.setMinimumWidth(width);
-        result.setMinimumHeight(height);
-        result.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-        addCheckboxPreviewLines(
-                result, checkboxPreviewLines, 0, 1.0F, false);
-        return result;
-    }
-
-    private void addCheckboxPreviewLines(
-            LinearLayout parent, List<CheckboxFormatLines.Line> lines,
-            int firstLineIndex, float totalWeight,
-            boolean analogCheckboxMode) {
-        if (lines.isEmpty()) return;
-        float rowWeight = totalWeight / lines.size();
-        StringBuilder format12 = new StringBuilder();
-        StringBuilder format24 = new StringBuilder();
-        for (int index = 0; index < lines.size(); ++index) {
-            if (index > 0) {
-                format12.append('\n');
-                format24.append('\n');
-            }
-            format12.append(lines.get(index).format12);
-            format24.append(lines.get(index).format24);
-        }
-        float textSizeSp = CheckboxFormatTextSizing.previewTextSizeSp(
-                this, minWidth, maxHeight,
-                format12.toString(), format24.toString(),
-                lines.size(), analogCheckboxMode);
-        for (int index = 0; index < lines.size(); ++index) {
-            CheckboxFormatLines.Line line = lines.get(index);
-            TextClock clock = new TextClock(this);
-            clock.setIncludeFontPadding(false);
-            clock.setGravity(Gravity.CENTER);
-            clock.setMaxLines(1);
-            clock.setTextSize(TypedValue.COMPLEX_UNIT_SP,
-                    textSizeSp);
-            clock.setTextColor(LineColors.checkboxLineColor(
-                    m_prefs, m_key, firstLineIndex + index, m_fgcolour));
-            clock.setFormat12Hour(line.format12);
-            clock.setFormat24Hour(line.format24);
-            parent.addView(clock, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, rowWeight));
-        }
+        analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.5F));
     }
 
     private void refreshAnalogPreviewTicker() {
