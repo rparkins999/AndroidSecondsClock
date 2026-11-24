@@ -19,6 +19,7 @@ public class SettingsTransferRulesTest {
         source.put("formatLandscape", "%H:%M");
         source.put("formatProfile", 1); // portrait
         source.put("showNextAlarm", true);
+        source.put("lineColorsEnabled", true);
         source.put("secondsSize", 255);
         source.put("minBright", 30); // full-screen-only setting
 
@@ -32,6 +33,7 @@ public class SettingsTransferRulesTest {
         assertEquals(2, result.get("showTime"));
         assertEquals(true, result.get("showSeconds"));
         assertTrue((Boolean) result.get("showNextAlarm"));
+        assertTrue((Boolean) result.get("lineColorsEnabled"));
         assertFalse(result.containsKey("minBright"));
     }
 
@@ -42,6 +44,7 @@ public class SettingsTransferRulesTest {
         source.put("formatHorizontal", "%H:%M");
         source.put("formatProfile", 1); // horizontal
         source.put("showTime", 1);
+        source.put("lineColorsEnabled", true);
         source.put("showWeekDay", 2);
         source.put("touchaction", 9000); // widget-only setting
 
@@ -53,6 +56,7 @@ public class SettingsTransferRulesTest {
         assertEquals(2, result.get("formatProfile")); // landscape
         assertEquals(0, result.get("secondsSize"));
         assertEquals(2, result.get("showWeekDay"));
+        assertTrue((Boolean) result.get("lineColorsEnabled"));
         assertFalse(result.containsKey("touchaction"));
     }
 

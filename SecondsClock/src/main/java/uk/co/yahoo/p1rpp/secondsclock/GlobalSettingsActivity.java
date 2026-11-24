@@ -8,12 +8,18 @@ import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -27,6 +33,12 @@ public class GlobalSettingsActivity extends Activity_common
     private static final int NEW_WIDGET_DEFAULTS_ID = SYSTEM_CLOCK_HELP_ID + 3;
     private static final int DONE_ID = SYSTEM_CLOCK_HELP_ID + 4;
     private static final int ALARM_MAX_AGE_ID = DONE_ID + 1;
+    private static final int LINE_COLOR_HELP_ID = DONE_ID + 2;
+    private static final int LINE_COLOR_PROFILE_ID = DONE_ID + 3;
+    private static final int LINE_COLOR_COPY_ID = DONE_ID + 4;
+    private static final int LINE_COLOR_REGENERATE_ID = DONE_ID + 5;
+    private EditText lineColorSeedInput;
+    private boolean lineColorSeedDirty;
 
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
@@ -81,6 +93,7 @@ public class GlobalSettingsActivity extends Activity_common
         addButton(page,
                 getString(R.string.alarm_max_age_button, ageOptions[selectedAge]),
                 ALARM_MAX_AGE_ID, R.string.alarm_age_settings_help);
+        addLineColorSettings(page);
 
         addHeading(page, R.string.new_widget_defaults_title, 0);
         TextView defaultsHelp = new TextView(this);
@@ -101,6 +114,12 @@ public class GlobalSettingsActivity extends Activity_common
     }
 
     @Override
+    protected void onPause() {
+        saveLineColorSeed();
+        super.onPause();
+    }
+
+    @Override
     public boolean onLongClick(View view) {
         if (view.getId() == SYSTEM_CLOCK_HELP_ID
                 || view.getId() == SYSTEM_CLOCK_OVERRIDE_ID
@@ -114,6 +133,13 @@ public class GlobalSettingsActivity extends Activity_common
         }
         if (view.getId() == ALARM_MAX_AGE_ID) {
             doToast(R.string.alarm_age_settings_help);
+            return true;
+        }
+        if (view.getId() == LINE_COLOR_HELP_ID
+                || view.getId() == LINE_COLOR_PROFILE_ID
+                || view.getId() == LINE_COLOR_COPY_ID
+                || view.getId() == LINE_COLOR_REGENERATE_ID) {
+            doToast(R.string.line_color_settings_help);
             return true;
         }
         return false;
@@ -139,6 +165,20 @@ public class GlobalSettingsActivity extends Activity_common
             case ALARM_MAX_AGE_ID:
                 chooseAlarmMaxAge();
                 break;
+            case LINE_COLOR_PROFILE_ID:
+                saveLineColorSeed();
+                chooseLineColorProfile();
+                break;
+            case LINE_COLOR_COPY_ID:
+                saveLineColorSeed();
+                copyLineColorSeed();
+                break;
+            case LINE_COLOR_REGENERATE_ID:
+                if (lineColorSeedInput != null) {
+                    lineColorSeedInput.setText(LineColors.newSeed());
+                }
+                saveLineColorSeed();
+                break;
             case DONE_ID:
                 finish();
                 break;
@@ -157,6 +197,120 @@ public class GlobalSettingsActivity extends Activity_common
                     : getString(R.string.system_clock_override_status, label));
         }
         parent.addView(status, matchWrap());
+    }
+
+    private void addLineColorSettings(LinearLayout page) {
+        addHeading(page, R.string.line_color_settings_title,
+                LINE_COLOR_HELP_ID);
+        TextView help = new TextView(this);
+        help.setText(R.string.line_color_settings_help);
+        help.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(help, matchWrap());
+
+        Button profile = addButton(page, R.string.line_color_profile_button,
+                LINE_COLOR_PROFILE_ID, R.string.line_color_settings_help);
+        profile.setText(lineColorProfileButtonText());
+
+        TextView seedLabel = new TextView(this);
+        seedLabel.setText(R.string.line_color_seed_label);
+        seedLabel.setPadding(0, dp(6), 0, 0);
+        page.addView(seedLabel, matchWrap());
+        lineColorSeedInput = new EditText(this);
+        lineColorSeedInput.setSingleLine(true);
+        lineColorSeedInput.setText(m_prefs.getString(
+                LineColors.SEED_KEY, LineColors.DEFAULT_SEED));
+        lineColorSeedInput.setHint(R.string.line_color_seed_hint);
+        lineColorSeedInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(
+                    CharSequence text, int start, int count, int after) {}
+            @Override public void onTextChanged(
+                    CharSequence text, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable text) {
+                m_prefs.edit().putString(
+                        LineColors.SEED_KEY, text.toString()).apply();
+                lineColorSeedDirty = true;
+            }
+        });
+        lineColorSeedInput.setOnFocusChangeListener((view, focused) -> {
+            if (!focused) saveLineColorSeed();
+        });
+        page.addView(lineColorSeedInput, matchWrap());
+
+        LinearLayout seedButtons = new LinearLayout(this);
+        seedButtons.setOrientation(LinearLayout.HORIZONTAL);
+        Button copy = makeButton(R.string.line_color_copy_seed,
+                LINE_COLOR_COPY_ID, R.string.line_color_settings_help);
+        Button regenerate = makeButton(R.string.line_color_regenerate_seed,
+                LINE_COLOR_REGENERATE_ID, R.string.line_color_settings_help);
+        LinearLayout.LayoutParams half = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0F);
+        seedButtons.addView(copy, half);
+        seedButtons.addView(regenerate, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0F));
+        page.addView(seedButtons, matchWrap());
+    }
+
+    private Button makeButton(int label, int id, int helpResource) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setId(id);
+        button.setAllCaps(false);
+        button.setOnClickListener(this);
+        button.setOnLongClickListener(view -> {
+            doToast(helpResource);
+            return true;
+        });
+        return button;
+    }
+
+    private String lineColorProfileButtonText() {
+        String[] profiles = getResources().getStringArray(
+                R.array.line_color_profiles);
+        int selected = m_prefs.getInt(LineColors.PROFILE_KEY, LineColors.NORMAL);
+        if (selected < 0 || selected >= profiles.length) selected = LineColors.NORMAL;
+        return getString(R.string.line_color_profile_button, profiles[selected]);
+    }
+
+    private void chooseLineColorProfile() {
+        String[] profiles = getResources().getStringArray(
+                R.array.line_color_profiles);
+        int selected = m_prefs.getInt(LineColors.PROFILE_KEY, LineColors.NORMAL);
+        if (selected < 0 || selected >= profiles.length) selected = LineColors.NORMAL;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.line_color_profile_title)
+                .setSingleChoiceItems(R.array.line_color_profiles, selected,
+                        (dialog, which) -> {
+                            m_prefs.edit().putInt(
+                                    LineColors.PROFILE_KEY, which).apply();
+                            LineColors.notifyChanged(this);
+                            dialog.dismiss();
+                            renderAgain();
+                        })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void saveLineColorSeed() {
+        if (lineColorSeedInput == null) return;
+        m_prefs.edit().putString(LineColors.SEED_KEY,
+                lineColorSeedInput.getText().toString()).apply();
+        if (lineColorSeedDirty) {
+            lineColorSeedDirty = false;
+            LineColors.notifyChanged(this);
+        }
+    }
+
+    private void copyLineColorSeed() {
+        String seed = lineColorSeedInput == null
+                ? m_prefs.getString(LineColors.SEED_KEY, LineColors.DEFAULT_SEED)
+                : lineColorSeedInput.getText().toString();
+        ClipboardManager clipboard = (ClipboardManager)
+                getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(ClipData.newPlainText(
+                    getString(R.string.line_color_seed_label), seed));
+            doToast(R.string.line_color_seed_copied);
+        }
     }
 
     private void addHeading(LinearLayout parent, int label, int id) {

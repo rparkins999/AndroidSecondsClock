@@ -13,14 +13,17 @@ final class FormatLineSplit {
     private static final String ALARM_SEPARATOR = "%|";
     private static final String ALARM_END = "%>";
     private static final String EMPHASIS = "%L";
+    private static final String RANDOM_COLOR = "%Q";
 
     static final class Line {
         final String format;
         final boolean emphasized;
+        final boolean randomColor;
 
-        Line(String format, boolean emphasized) {
+        Line(String format, boolean emphasized, boolean randomColor) {
             this.format = format;
             this.emphasized = emphasized;
+            this.randomColor = randomColor;
         }
     }
 
@@ -34,23 +37,25 @@ final class FormatLineSplit {
     static List<Line> splitLines(String format, boolean removeEmphasisMarkers) {
         List<Line> lines = new ArrayList<>();
         if (format == null) {
-            lines.add(new Line("", false));
+            lines.add(new Line("", false, false));
             return lines;
         }
 
         StringBuilder line = new StringBuilder();
         boolean emphasized = false;
+        boolean randomColor = false;
         boolean insideAlarm = false;
         boolean insideAlarmFallback = false;
         for (int index = 0; index < format.length();) {
             if (format.charAt(index) == '\n') {
-                addLine(lines, line, emphasized, insideAlarm);
+                addLine(lines, line, emphasized, randomColor, insideAlarm);
                 line.setLength(0);
                 if (insideAlarm) {
                     line.append(ALARM_START);
                     if (insideAlarmFallback) line.append(ALARM_SEPARATOR);
                 }
                 emphasized = false;
+                randomColor = false;
                 ++index;
                 continue;
             }
@@ -87,18 +92,25 @@ final class FormatLineSplit {
                 continue;
             }
 
+            if (format.startsWith(RANDOM_COLOR, index)) {
+                randomColor = true;
+                index += RANDOM_COLOR.length();
+                continue;
+            }
+
             char conversion = format.charAt(index + 1);
             if (conversion == '%') {
                 line.append("%%");
                 index += 2;
             } else if (conversion == 'n') {
-                addLine(lines, line, emphasized, insideAlarm);
+                addLine(lines, line, emphasized, randomColor, insideAlarm);
                 line.setLength(0);
                 if (insideAlarm) {
                     line.append(ALARM_START);
                     if (insideAlarmFallback) line.append(ALARM_SEPARATOR);
                 }
                 emphasized = false;
+                randomColor = false;
                 index += 2;
             } else if (format.startsWith(EMPHASIS, index)) {
                 if (removeEmphasisMarkers) {
@@ -116,7 +128,7 @@ final class FormatLineSplit {
                 index += 2;
             }
         }
-        addLine(lines, line, emphasized, insideAlarm);
+        addLine(lines, line, emphasized, randomColor, insideAlarm);
         return lines;
     }
 
@@ -141,7 +153,8 @@ final class FormatLineSplit {
         for (int index = 0; index < result.size(); ++index) {
             Line line = result.get(index);
             if (!line.format.isEmpty()) {
-                result.set(index, new Line(line.format, true));
+                result.set(index, new Line(
+                        line.format, true, line.randomColor));
                 break;
             }
         }
@@ -166,9 +179,9 @@ final class FormatLineSplit {
 
     private static void addLine(
             List<Line> lines, StringBuilder format,
-            boolean emphasized, boolean insideAlarm) {
+            boolean emphasized, boolean randomColor, boolean insideAlarm) {
         String value = format.toString();
         if (insideAlarm) value += ALARM_END;
-        lines.add(new Line(value, emphasized));
+        lines.add(new Line(value, emphasized, randomColor));
     }
 }

@@ -27,6 +27,12 @@ public class SettingsStoreValidationTest {
         assertNull(SettingsStore.invalidSetting(
                 Collections.singletonMap("analogMode", true),
                 SettingsTransferRules.CLOCK));
+        Map<String, Object> globalColors = new LinkedHashMap<>();
+        globalColors.put("lineColorsEnabled", true);
+        globalColors.put("lineColorProfile", LineColors.DEUTERANOPIA);
+        globalColors.put("lineColorSeed", "shared seed");
+        assertNull(SettingsStore.invalidSetting(
+                globalColors, SettingsTransferRules.GLOBALS));
     }
 
     @Test
@@ -68,6 +74,12 @@ public class SettingsStoreValidationTest {
                         .get(AlarmTimeRelevance.MAX_AGE_KEY));
         assertNull(SettingsStore.globalValues(stored)
                 .get(AlarmTimeRelevance.MAX_AGE_KEY));
+        assertEquals("lineColorsEnabled", SettingsStore.invalidSetting(
+                Collections.singletonMap("lineColorsEnabled", 1),
+                SettingsTransferRules.GLOBALS));
+        assertEquals("lineColorProfile", SettingsStore.invalidSetting(
+                Collections.singletonMap("lineColorProfile", 99),
+                SettingsTransferRules.GLOBALS));
     }
 
     @Test
@@ -95,5 +107,27 @@ public class SettingsStoreValidationTest {
     public void rejectsSettingsFromAnUnknownComponentType() {
         assertEquals("component type", SettingsStore.invalidSetting(
                 Collections.emptyMap(), "other"));
+    }
+
+    @Test
+    public void automaticColorSwitchIsStoredPerDisplayAndPaletteIsShared() {
+        Map<String, Object> defaults = SettingsStore.globalValues(
+                Collections.emptyMap());
+        assertEquals(false, defaults.get("lineColorsEnabled"));
+        assertEquals(LineColors.NORMAL, defaults.get("lineColorProfile"));
+        assertEquals(LineColors.DEFAULT_SEED, defaults.get("lineColorSeed"));
+        assertEquals(true, SettingsStore.globalValues(
+                Collections.singletonMap(LineColors.enabledKey("W"), true))
+                .get("lineColorsEnabled"));
+        assertEquals(false, SettingsStore.widgetValues(
+                Collections.emptyMap(), 8).get("lineColorsEnabled"));
+        assertEquals(true, SettingsStore.widgetValues(
+                Collections.singletonMap(LineColors.enabledKey("W8"), true), 8)
+                .get("lineColorsEnabled"));
+        assertEquals(false, SettingsStore.clockValues(
+                Collections.emptyMap()).get("lineColorsEnabled"));
+        assertEquals(true, SettingsStore.clockValues(
+                Collections.singletonMap(LineColors.enabledKey("C"), true))
+                .get("lineColorsEnabled"));
     }
 }

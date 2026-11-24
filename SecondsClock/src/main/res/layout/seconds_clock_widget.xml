@@ -5,21 +5,27 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/appwidget_root"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextClock
-        tools:ignore="PxUsage"
         android:id="@+id/appwidget_textclock"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:autoSizeMinTextSize="16px"
-        android:autoSizeTextType="uniform" />
+        android:includeFontPadding="false" />
+
+    <LinearLayout
+        android:id="@+id/appwidget_checkbox_format_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone" />
 
     <include
         layout="@layout/analog_clock_widget"
@@ -29,14 +35,21 @@
         android:visibility="gone" />
 
     <TextClock
-        tools:ignore="PxUsage"
         android:id="@+id/appwidget_analog_dateclock"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1.5"
         android:gravity="center"
-        android:autoSizeMinTextSize="12px"
-        android:autoSizeTextType="uniform"
+        android:includeFontPadding="false"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/appwidget_checkbox_analog_date_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:gravity="center"
+        android:orientation="vertical"
         android:visibility="gone" />
 
     <LinearLayout

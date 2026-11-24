@@ -33,6 +33,7 @@ final class SettingsTransferRules {
         putEffective(values, result, "showNextAlarm", false);
         putEffective(values, result, "formatSyncEnabled", true);
         putEffective(values, result, "textStyleEmoji", false);
+        putEffective(values, result, "lineColorsEnabled", false);
         putEffective(values, result, "fgcolour", 0xFFFFFFFF);
         result.put("advancedFormatMode", isAdvancedFormat(source, values));
         putEffective(values, result, "formatProfile", 0);

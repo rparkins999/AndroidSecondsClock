@@ -55,6 +55,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private static final int TEXT_STYLE_EMOJI = FORMATPROFILE_VERTICAL + 1;
     private static final int WIDGET_NAME = TEXT_STYLE_EMOJI + 1;
     private static final int ANALOG_MODE = WIDGET_NAME + 1;
+    private static final int LINE_COLORS = ANALOG_MODE + 1;
 
     private int widgetId;
     private int maxHeight = 121;
@@ -100,6 +101,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private CheckBox showSecondsCheckBox;
     private CheckBox showNextAlarmCheckBox;
     private CheckBox analogModeCheckBox;
+    private CheckBox lineColorsCheckBox;
     private Button bgButton;
     private Button fgButton;
     private Button chooseButton;
@@ -150,6 +152,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
             case FORMATHELP: doToast(R.string.widget_format_help); return true;
             case NEXTALARM: doToast(R.string.next_alarm_source_help); return true;
             case ANALOG_MODE: doToast(R.string.widget_analog_mode_help); return true;
+            case LINE_COLORS:
+                doToast(R.string.line_color_automatic_help); return true;
             case FORMATMODE: doToast(R.string.widgetconfighelp); return true;
             case WIDGET_NAME: doToast(R.string.widget_name_help); return true;
             case DONEBUTTON: doToast(R.string.donehelp); return true;
@@ -212,6 +216,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (buttonView.getId() == NEXTALARM) {
             m_prefs.edit().putBoolean(m_key + "showNextAlarm", isChecked).apply();
             updateFromCheckBox();
+            return;
+        }
+        if (buttonView.getId() == LINE_COLORS) {
+            m_prefs.edit().putBoolean(
+                    LineColors.enabledKey(m_key), isChecked).apply();
+            updateDemo();
+            updateWidget();
             return;
         }
         if (buttonView.getId() == TEXT_STYLE_EMOJI) {
@@ -510,9 +521,17 @@ public class WidgetConfigureActivity extends ConfigureActivity
                     showWeekDay, showShortDate, showMonthDay, showMonth,
                     showYear, showNextAlarmCheckBox != null
                             && showNextAlarmCheckBox.isChecked(), nextAlarm);
+            CharSequence dateFormat12 = f.time12 + f.rest;
+            CharSequence dateFormat24 = f.time24 + f.rest;
+            if (LineColors.automaticEnabled(m_prefs, m_key)) {
+                dateFormat12 = LineColors.colorCheckboxFormat(
+                        dateFormat12, m_prefs, m_key, 1, m_fgcolour);
+                dateFormat24 = LineColors.colorCheckboxFormat(
+                        dateFormat24, m_prefs, m_key, 1, m_fgcolour);
+            }
             analogDateDemo.setTextColor(m_fgcolour);
-            analogDateDemo.setFormat12Hour(f.time12 + f.rest);
-            analogDateDemo.setFormat24Hour(f.time24 + f.rest);
+            analogDateDemo.setFormat12Hour(dateFormat12);
+            analogDateDemo.setFormat24Hour(dateFormat24);
             analogDateDemo.setLines(f.lines);
             analogDateDemo.setVisibility(f.rest.isEmpty() ? View.GONE : View.VISIBLE);
             configureAnalogPreviewHands(analogDemo, true, true, showSeconds);
@@ -528,8 +547,17 @@ public class WidgetConfigureActivity extends ConfigureActivity
         demo.setTextColor(m_fgcolour);
         if (!checkboxAnalog
                 && !(advancedFormatMode && AnalogFormat.containsClock(format))) {
-            demo.setFormat12Hour(f.time12 + f.rest);
-            demo.setFormat24Hour(f.time24 + f.rest);
+            CharSequence demoFormat12 = f.time12 + f.rest;
+            CharSequence demoFormat24 = f.time24 + f.rest;
+            if (!advancedFormatMode
+                    && LineColors.automaticEnabled(m_prefs, m_key)) {
+                demoFormat12 = LineColors.colorCheckboxFormat(
+                        demoFormat12, m_prefs, m_key, 0, m_fgcolour);
+                demoFormat24 = LineColors.colorCheckboxFormat(
+                        demoFormat24, m_prefs, m_key, 0, m_fgcolour);
+            }
+            demo.setFormat12Hour(demoFormat12);
+            demo.setFormat24Hour(demoFormat24);
             demo.setLines(f.lines);
         }
         int width = (int)(minWidth * m_density);
@@ -546,7 +574,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.setMinimumWidth(width);
         analogPreview.setMinimumHeight(height);
         analogPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-        analogDemo.setColor(m_fgcolour);
+        analogDemo.setColor(checkboxAnalog
+                ? LineColors.checkboxLineColor(
+                        m_prefs, m_key, 0, m_fgcolour)
+                : m_fgcolour);
         showPreview();
     }
 
@@ -646,6 +677,11 @@ public class WidgetConfigureActivity extends ConfigureActivity
         result.setWeightSum(weightSum);
         for (int lineIndex = 0; lineIndex < rendered.lines.size(); ++lineIndex) {
             AnalogFormatRenderer.Line line = rendered.lines.get(lineIndex);
+            boolean colorized = line.randomColor;
+            int lineColor = colorized
+                    ? LineColors.withBaseAlpha(
+                            LineColors.colorForLine(m_prefs, line.lineIndex), m_fgcolour)
+                    : m_fgcolour;
             StringBuilder linePattern = advancedPreviewLinePatternBuilder(line);
             boolean longText = line.hands == null && !line.emphasized
                     && linePattern.length() > 32;
@@ -660,7 +696,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
                         ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
                 AnalogClockView clock = new AnalogClockView(this);
                 clock.setBackgroundColor(m_bgcolour);
-                clock.setColor(m_fgcolour);
+                clock.setColor(lineColor);
                 clock.setHands(line.hands.hour, line.hands.minute,
                         line.hands.second);
                 clock.setTime(Calendar.getInstance());
@@ -671,7 +707,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
             addAdvancedFormatPreviewTextBlock(result, linePattern,
                     longText, line.emphasized,
                     line.emphasized && rendered.hasAnalog && lineIndex > 0,
-                    weight);
+                    weight, lineColor);
         }
         return result;
     }
@@ -693,12 +729,12 @@ public class WidgetConfigureActivity extends ConfigureActivity
     private void addAdvancedFormatPreviewTextBlock(
             LinearLayout result, StringBuilder format,
             boolean longText, boolean emphasized, boolean alignToPrevious,
-            float weight) {
+            float weight, int textColor) {
         TextClock text = new TextClock(this);
         text.setIncludeFontPadding(false);
         text.setGravity(emphasized && alignToPrevious
                 ? Gravity.TOP | Gravity.CENTER_HORIZONTAL : Gravity.CENTER);
-        text.setTextColor(m_fgcolour);
+        text.setTextColor(textColor);
         text.setSingleLine(!longText || emphasized);
         text.setFormat12Hour(format.toString());
         text.setFormat24Hour(format.toString());
@@ -714,7 +750,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (advancedFormatMode) {
             demobox.addView(makeAdvancedFormatPreview());
         } else if (analogMode && !advancedFormatMode) {
-            ensureAnalogPreviewChildren();
+            rebuildCheckboxAnalogPreview();
             demobox.addView(analogPreview);
         } else {
             demobox.addView(demo);
@@ -722,15 +758,12 @@ public class WidgetConfigureActivity extends ConfigureActivity
         refreshAnalogPreviewTicker();
     }
 
-    private void ensureAnalogPreviewChildren() {
-        if (analogDemo.getParent() == null) {
-            analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
-        }
-        if (analogDateDemo.getParent() == null) {
-            analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.5F));
-        }
+    private void rebuildCheckboxAnalogPreview() {
+        analogPreview.removeAllViews();
+        analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
+        analogPreview.addView(analogDateDemo, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.5F));
     }
 
     private void refreshAnalogPreviewTicker() {
@@ -764,7 +797,10 @@ public class WidgetConfigureActivity extends ConfigureActivity
         if (demo != null) demo.setTextColor(m_fgcolour);
         if (analogDateDemo != null) analogDateDemo.setTextColor(m_fgcolour);
         if (analogDemo != null) {
-            analogDemo.setColor(m_fgcolour);
+            analogDemo.setColor(!advancedFormatMode && analogMode
+                    ? LineColors.checkboxLineColor(
+                            m_prefs, m_key, 0, m_fgcolour)
+                    : m_fgcolour);
         }
         if (demobox != null && demobox.getChildCount() > 0) showPreview();
     }
@@ -916,6 +952,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         editor.addView(showLongMonthCheckBox, lpWrapWrap);
         editor.addView(showYearCheckBox, lpWrapWrap);
         editor.addView(showNextAlarmCheckBox, lpWrapWrap);
+        editor.addView(lineColorsCheckBox, lpWrapWrap);
         TextView alarmHelp = new TextView(this);
         alarmHelp.setText(R.string.next_alarm_source_help);
         editor.addView(alarmHelp, lpMatchWrap);
@@ -1002,6 +1039,8 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 new FormatToken(R.string.format_token_percent, "%%"), null);
         addFormatTokenRow(guide,
                 new FormatToken(R.string.format_token_analog_clock, "%C\n", 2), null);
+        addFormatTokenRow(guide,
+                new FormatToken(R.string.format_token_random_color, "%Q"), null);
         TextView analogHint = new TextView(this);
         analogHint.setText(R.string.widget_format_analog_hint);
         guide.addView(analogHint, lpMatchWrap);
@@ -1404,6 +1443,13 @@ public class WidgetConfigureActivity extends ConfigureActivity
                 m_prefs.getBoolean(m_key + "showNextAlarm", false));
         showNextAlarmCheckBox.setOnCheckedChangeListener(this);
         showNextAlarmCheckBox.setOnLongClickListener(this);
+        lineColorsCheckBox = new CheckBox(this);
+        lineColorsCheckBox.setId(LINE_COLORS);
+        lineColorsCheckBox.setText(R.string.line_color_automatic);
+        lineColorsCheckBox.setChecked(
+                LineColors.automaticEnabled(m_prefs, m_key));
+        lineColorsCheckBox.setOnCheckedChangeListener(this);
+        lineColorsCheckBox.setOnLongClickListener(this);
         analogModeCheckBox = new CheckBox(this);
         analogModeCheckBox.setId(ANALOG_MODE);
         analogModeCheckBox.setText(R.string.widget_analog_mode);
@@ -1448,7 +1494,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         formatModeButton.setAllCaps(false);
         formatModeButton.setOnClickListener(this);
         formatModeButton.setOnLongClickListener(this);
-        demo = new TextClock(this);
+        demo = new CheckboxTextClock(this);
         demo.setId(WIDGETDEMO);
         demo.setGravity(Gravity.CENTER_HORIZONTAL);
         demo.setBackgroundColor(m_bgcolour);
@@ -1465,7 +1511,7 @@ public class WidgetConfigureActivity extends ConfigureActivity
         analogPreview.setBackgroundColor(m_bgcolour);
         analogPreview.addView(analogDemo, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 2.5F));
-        analogDateDemo = new TextClock(this);
+        analogDateDemo = new CheckboxTextClock(this);
         analogDateDemo.setGravity(Gravity.CENTER);
         analogDateDemo.setTextColor(m_fgcolour);
         analogDateDemo.setAutoSizeTextTypeUniformWithConfiguration(

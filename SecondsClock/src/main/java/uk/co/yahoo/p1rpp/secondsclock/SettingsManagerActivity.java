@@ -503,7 +503,11 @@ public class SettingsManagerActivity extends Activity_common
                 String target = destinationSelection.source;
                 SettingsStore.applyPresetToComponent(m_prefs, presets,
                         source, target, destinationSelection.widgetId);
-                if (target.equals(SettingsTransferRules.WIDGET)) updateWidgets();
+                if (target.equals(SettingsTransferRules.WIDGET)) {
+                    updateWidgets();
+                } else if (target.equals(SettingsTransferRules.GLOBALS)) {
+                    LineColors.notifyChanged(this);
+                }
             }
             sourceSelection = null;
             destinationSelection = null;
@@ -630,6 +634,7 @@ public class SettingsManagerActivity extends Activity_common
             switch (component.source) {
                 case SettingsTransferRules.GLOBALS:
                     SettingsStore.resetGlobals(m_prefs, presets);
+                    LineColors.notifyChanged(this);
                     break;
                 case SettingsTransferRules.CLOCK:
                     SettingsStore.resetClock(m_prefs, presets);
@@ -779,6 +784,7 @@ public class SettingsManagerActivity extends Activity_common
             SettingsStore.ImportResult result = SettingsStore.importBackup(
                     m_prefs, appWidgetManager, secondsClockWidget, backup);
             updateWidgets();
+            LineColors.notifyChanged(this);
             loadPresets();
             renderAgain();
             doToast(getString(R.string.file_imported,

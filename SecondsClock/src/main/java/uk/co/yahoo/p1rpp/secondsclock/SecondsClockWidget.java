@@ -35,6 +35,7 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.Objects;
 
 /*
@@ -103,6 +104,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     .putInt(key + "showYear", prefs.getInt("WshowYear", 1))
                     .putBoolean(key + "showNextAlarm",
                             prefs.getBoolean("WshowNextAlarm", false))
+                    .putBoolean(LineColors.enabledKey(key),
+                            LineColors.automaticEnabled(prefs, "W"))
                     .putInt(key + "bgcolour", bgcolour)
                     .putInt(key + "fgcolour", fgcolour)
                     .putInt(key + "touchaction", touchaction)
@@ -164,15 +167,24 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     FormatProfiles.isHorizontalWidget(minWidth, maxHeight));
         }
         boolean checkboxAnalog = analogMode && !advancedFormatMode;
+        boolean checkboxAutomaticColors = !advancedFormatMode
+                && LineColors.automaticEnabled(prefs, key);
         views.setViewVisibility(R.id.appwidget_analogclock,
                 checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_analog_dateclock,
-                checkboxAnalog ? android.view.View.VISIBLE : android.view.View.GONE);
+                checkboxAnalog && !checkboxAutomaticColors
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_checkbox_format_container,
+                !checkboxAnalog && checkboxAutomaticColors
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
+        views.setViewVisibility(R.id.appwidget_checkbox_analog_date_container,
+                checkboxAnalog && checkboxAutomaticColors
+                        ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_format_container,
                 advancedFormatMode
                         ? android.view.View.VISIBLE : android.view.View.GONE);
         views.setViewVisibility(R.id.appwidget_textclock,
-                checkboxAnalog || advancedFormatMode
+                checkboxAnalog || advancedFormatMode || checkboxAutomaticColors
                         ? android.view.View.GONE : android.view.View.VISIBLE);
 
         if (advancedFormatMode) {
@@ -181,14 +193,16 @@ public class SecondsClockWidget extends AppWidgetProvider {
             }
             AnalogFormatRenderer.Result rendered = AnalogFormatRenderer.render(
                     format, nextAlarmTime, true);
-            addAdvancedFormat(context, views, rendered, fgcolour,
+            addAdvancedFormat(context, views, rendered, prefs, fgcolour,
                     minWidth, maxHeight);
         } else if (checkboxAnalog) {
             boolean showSeconds = prefs.getBoolean(
                     key + "showSeconds", prefs.getInt(key + "showTime", 2) == 2);
+            int dialColor = LineColors.checkboxLineColor(
+                    prefs, key, 0, fgcolour);
             views.setImageViewBitmap(R.id.appwidget_analog_dial,
-                    AnalogClockFace.createBitmap(fgcolour));
-            setAnalogHands(views, context, fgcolour, true, true,
+                    AnalogClockFace.createBitmap(dialColor));
+            setAnalogHands(views, context, dialColor, true, true,
                     showSeconds, R.id.appwidget_analog_hands,
                     R.id.appwidget_analog_hours_only,
                     R.id.appwidget_analog_minutes_only,
@@ -202,13 +216,29 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     prefs.getInt(key + "showYear", 1),
                     prefs.getBoolean(key + "showNextAlarm", false),
                     nextAlarmTime);
-            views.setCharSequence(R.id.appwidget_analog_dateclock,
-                    "setFormat12Hour", f.time12 + f.rest);
-            views.setCharSequence(R.id.appwidget_analog_dateclock,
-                    "setFormat24Hour", f.time24 + f.rest);
-            views.setInt(R.id.appwidget_analog_dateclock, "setLines", f.lines);
-            views.setViewVisibility(R.id.appwidget_analog_dateclock,
-                    f.rest.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
+            CharSequence format12 = f.time12 + f.rest;
+            CharSequence format24 = f.time24 + f.rest;
+            float textSizeSp = CheckboxFormatTextSizing.widgetTextSizeSp(
+                    context, minWidth, maxHeight,
+                    format12.toString(), format24.toString(),
+                    f.lines, true);
+            if (checkboxAutomaticColors) {
+                addCheckboxLines(context, views,
+                        R.id.appwidget_checkbox_analog_date_container,
+                        format12.toString(), format24.toString(), 1,
+                        key, textSizeSp, prefs, fgcolour);
+            } else {
+                views.setFloat(R.id.appwidget_analog_dateclock,
+                        "setTextSize", textSizeSp);
+                views.setCharSequence(R.id.appwidget_analog_dateclock,
+                        "setFormat12Hour", format12);
+                views.setCharSequence(R.id.appwidget_analog_dateclock,
+                        "setFormat24Hour", format24);
+                views.setInt(R.id.appwidget_analog_dateclock, "setLines", f.lines);
+                views.setViewVisibility(R.id.appwidget_analog_dateclock,
+                        f.rest.isEmpty()
+                                ? android.view.View.GONE : android.view.View.VISIBLE);
+            }
         } else {
             f.setCheckboxes(context, minWidth, maxHeight,
                     prefs.getInt(key + "showTime", 2),
@@ -219,11 +249,25 @@ public class SecondsClockWidget extends AppWidgetProvider {
                     prefs.getInt(key + "showYear", 1),
                     prefs.getBoolean(key + "showNextAlarm", false),
                     nextAlarmTime);
-            views.setCharSequence(R.id.appwidget_textclock,
-                    "setFormat12Hour", f.time12 + f.rest);
-            views.setCharSequence(R.id.appwidget_textclock,
-                    "setFormat24Hour", f.time24 + f.rest);
-            views.setInt(R.id.appwidget_textclock, "setLines", f.lines);
+            CharSequence format12 = f.time12 + f.rest;
+            CharSequence format24 = f.time24 + f.rest;
+            float textSizeSp = CheckboxFormatTextSizing.widgetTextSizeSp(
+                    context, minWidth, maxHeight,
+                    format12.toString(), format24.toString(),
+                    f.lines, false);
+            if (checkboxAutomaticColors) {
+                addCheckboxLines(context, views,
+                        R.id.appwidget_checkbox_format_container,
+                        format12.toString(), format24.toString(), 0,
+                        key, textSizeSp, prefs, fgcolour);
+            } else {
+                views.setFloat(R.id.appwidget_textclock, "setTextSize", textSizeSp);
+                views.setCharSequence(R.id.appwidget_textclock,
+                        "setFormat12Hour", format12);
+                views.setCharSequence(R.id.appwidget_textclock,
+                        "setFormat24Hour", format24);
+                views.setInt(R.id.appwidget_textclock, "setLines", f.lines);
+            }
         }
 
         // Make a click anywhere on the widget go to the switch in MainActivity.
@@ -235,6 +279,32 @@ public class SecondsClockWidget extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.appwidget_root, pi);
 
         return views;
+    }
+
+    private static void addCheckboxLines(
+            Context context, RemoteViews parent, int containerId,
+            String format12, String format24, int firstLineIndex,
+            String preferencePrefix, float textSizeSp,
+            SharedPreferences prefs, int baseColor) {
+        List<CheckboxFormatLines.Line> lines =
+                CheckboxFormatLines.split(format12, format24);
+        for (int index = 0; index < lines.size(); ++index) {
+            CheckboxFormatLines.Line line = lines.get(index);
+            RemoteViews text = new RemoteViews(
+                    context.getPackageName(), R.layout.widget_checkbox_clock_line);
+            text.setFloat(R.id.widget_checkbox_line_clock,
+                    "setTextSize", textSizeSp);
+            text.setTextColor(R.id.widget_checkbox_line_clock,
+                    LineColors.checkboxLineColor(
+                            prefs, preferencePrefix,
+                            firstLineIndex + index, baseColor));
+            text.setCharSequence(R.id.widget_checkbox_line_clock,
+                    "setFormat12Hour", line.format12);
+            text.setCharSequence(R.id.widget_checkbox_line_clock,
+                    "setFormat24Hour", line.format24);
+            text.setInt(R.id.widget_checkbox_line_clock, "setLines", 1);
+            parent.addView(containerId, text);
+        }
     }
 
     private static boolean setRemoteViewIcon(
@@ -264,7 +334,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
 
     private static void addAdvancedFormat(
             Context context, RemoteViews views,
-            AnalogFormatRenderer.Result rendered, int dialColor,
+            AnalogFormatRenderer.Result rendered, SharedPreferences prefs,
+            int dialColor,
             int minWidth, int maxHeight) {
         views.removeAllViews(R.id.appwidget_format_container);
         float totalWeight = advancedFormatWeight(
@@ -285,6 +356,11 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 "setWeightSum", weightSum);
         for (int lineIndex = 0; lineIndex < rendered.lines.size(); ++lineIndex) {
             AnalogFormatRenderer.Line line = rendered.lines.get(lineIndex);
+            boolean colorized = line.randomColor;
+            int lineColor = colorized
+                    ? LineColors.withBaseAlpha(
+                            LineColors.colorForLine(prefs, line.lineIndex), dialColor)
+                    : dialColor;
             if (line.hands == null) {
                 StringBuilder linePattern = new StringBuilder();
                 for (AnalogFormatRenderer.Part part : line.parts) {
@@ -297,7 +373,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 addAdvancedTextLine(context, views, linePattern, longText,
                         line.emphasized, rendered.hasAnalog,
                         line.emphasized && rendered.hasAnalog && lineIndex > 0,
-                        dialColor);
+                        lineColor);
                 continue;
             }
 
@@ -306,8 +382,8 @@ public class SecondsClockWidget extends AppWidgetProvider {
             RemoteViews analog = new RemoteViews(
                     context.getPackageName(), R.layout.analog_clock_widget_inline);
             analog.setImageViewBitmap(R.id.appwidget_analog_dial,
-                    AnalogClockFace.createBitmap(dialColor));
-            setAnalogHands(analog, context, dialColor,
+                    AnalogClockFace.createBitmap(lineColor));
+            setAnalogHands(analog, context, lineColor,
                     line.hands.hour, line.hands.minute,
                     line.hands.second,
                     R.id.appwidget_analog_hands,
@@ -395,6 +471,7 @@ public class SecondsClockWidget extends AppWidgetProvider {
                 ? minute ? bothId : hourId
                 : minute ? minuteId : noneId;
         int[] clockIds = {bothId, hourId, minuteId, noneId};
+        // AnalogClock exposes RemoteViews hand tinting only on API 36+.
         ColorStateList handColors = Build.VERSION.SDK_INT >= 36
                 ? ColorStateList.valueOf(handColor) : null;
         for (int clockId : clockIds) {
@@ -479,6 +556,17 @@ public class SecondsClockWidget extends AppWidgetProvider {
         } else {
             alarmManager.set(AlarmManager.RTC_WAKEUP, expiryTime, refresh);
         }
+    }
+
+    static void requestUpdateAll(Context context) {
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        int[] widgetIds = manager.getAppWidgetIds(
+                new ComponentName(context, SecondsClockWidget.class));
+        if (widgetIds.length == 0) return;
+        Intent update = new Intent(context, SecondsClockWidget.class)
+                .setAction("uk.co.yahoo.p1rpp.UpdateWidget")
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+        context.sendBroadcast(update);
     }
 
     @SuppressLint("ApplySharedPref")
